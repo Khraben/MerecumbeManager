@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
 
-export default function Login() {
+export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -15,6 +15,10 @@ export default function Login() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleLogin = () => {
+    onLogin();
+  };
+
   return (
     <Background>
       {isLoading ? (
@@ -24,7 +28,7 @@ export default function Login() {
       ) : (
         <LoginContainer>
           <StyledLogo src="/logo.svg" alt="Logo" width={120} height={120} />
-          <Form>
+          <Form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
             <Input type="text" placeholder="Usuario" />
             <Input type="password" placeholder="Contraseña" />
             <Button type="submit">Ingresar</Button>
@@ -47,6 +51,9 @@ const Background = styled.div`
   padding: 0;
   font-family: 'Quicksand', sans-serif;
   overflow: hidden;
+  position: fixed; 
+  top: 0;
+  left: 0;
 `;
 
 const spin = keyframes`
@@ -67,7 +74,7 @@ const AnimationContainer = styled.div`
 `;
 
 const Logo = styled(Image)`
-  animation: ${spin} 1.5s linear infinite; /* Añadimos infinite para que gire continuamente */
+  animation: ${spin} 1.5s linear ;
 `;
 
 const LoginContainer = styled.div`

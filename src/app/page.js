@@ -1,7 +1,7 @@
-"use client";
-
-import Login from "@/components/Login";
-
 export default function Home() {
-  return <Login />;
+  return (
+    <div>
+      <h1>Bienvenido a la Página Principal</h1>
+    </div>
+  );
 }
