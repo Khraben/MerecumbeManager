@@ -3,16 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import styled from "styled-components";
-import Link from "next/link";
 import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaSignOutAlt } from "react-icons/fa";
 
-export default function Navbar({ onLogout, toggleNavbar }) {
+export default function SideNavbar({ onLogout, toggleSideNavbar }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); 
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    toggleNavbar(); 
+    toggleSideNavbar(); 
   };
 
   const handleLogout = () => {
@@ -20,14 +19,15 @@ export default function Navbar({ onLogout, toggleNavbar }) {
     router.push("/");
   };
 
-  const handleHomeClick = () => {
-    router.push("/");
-  };
-
-  const handleLinkClick = (path) => {
+  const handleLinkClick_Show = (path) => {
     router.push(path);
     setIsOpen(false);
-    toggleNavbar();
+    toggleSideNavbar(); 
+  };
+
+  const handleLinkClick_Hidden = (path) => {
+    router.push(path);
+    setIsOpen(false);
   };
 
   return (
@@ -37,17 +37,17 @@ export default function Navbar({ onLogout, toggleNavbar }) {
       </ToggleButton>
       {!isOpen && (
         <>
-          <HomeButton onClick={handleHomeClick}>
-            <FaHome />
-          </HomeButton>
           <HiddenLinks>
-            <HiddenLink onClick={() => handleLinkClick("/GroupList")}>
+            <HiddenLink onClick={() => handleLinkClick_Hidden("/")}>
+              <FaHome />
+            </HiddenLink>
+            <HiddenLink onClick={() => handleLinkClick_Hidden("/GroupList")}>
               <FaUsers />
             </HiddenLink>
-            <HiddenLink onClick={() => handleLinkClick("/StudentList")}>
+            <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
               <FaUserGraduate />
             </HiddenLink>
-            <HiddenLink onClick={() => handleLinkClick("/MakePayment")}>
+            <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
               <FaFileInvoiceDollar />
             </HiddenLink>
             <HiddenLink onClick={handleLogout}>
@@ -58,23 +58,23 @@ export default function Navbar({ onLogout, toggleNavbar }) {
       )}
       <SideNav isOpen={isOpen}>
         <NavList isOpen={isOpen}>
-        <NavItem>
-            <StyledLink onClick={() => handleLinkClick("/")}>
+          <NavItem>
+            <StyledLink onClick={() => handleLinkClick_Show("/")}>
               <FaHome /> Inicio
             </StyledLink>
           </NavItem>
           <NavItem>
-            <StyledLink onClick={() => handleLinkClick("/GroupList")}>
+            <StyledLink onClick={() => handleLinkClick_Show("/GroupList")}>
               <FaUsers /> Grupos
             </StyledLink>
           </NavItem>
           <NavItem>
-            <StyledLink onClick={() => handleLinkClick("/StudentList")}>
+            <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
               <FaUserGraduate /> Alumnos
             </StyledLink>
           </NavItem>
           <NavItem>
-            <StyledLink onClick={() => handleLinkClick("/MakePayment")}>
+            <StyledLink onClick={() => handleLinkClick_Show("/MakePayment")}>
               <FaFileInvoiceDollar /> Facturar
             </StyledLink>
           </NavItem>
@@ -99,32 +99,11 @@ const ToggleButton = styled.button`
   padding: 10px;
   cursor: pointer;
   border-radius: 5px;
-  z-index: 1000;
   font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &:hover {
-    background-color: #081075;
-  }
-`;
-
-const HomeButton = styled.button`
-  position: fixed;
-  top: 60px;
-  left: 10px;
-  background-color: #0b0f8b;
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 5px;
-  z-index: 1000;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 1001; /* Ensure the button stays on top */
 
   &:hover {
     background-color: #081075;
@@ -133,12 +112,12 @@ const HomeButton = styled.button`
 
 const HiddenLinks = styled.div`
   position: fixed;
-  top: 120px;
+  top: 70px;
   left: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 1000;
+  z-index: 1001;
 `;
 
 const HiddenLink = styled.button`
@@ -152,6 +131,7 @@ const HiddenLink = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1001; 
 
   &:hover {
     background-color: #081075;
@@ -171,8 +151,9 @@ const SideNav = styled.nav`
   align-items: flex-start;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   transition: left 0.3s ease-in-out;
-  overflow: hidden; 
-
+  z-index: 1000; 
+  overflow: hidden;
+  
   @media (max-width: 480px) {
     width: 100vw;
     left: ${({ isOpen }) => (isOpen ? "0" : "-95vw")};
@@ -184,9 +165,8 @@ const NavList = styled.ul`
   width: 100%;
   padding: 0;
   margin: 0;
-  margin-top: 20px;
+  margin-top: 40px;
   pointer-events: ${({ isOpen }) => (isOpen ? "auto" : "none")};
-  overflow: hidden; 
 `;
 
 const NavItem = styled.li`
@@ -205,6 +185,7 @@ const StyledLink = styled.a`
   border-radius: 5px;
   transition: background-color 0.3s ease-in-out;
   cursor: pointer;
+  z-index: 1000; 
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.2);
