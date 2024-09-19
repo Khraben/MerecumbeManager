@@ -1,79 +1,37 @@
 "use client";
 
 import styled from "styled-components";
-import { useState } from "react";
-import { FaSearch } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaSearch, FaInfoCircle } from "react-icons/fa";
+import AddStudentModal from "../components/AddStudentModal";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../conf/firebase";
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    const querySnapshot = await getDocs(collection(db, "students"));
+    const studentsData = querySnapshot.docs.map(doc => doc.data());
+    studentsData.sort((a, b) => a.name.localeCompare(b.name));
+    setStudents(studentsData);
+  };
+
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    fetchStudents();
+  };
   
-  const students = [
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    
-  ];
+  const handleViewStudentDetails = (student) => {
+    console.log("Ver detalles de estudiante:", student);
+  };
 
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -98,7 +56,7 @@ export default function StudentList() {
               <th>Nombre</th>
               <th>Celular</th>
               <th>Grupo Principal</th>
-              <th>+</th>
+              <th> </th>
             </tr>
           </thead>
           <tbody>
@@ -106,14 +64,17 @@ export default function StudentList() {
               <tr key={index}>
                 <td>{student.name}</td>
                 <td>{student.phone}</td>
-                <td> </td>
-                <td> </td>
+                <td>{student.mainGroup || "No Definido"}</td>
+                <td>
+                  <InfoIcon onClick={() => handleViewStudentDetails(student)} />
+                </td>
               </tr>
             ))}
           </tbody>
         </Table>
       </TableContainer>
-      <AddButton>Agregar Alumno</AddButton>
+      <AddButton onClick={handleOpenModal}>Agregar Alumno</AddButton>
+      <AddStudentModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </Wrapper>
   );
 }
@@ -243,4 +204,14 @@ const SearchIcon = styled(FaSearch)`
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
+`;
+
+const InfoIcon = styled(FaInfoCircle)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 20px;
+
+  &:hover {
+    color: #073e8a;
+  }
 `;

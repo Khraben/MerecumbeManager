@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import styled from "styled-components";
 import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaSignOutAlt } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
-export default function SideNavbar({ onLogout, toggleSideNavbar }) {
+export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); 
+  const { user, logout } = useAuth();
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -15,8 +17,9 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
   };
 
   const handleLogout = () => {
-    onLogout();
     router.push("/");
+    logout()
+    propOnLogout(); 
   };
 
   const handleLinkClick_Show = (path) => {
@@ -25,9 +28,9 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
     toggleSideNavbar(); 
   };
 
+
   const handleLinkClick_Hidden = (path) => {
     router.push(path);
-    setIsOpen(false);
   };
 
   return (
@@ -58,7 +61,7 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
       )}
       <SideNav isOpen={isOpen}>
         <NavList isOpen={isOpen}>
-          <NavItem>
+        <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/")}>
               <FaHome /> Inicio
             </StyledLink>
@@ -103,7 +106,7 @@ const ToggleButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1001; /* Ensure the button stays on top */
+  z-index: 1001;
 
   &:hover {
     background-color: #081075;

@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
+import { auth } from "../conf/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,8 +20,15 @@ export default function Login({ onLogin }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLogin = () => {
-    onLogin();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const email = `${username}@gmail.com`;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin();
+    } catch (error) {
+      setError("Error al iniciar sesión: " + error.message);
+    }
   };
 
   return (
@@ -28,9 +40,22 @@ export default function Login({ onLogin }) {
       ) : (
         <LoginContainer>
           <StyledLogo src="/logo.svg" alt="Logo" width={120} height={120} />
-          <Form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-            <Input type="text" placeholder="Usuario" />
-            <Input type="password" placeholder="Contraseña" />
+          <Form onSubmit={handleLogin}>
+            <Input
+              type="text"
+              placeholder="Usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && <ErrorMessage>{error}</ErrorMessage>}
             <Button type="submit">Ingresar</Button>
           </Form>
         </LoginContainer>
@@ -121,4 +146,10 @@ const Button = styled.button`
   max-width: 320px;
   margin-top: 10px;
   font-weight: bold;
+`;
+
+const ErrorMessage = styled.p`
+  color: red;
+  font-weight: bold;
+  text-align: center;
 `;
