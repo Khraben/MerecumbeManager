@@ -1,9 +1,11 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 import { FaSearch, FaInfoCircle } from "react-icons/fa";
 import AddStudentModal from "../components/AddStudentModal";
+import StudentDetails from "../components/StudentDetails";
+import Loading from "../components/Loading"; // Asegúrate de que la ruta sea correcta
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../conf/firebase";
 
@@ -11,16 +13,27 @@ export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [students, setStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [loading, setLoading] = useState(true); // Estado de carga
 
   useEffect(() => {
     fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
+    setLoading(true); // Iniciar carga
     const querySnapshot = await getDocs(collection(db, "students"));
-    const studentsData = querySnapshot.docs.map(doc => doc.data());
+    const studentsData = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        group: data.groups[0] || "Ningún grupo" // Recuperar el grupo principal
+      };
+    });
     studentsData.sort((a, b) => a.name.localeCompare(b.name));
     setStudents(studentsData);
+    setLoading(false); // Finalizar carga
   };
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -28,14 +41,26 @@ export default function StudentList() {
     setIsModalOpen(false);
     fetchStudents();
   };
-  
-  const handleViewStudentDetails = (student) => {
-    console.log("Ver detalles de estudiante:", student);
+
+  const handleViewStudentDetails = (studentId) => {
+    setSelectedStudentId(studentId);
+  };
+
+  const handleBack = () => {
+    setSelectedStudentId(null);
   };
 
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (selectedStudentId) {
+    return <StudentDetails studentId={selectedStudentId} onBack={handleBack} />;
+  }
 
   return (
     <Wrapper>
@@ -64,9 +89,9 @@ export default function StudentList() {
               <tr key={index}>
                 <td>{student.name}</td>
                 <td>{student.phone}</td>
-                <td>{student.mainGroup || "No Definido"}</td>
+                <td>{student.group}</td>
                 <td>
-                  <InfoIcon onClick={() => handleViewStudentDetails(student)} />
+                  <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
                 </td>
               </tr>
             ))}
@@ -94,6 +119,10 @@ const Title = styled.h1`
   text-transform: uppercase;
   font-weight: 700;
   text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const AddButton = styled.button`
@@ -114,6 +143,11 @@ const AddButton = styled.button`
 
   &:focus {
     outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 12px;
   }
 `;
 
@@ -197,6 +231,11 @@ const SearchInput = styled.input`
   border-radius: 5px;
   outline: none;
   background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 `;
 
 const SearchIcon = styled(FaSearch)`
@@ -204,6 +243,10 @@ const SearchIcon = styled(FaSearch)`
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const InfoIcon = styled(FaInfoCircle)`
@@ -213,5 +256,9 @@ const InfoIcon = styled(FaInfoCircle)`
 
   &:hover {
     color: #073e8a;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
   }
 `;
