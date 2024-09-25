@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../conf/firebase";
 
-const AddGroupModal = ({ isOpen, onClose }) => {
+const GroupModal = ({ isOpen, onClose }) => {
   const [instructor, setInstructor] = useState("");
   const [day, setDay] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -12,6 +12,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
   const [instructors, setInstructors] = useState([]);
   const [existingGroups, setExistingGroups] = useState([]);
   const [error, setError] = useState("");
+  const [workshopName, setWorkshopName] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -29,7 +30,10 @@ const AddGroupModal = ({ isOpen, onClose }) => {
 
   const fetchInstructors = async () => {
     const querySnapshot = await getDocs(collection(db, "instructors"));
-    const instructorsData = querySnapshot.docs.map(doc => doc.data().name);
+    const instructorsData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name
+    }));
     setInstructors(instructorsData);
   };
 
@@ -57,17 +61,19 @@ const AddGroupModal = ({ isOpen, onClose }) => {
 
   const handleDayChange = (e) => {
     setDay(e.target.value);
-    setStartTime(""); // Reiniciar la selección de la hora de inicio
-    setEndTime(""); // Reiniciar la selección de la hora de fin
+    setStartTime("");
+    setEndTime(""); 
   };
 
   const handleSave = async () => {
-    if (!instructor || !day || !startTime) {
+    if (!instructor || !day || !startTime || (level === "Taller" && !workshopName)) {
       setError("Todos los campos son obligatorios");
       return;
     }
 
     setError("");
+
+    const name = level === "Taller" ? `Taller ${workshopName}` : `${day} ${startTime}`;
 
     const newGroup = {
       instructor,
@@ -75,6 +81,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
       startTime,
       endTime,
       level,
+      name,
     };
 
     try {
@@ -92,6 +99,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
     setStartTime("");
     setEndTime("");
     setLevel("Nivel I");
+    setWorkshopName("");
     setError("");
   };
 
@@ -138,7 +146,6 @@ const AddGroupModal = ({ isOpen, onClose }) => {
       const groupEnd24 = convertTo24HourFormat(group.endTime);
       const [groupStartHours, groupStartMinutes] = groupStart24.split(":").map(Number);
       const [groupEndHours, groupEndMinutes] = groupEnd24.split(":").map(Number);
-
       const selectedTimeInMinutes = selectedHours * 60 + selectedMinutes;
       const groupStartTimeInMinutes = groupStartHours * 60 + groupStartMinutes;
       const groupEndTimeInMinutes = groupEndHours * 60 + groupEndMinutes;
@@ -161,7 +168,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
             <Select value={instructor} onChange={handleInputChange(setInstructor)}>
               <option value="">Seleccione un instructor</option>
               {instructors.map((inst, index) => (
-                <option key={index} value={inst}>{inst}</option>
+                <option key={index} value={inst.id}>{inst.name}</option>
               ))}
             </Select>
             <label>Día y Horario</label>
@@ -187,7 +194,16 @@ const AddGroupModal = ({ isOpen, onClose }) => {
               <option value="Nivel II">Nivel II</option>
               <option value="Nivel III">Nivel III</option>
               <option value="Nivel IV">Nivel IV</option>
+              <option value="Taller">Taller</option>
             </Select>
+            {level === "Taller" && (
+              <Input
+                type="text"
+                placeholder="Nombre del Taller"
+                value={workshopName}
+                onChange={handleInputChange(setWorkshopName)}
+              />
+            )}
           </Form>
           {error && <ErrorMessage>{error}</ErrorMessage>}
         </ModalBody>
@@ -369,4 +385,4 @@ const ErrorMessage = styled.p`
   }
 `;
 
-export default AddGroupModal;
+export default GroupModal;

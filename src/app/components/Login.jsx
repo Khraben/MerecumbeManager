@@ -55,8 +55,8 @@ export default function Login({ onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <ErrorMessage>{error}</ErrorMessage>}
             <Button type="submit">Ingresar</Button>
+            {error && <ErrorMessage>{error}</ErrorMessage>}
           </Form>
         </LoginContainer>
       )}

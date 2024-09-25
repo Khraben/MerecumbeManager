@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import styled, { createGlobalStyle } from "styled-components";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../conf/firebase";
 import { toPng } from "html-to-image";
 import Image from "next/image";
-import Loading from "../components/Loading"; // Asegúrate de que la ruta sea correcta
+import Loading from "../components/Loading";
 
 const GlobalStyle = createGlobalStyle`
   body, html {
@@ -21,13 +21,14 @@ export default function MakePayment() {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [date, setDate] = useState(new Date().toLocaleDateString("es-CR"));
   const [groups, setGroups] = useState([]);
+  const [tallerGroups, setTallerGroups] = useState([]);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
-  const [workshopDescription, setWorkshopDescription] = useState("");
+  const [selectedTaller, setSelectedTaller] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  const [loading, setLoading] = useState(true); // Estado de carga
+  const [loading, setLoading] = useState(true); 
   const receiptRef = useRef(null);
 
   useEffect(() => {
@@ -38,27 +39,42 @@ export default function MakePayment() {
     if (selectedStudent) {
       const student = students.find(s => s.name === selectedStudent);
       if (student) {
-        setGroups(student.groups);
-        if (selectedMonth !== "Clases Privadas" && !selectedMonth.startsWith("Taller de")) {
-          calculateAmount(student.groups.length);
-        }
+        fetchGroups(student.groups);
       }
     } else {
       setGroups([]);
+      setTallerGroups([]);
       setAmount("");
     }
   }, [selectedStudent, selectedMonth]);
 
   const fetchStudents = async () => {
-    setLoading(true); // Iniciar carga
+    setLoading(true);
     const querySnapshot = await getDocs(collection(db, "students"));
     const studentsData = querySnapshot.docs.map(doc => doc.data());
     setStudents(studentsData);
-    setLoading(false); // Finalizar carga
+    setLoading(false); 
   };
 
-  const calculateAmount = (groupCount) => {
+  const fetchGroups = async (groupIds) => {
+    const groupPromises = groupIds.map(async (groupId) => {
+      const groupDoc = await getDoc(doc(db, "groups", groupId));
+      return groupDoc.exists() ? { name: groupDoc.data().name, level: groupDoc.data().level } : { name: "Grupo no encontrado", level: "" };
+    });
+    const groupData = await Promise.all(groupPromises);
+    const validGroups = groupData.filter(group => group.level !== "Taller");
+    const tallerGroups = groupData.filter(group => group.level === "Taller");
+    setGroups(validGroups.map(group => group.name));
+    setTallerGroups(tallerGroups.map(group => group.name));
+    if (selectedMonth === "Mensualidad") {
+      calculateAmount(validGroups);
+    }
+  };
+
+  const calculateAmount = (validGroups) => {
     let baseAmount = 20000;
+    const groupCount = validGroups.length;
+
     if (groupCount === 2) {
       baseAmount = 23000;
     } else if (groupCount > 2) {
@@ -68,7 +84,7 @@ export default function MakePayment() {
   };
 
   const handleGenerateImage = async () => {
-    if (!selectedStudent || !paymentMethod || !selectedMonth || (selectedMonth.startsWith("Taller de") && !workshopDescription)) {
+    if (!selectedStudent || !paymentMethod || !selectedMonth || !amount) {
       setErrorMessage("Por favor complete todos los campos.");
       return;
     }
@@ -95,21 +111,23 @@ export default function MakePayment() {
     setErrorMessage("");
   };
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setAmount(value);
+  };
+
   const handleAmountBlur = () => {
-    if (amount && (selectedMonth === "Clases Privadas" || selectedMonth.startsWith("Taller de"))) {
-      setAmount(`₡${amount.replace(/₡/g, '')}`);
+    if (amount && (selectedMonth === "Clases Privadas" || selectedMonth === "Taller")) {
+      setAmount(`₡${amount}`);
     }
   };
 
   const handleMonthChange = (e) => {
     const value = e.target.value;
-    if (value.startsWith("Taller de")) {
-      setSelectedMonth("Taller de");
-    } else {
-      setSelectedMonth(value);
-    }
+    setSelectedMonth(value);
     handleInputChange();
-    if (value === "Clases Privadas" || value.startsWith("Taller de")) {
+    if (value === "Clases Privadas" || value === "Taller" || value === "") {
+      setGroups([]);
       setAmount("");
     }
   };
@@ -141,23 +159,14 @@ export default function MakePayment() {
             </Select>
 
             <Label>Por concepto de</Label>
-            <MonthWrapper>
-              <Select value={selectedMonth} onChange={handleMonthChange} halfWidth={selectedMonth === "Taller de"}>
-                <option value="">Seleccione una opción...</option>
-                {["Mensualidad", "Clases Privadas", "Taller de"].map((month, index) => (
-                  <option key={index} value={month}>{month}</option>
-                ))}
-              </Select>
-              {selectedMonth === "Taller de" && (
-                <Input 
-                  type="text" 
-                  placeholder="Especifique el taller" 
-                  onChange={(e) => { setWorkshopDescription(e.target.value); handleInputChange(); }} 
-                />
-              )}
-            </MonthWrapper>
+            <Select value={selectedMonth} onChange={handleMonthChange} disabled={!selectedStudent}>
+              <option value="">Seleccione una opción...</option>
+              {["Mensualidad", "Clases Privadas", tallerGroups.length > 0 && "Taller"].filter(Boolean).map((month, index) => (
+                <option key={index} value={month}>{month}</option>
+              ))}
+            </Select>
 
-            {selectedMonth !== "Clases Privadas" && !selectedMonth.startsWith("Taller de") && (
+            {selectedMonth === "Mensualidad" && (
               <>
                 <Label>Grupos</Label>
                 <GroupList>
@@ -168,12 +177,24 @@ export default function MakePayment() {
               </>
             )}
 
+            {selectedMonth === "Taller" && (
+              <>
+                <Label>Seleccione un Taller</Label>
+                <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
+                  <option value="">Seleccione un taller...</option>
+                  {tallerGroups.map((taller, index) => (
+                    <option key={index} value={taller}>{taller}</option>
+                  ))}
+                </Select>
+              </>
+            )}
+
             <Label>Monto</Label>
             <Input 
               type="text" 
-              value={selectedMonth === "Clases Privadas" || selectedMonth.startsWith("Taller de") ? amount : `₡${amount}`} 
-              readOnly={!(selectedMonth === "Clases Privadas" || selectedMonth.startsWith("Taller de"))} 
-              onChange={(e) => setAmount(e.target.value)} 
+              value={(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`} 
+              readOnly={selectedMonth !== "Clases Privadas" && selectedMonth !== "Taller"} 
+              onChange={handleAmountChange} 
               onBlur={handleAmountBlur}
             />
 
@@ -210,9 +231,9 @@ export default function MakePayment() {
                     <p>{selectedStudent}</p>
 
                     <Label>Por concepto de</Label>
-                    <p>{selectedMonth} {selectedMonth === "Taller de" && ` ${workshopDescription}`}</p>
+                    <p>{selectedMonth}</p>
 
-                    {selectedMonth !== "Clases Privadas" && !selectedMonth.startsWith("Taller de") && (
+                    {selectedMonth === "Mensualidad" && (
                       <>
                         <Label>Grupos</Label>
                         <GroupList>
@@ -223,8 +244,15 @@ export default function MakePayment() {
                       </>
                     )}
 
+                    {selectedMonth === "Taller" && (
+                      <>
+                        <Label>Especificación</Label>
+                        <p>{selectedTaller}</p>
+                      </>
+                    )}
+
                     <Label>Monto</Label>
-                    <p>{selectedMonth === "Clases Privadas" || selectedMonth.startsWith("Taller de") ? amount : `₡${amount}`}</p>
+                    <p>{(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`}</p>
 
                     <Label>Forma de Pago</Label>
                     <p>{paymentMethod}</p>
@@ -457,11 +485,6 @@ const ErrorMessage = styled.p`
   font-size: 14px;
   text-align: center;
   margin-top: 10px;
-`;
-
-const MonthWrapper = styled.div`
-  display: flex;
-  gap: 10px;
 `;
 
 const Modal = styled.div`

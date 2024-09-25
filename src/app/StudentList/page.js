@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle } from "react-icons/fa";
-import AddStudentModal from "../components/AddStudentModal";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash} from "react-icons/fa";
+import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails";
-import Loading from "../components/Loading"; // Asegúrate de que la ruta sea correcta
+import Loading from "../components/Loading"; 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../conf/firebase";
 
@@ -14,26 +14,24 @@ export default function StudentList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const [loading, setLoading] = useState(true); // Estado de carga
-
+  const [loading, setLoading] = useState(true); 
   useEffect(() => {
     fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
-    setLoading(true); // Iniciar carga
+    setLoading(true);
     const querySnapshot = await getDocs(collection(db, "students"));
     const studentsData = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
         ...data,
-        group: data.groups[0] || "Ningún grupo" // Recuperar el grupo principal
       };
     });
     studentsData.sort((a, b) => a.name.localeCompare(b.name));
     setStudents(studentsData);
-    setLoading(false); // Finalizar carga
+    setLoading(false); 
   };
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -80,7 +78,6 @@ export default function StudentList() {
             <tr>
               <th>Nombre</th>
               <th>Celular</th>
-              <th>Grupo Principal</th>
               <th> </th>
             </tr>
           </thead>
@@ -89,9 +86,14 @@ export default function StudentList() {
               <tr key={index}>
                 <td>{student.name}</td>
                 <td>{student.phone}</td>
-                <td>{student.group}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
+                  <a> </a>
+                  <a> </a>
+                  <EditIcon />
+                  <a> </a>
+                  <a> </a>
+                  <DeleteIcon />
                 </td>
               </tr>
             ))}
@@ -99,7 +101,7 @@ export default function StudentList() {
         </Table>
       </TableContainer>
       <AddButton onClick={handleOpenModal}>Agregar Alumno</AddButton>
-      <AddStudentModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </Wrapper>
   );
 }
@@ -260,5 +262,33 @@ const InfoIcon = styled(FaInfoCircle)`
 
   @media (max-width: 480px) {
     font-size: 18px;
+  }
+`;
+
+const EditIcon = styled(FaEdit)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 20px;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const DeleteIcon = styled(FaTrash)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 18px;
+
+  &:hover {
+    color: #ff0000;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
   }
 `;

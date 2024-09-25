@@ -7,6 +7,7 @@ import Loading from "./Loading";
 
 const StudentDetails = ({ studentId, onBack }) => {
   const [student, setStudent] = useState(null);
+  const [groupNames, setGroupNames] = useState([]);
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -14,10 +15,23 @@ const StudentDetails = ({ studentId, onBack }) => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setStudent(docSnap.data());
+        const studentData = docSnap.data();
+        setStudent(studentData);
+        fetchGroupNames(studentData.groups);
       } else {
         console.log("No such document!");
       }
+    };
+
+    const fetchGroupNames = async (groupKeys) => {
+      const groupNamesPromises = groupKeys.map(async (key) => {
+        const groupDocRef = doc(db, "groups", key);
+        const groupDocSnap = await getDoc(groupDocRef);
+        return groupDocSnap.exists() ? groupDocSnap.data().name : "Desconocido";
+      });
+
+      const names = await Promise.all(groupNamesPromises);
+      setGroupNames(names);
     };
 
     fetchStudent();
@@ -41,14 +55,10 @@ const StudentDetails = ({ studentId, onBack }) => {
         <p><strong>Teléfono de Emergencia:</strong> {student.emergencyPhone}</p>
         <p><strong>Grupos:</strong></p>
         <GroupList>
-          {student.groups.map((group, index) => (
-            <li key={index}>{group}</li>
+          {groupNames.map((name, index) => (
+            <li key={index}>{name}</li>
           ))}
         </GroupList>
-        <ButtonContainer>
-          <ActionButton>Editar Detalles</ActionButton>
-          <ActionButton>Historial de Pago</ActionButton>
-        </ButtonContainer>
       </DetailsContainer>
     </DetailsWrapper>
   );
@@ -117,37 +127,6 @@ const GroupList = styled.ul`
     margin-bottom: 5px;
     font-size: 16px;
     color: #333;
-  }
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-`;
-
-const ActionButton = styled.button`
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #fff;
-  background-color: #0b0f8b;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #073e8a;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 16px;
-    font-size: 12px;
   }
 `;
 

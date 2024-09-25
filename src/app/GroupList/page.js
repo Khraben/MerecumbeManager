@@ -2,9 +2,10 @@
 
 import styled from "styled-components";
 import { useState, useEffect } from "react";
-import { FaSearch, FaInfoCircle } from "react-icons/fa";
-import AddGroupModal from "../components/AddGroupModal";
-import Loading from "../components/Loading"; // Asegúrate de que la ruta sea correcta
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import GroupModal from "../components/GroupModal";
+import GroupDetails from "../components/GroupDetails";
+import Loading from "../components/Loading"; 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../conf/firebase";
 
@@ -12,16 +13,27 @@ export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true); // Estado de carga
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchGroups();
   }, []);
 
   const fetchGroups = async () => {
-    setLoading(true); // Iniciar carga
-    const querySnapshot = await getDocs(collection(db, "groups"));
-    const groupsData = querySnapshot.docs.map(doc => doc.data());
+    setLoading(true);
+    const instructorsSnapshot = await getDocs(collection(db, "instructors"));
+    const instructorsMap = {};
+    instructorsSnapshot.docs.forEach(doc => {
+      instructorsMap[doc.id] = doc.data().name;
+    });
+    const groupsSnapshot = await getDocs(collection(db, "groups"));
+    const groupsData = groupsSnapshot.docs.map(doc => {
+      const group = doc.data();
+      return {
+        ...group,
+        instructor: instructorsMap[group.instructor] || "Instructor no encontrado"
+      };
+    });
     groupsData.sort((a, b) => {
       const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
@@ -29,7 +41,7 @@ export default function GroupList() {
       return a.startTime.localeCompare(b.startTime);
     });
     setGroups(groupsData);
-    setLoading(false); // Finalizar carga
+    setLoading(false);
   };
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -43,8 +55,7 @@ export default function GroupList() {
   };
 
   const filteredGroups = groups.filter(group =>
-    group.day.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.startTime.toLowerCase().includes(searchTerm.toLowerCase())
+    group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -57,7 +68,7 @@ export default function GroupList() {
       <SearchContainer>
         <SearchInput
           type="text"
-          placeholder="Filtrar por día o hora de inicio..."
+          placeholder="Filtrar por nombre del grupo..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -69,18 +80,22 @@ export default function GroupList() {
             <tr>
               <th>Grupo</th>
               <th>Instructor</th>
-              <th>Nivel</th>
-              <th> </th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {filteredGroups.map((group, index) => (
               <tr key={index}>
-                <td>{group.day} {group.startTime}</td>
+                <td>{group.name}</td>
                 <td>{group.instructor}</td>
-                <td>{group.level}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewGroupDetails(group)} />
+                  <a> </a>
+                  <a> </a>
+                  <EditIcon />
+                  <a> </a>
+                  <a> </a>
+                  <DeleteIcon />
                 </td>
               </tr>
             ))}
@@ -88,7 +103,7 @@ export default function GroupList() {
         </Table>
       </TableContainer>
       <AddButton onClick={handleOpenModal}>Agregar Grupo</AddButton>
-      <AddGroupModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </Wrapper>
   );
 }
@@ -265,5 +280,33 @@ const InfoIcon = styled(FaInfoCircle)`
 
   @media (max-width: 480px) {
     font-size: 18px;
+  }
+`;
+
+const EditIcon = styled(FaEdit)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 20px;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const DeleteIcon = styled(FaTrash)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 18px;
+
+  &:hover {
+    color: #ff0000;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
   }
 `;

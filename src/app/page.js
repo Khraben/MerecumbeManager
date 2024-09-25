@@ -4,28 +4,43 @@ import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./conf/firebase";
+import Loading from "./components/Loading";
 
 export default function Home() {
   const [groups, setGroups] = useState([]);
+  const [formattedDate, setFormattedDate] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchGroups();
+    const today = new Date();
+    setFormattedDate(formatDate(today));
+    fetchGroups(today);
   }, []);
 
-  const fetchGroups = async () => {
-    const today = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
+  const formatDate = (date) => {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('es-ES', options);
+  };
+
+  const fetchGroups = async (date) => {
+    const today = date.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
     const querySnapshot = await getDocs(collection(db, "groups"));
     const groupsData = querySnapshot.docs
       .map(doc => doc.data())
-      .filter(group => group.days && group.days.includes(today));
+      .filter(group => group.day && group.day.toLowerCase() === today);
     setGroups(groupsData);
+    setLoading(false);
   };
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Wrapper>
       <Title>Merecumbé San Ramón</Title>
       <Section>
-        <Subtitle>Clases del Día</Subtitle>
+        <Subtitle>{formattedDate}</Subtitle>
         <GroupList>
           {groups.length > 0 ? (
             groups.map((group, index) => (

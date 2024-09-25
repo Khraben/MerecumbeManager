@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { addDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../conf/firebase"; 
-import { FaPlus, FaTimes } from "react-icons/fa"; // Importar iconos
+import { FaPlus, FaTimes } from "react-icons/fa"; 
 
-export default function AddStudentModal({ isOpen, onClose }) {
+export default function StudentModal({ isOpen, onClose }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [group, setGroup] = useState("");
-  const [additionalGroups, setAdditionalGroups] = useState([]); // Estado para grupos adicionales
+  const [additionalGroups, setAdditionalGroups] = useState([]);
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [error, setError] = useState(""); 
@@ -33,22 +33,22 @@ export default function AddStudentModal({ isOpen, onClose }) {
     const groupsData = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
+        id: doc.id,
+        name: data.name || "Nombre no especificado",
         day: data.day || "Día no especificado",
-        startTime: data.startTime || "Hora no especificada",
-        name: data.name || "Nombre no especificado"
+        startTime: data.startTime || "00:00"
       };
     });
-
-    // Ordenar los grupos por día y luego por hora
-    const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     groupsData.sort((a, b) => {
+      const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
       if (dayComparison !== 0) return dayComparison;
       return a.startTime.localeCompare(b.startTime);
     });
-
     setGroups(groupsData);
   };
+
+
 
   const addStudent = async (student) => {
     try {
@@ -73,7 +73,7 @@ export default function AddStudentModal({ isOpen, onClose }) {
       email,
       emergencyName,
       emergencyPhone,
-      groups: [group, ...additionalGroups], // Guardar grupos en una lista
+      groups: [group, ...additionalGroups],
     };
 
     await addStudent(newStudent);
@@ -98,7 +98,7 @@ export default function AddStudentModal({ isOpen, onClose }) {
   };
 
   const handleAddGroup = (e) => {
-    e.preventDefault(); // Evitar recarga de la página
+    e.preventDefault(); 
     if (group && !additionalGroups.includes("")) {
       setAdditionalGroups([...additionalGroups, ""]);
     } else {
@@ -194,10 +194,10 @@ export default function AddStudentModal({ isOpen, onClose }) {
             <label>Grupos</label>
             <GroupContainer>
               <Select value={group} onChange={handleInputChange(setGroup)}>
-                <option value="">Ningún grupo</option>
-                {groups.map((group, index) => (
-                  <option key={index} value={`${group.day} ${group.startTime}`} disabled={isGroupSelected(`${group.day} ${group.startTime}`)}>
-                    {`${group.day} ${group.startTime}`}
+                <option value="">INACTIVO</option>
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
+                    {group.name}
                   </option>
                 ))}
               </Select>
@@ -207,9 +207,9 @@ export default function AddStudentModal({ isOpen, onClose }) {
               <GroupContainer key={index}>
                 <Select value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
                   <option value="">Seleccione un grupo</option>
-                  {groups.map((group, i) => (
-                    <option key={i} value={`${group.day} ${group.startTime}`} disabled={isGroupSelected(`${group.day} ${group.startTime}`)}>
-                      {`${group.day} ${group.startTime}`}
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
+                      {group.name}
                     </option>
                   ))}
                 </Select>
