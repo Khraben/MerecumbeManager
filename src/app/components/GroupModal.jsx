@@ -13,6 +13,7 @@ const GroupModal = ({ isOpen, onClose }) => {
   const [existingGroups, setExistingGroups] = useState([]);
   const [error, setError] = useState("");
   const [workshopName, setWorkshopName] = useState("");
+  const [startDate, setStartDate] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -47,14 +48,14 @@ const GroupModal = ({ isOpen, onClose }) => {
     const selectedTime = e.target.value;
     setStartTime(selectedTime);
     const [hours, minutes, period] = selectedTime.match(/(\d+):(\d+)(\w+)/).slice(1);
-    let endHours = parseInt(hours) + (period === "PM" && hours !== "12" ? 12 : 0);
+    let endHours = parseInt(hours) + (period === "pm" && hours !== "12" ? 12 : 0);
     endHours += 1;
     let endMinutes = parseInt(minutes) + 30;
     if (endMinutes >= 60) {
       endMinutes -= 60;
       endHours += 1;
     }
-    const endPeriod = endHours >= 12 ? "PM" : "AM";
+    const endPeriod = endHours >= 12 ? "pm" : "am";
     endHours = endHours > 12 ? endHours - 12 : endHours;
     setEndTime(`${endHours}:${endMinutes < 10 ? "0" : ""}${endMinutes}${endPeriod}`);
   };
@@ -63,10 +64,11 @@ const GroupModal = ({ isOpen, onClose }) => {
     setDay(e.target.value);
     setStartTime("");
     setEndTime(""); 
+    setStartDate("");
   };
 
   const handleSave = async () => {
-    if (!instructor || !day || !startTime || (level === "Taller" && !workshopName)) {
+    if (!instructor || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
       setError("Todos los campos son obligatorios");
       return;
     }
@@ -82,6 +84,7 @@ const GroupModal = ({ isOpen, onClose }) => {
       endTime,
       level,
       name,
+      startDate,
     };
 
     try {
@@ -101,6 +104,7 @@ const GroupModal = ({ isOpen, onClose }) => {
     setLevel("Nivel I");
     setWorkshopName("");
     setError("");
+    setStartDate("");
   };
 
   const handleInputChange = (setter) => (e) => {
@@ -114,7 +118,7 @@ const GroupModal = ({ isOpen, onClose }) => {
     const endHour = 19;
     for (let hour = startHour; hour <= endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        const period = hour < 12 ? "AM" : "PM";
+        const period = hour < 12 ? "am" : "pm";
         const displayHour = hour % 12 === 0 ? 12 : hour % 12;
         const time = `${displayHour}:${minute === 0 ? "00" : minute}${period}`;
         times.push(time);
@@ -126,10 +130,10 @@ const GroupModal = ({ isOpen, onClose }) => {
   const convertTo24HourFormat = (time) => {
     const [hours, minutes, period] = time.match(/(\d+):(\d+)(\w+)/).slice(1);
     let hours24 = parseInt(hours);
-    if (period === "PM" && hours !== "12") {
+    if (period === "pm" && hours !== "12") {
       hours24 += 12;
     }
-    if (period === "AM" && hours === "12") {
+    if (period === "am" && hours === "12") {
       hours24 = 0;
     }
     return `${hours24}:${minutes}`;
@@ -152,6 +156,27 @@ const GroupModal = ({ isOpen, onClose }) => {
 
       return selectedTimeInMinutes >= groupStartTimeInMinutes && selectedTimeInMinutes < groupEndTimeInMinutes;
     });
+  };
+
+  const generateDateOptions = () => {
+    if (!day) return [];
+    const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const dayIndex = daysOfWeek.indexOf(day);
+    if (dayIndex === -1) return [];
+
+    const dates = [];
+    const today = new Date();
+    let currentDate = new Date(today.setDate(today.getDate() + ((dayIndex - today.getDay() + 7) % 7)));
+
+    for (let i = 0; i < 8; i++) {
+      const day = String(currentDate.getDate()).padStart(2, '0');
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const year = currentDate.getFullYear();
+      dates.push(`${day}/${month}/${year}`);
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+
+    return dates;
   };
 
   if (!isOpen) return null;
@@ -181,13 +206,19 @@ const GroupModal = ({ isOpen, onClose }) => {
               <option value="Viernes">Viernes</option>
               <option value="Sábado">Sábado</option>
             </Select>
+            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day}>
+              <option value="">Fecha de inicio</option>
+              {generateDateOptions().map((date, index) => (
+                <option key={index} value={date}>{date}</option>
+              ))}
+            </Select>
             <Select value={startTime} onChange={handleStartTimeChange} disabled={!day}>
-              <option value="">Seleccione una hora</option>
+              <option value="">Hora de inicio</option>
               {generateTimeOptions().map((time, index) => (
                 <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
               ))}
             </Select>
-            <Input type="text" value={endTime} readOnly />
+            <Input type="text" value={endTime} placeholder="Hora de finalización" readOnly />
             <label>Nivel</label>
             <Select value={level} onChange={handleInputChange(setLevel)}>
               <option value="Nivel I">Nivel I</option>
@@ -234,8 +265,8 @@ const ModalContainer = styled.div`
   padding: 20px;
   width: 400px;
   max-width: 90vw;
-  max-height: 60vh; /* Tamaño máximo del modal */
-  overflow-y: auto; /* Scrollbar cuando el contenido excede el tamaño */
+  max-height: 60vh;
+  overflow-y: auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1003;

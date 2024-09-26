@@ -88,11 +88,7 @@ export default function StudentList() {
                 <td>{student.phone}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
-                  <a> </a>
-                  <a> </a>
                   <EditIcon />
-                  <a> </a>
-                  <a> </a>
                   <DeleteIcon />
                 </td>
               </tr>
@@ -130,6 +126,7 @@ const Title = styled.h1`
 const AddButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
+  margin-bottom: 20px;
   font-size: 14px;
   font-weight: bold;
   color: #fff;
@@ -269,6 +266,8 @@ const EditIcon = styled(FaEdit)`
   color: #0b0f8b;
   cursor: pointer;
   font-size: 20px;
+  margin-right: 10px;
+  margin-left: 10px;
 
   &:hover {
     color: #073e8a;

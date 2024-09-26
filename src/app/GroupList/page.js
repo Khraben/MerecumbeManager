@@ -14,6 +14,7 @@ export default function GroupList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
 
   useEffect(() => {
     fetchGroups();
@@ -30,6 +31,7 @@ export default function GroupList() {
     const groupsData = groupsSnapshot.docs.map(doc => {
       const group = doc.data();
       return {
+        id: doc.id, // Asegurarse de incluir el ID del documento
         ...group,
         instructor: instructorsMap[group.instructor] || "Instructor no encontrado"
       };
@@ -50,8 +52,12 @@ export default function GroupList() {
     fetchGroups();
   };
 
-  const handleViewGroupDetails = (group) => {
-    console.log("Ver detalles del grupo:", group);
+  const handleViewGroupDetails = (groupId) => {
+    setSelectedGroupId(groupId);
+  };
+
+  const handleBack = () => {
+    setSelectedGroupId(null);
   };
 
   const filteredGroups = groups.filter(group =>
@@ -60,6 +66,10 @@ export default function GroupList() {
 
   if (loading) {
     return <Loading />;
+  }
+
+  if (selectedGroupId) {
+    return <GroupDetails groupId={selectedGroupId} onBack={handleBack} />;
   }
 
   return (
@@ -89,12 +99,8 @@ export default function GroupList() {
                 <td>{group.name}</td>
                 <td>{group.instructor}</td>
                 <td>
-                  <InfoIcon onClick={() => handleViewGroupDetails(group)} />
-                  <a> </a>
-                  <a> </a>
+                  <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
                   <EditIcon />
-                  <a> </a>
-                  <a> </a>
                   <DeleteIcon />
                 </td>
               </tr>
@@ -132,6 +138,7 @@ const Title = styled.h1`
 const AddButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
+  margin-bottom: 20px;  
   font-size: 14px;
   font-weight: bold;
   color: #fff;
@@ -287,6 +294,8 @@ const EditIcon = styled(FaEdit)`
   color: #0b0f8b;
   cursor: pointer;
   font-size: 20px;
+  margin-right: 10px;
+  margin-left: 10px;
 
   &:hover {
     color: #073e8a;

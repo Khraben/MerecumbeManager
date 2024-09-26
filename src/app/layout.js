@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
           {isLoggedIn ? (
             <>
               <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
-              <main
+              <main id="content"
                 style={{
                   paddingLeft: isSideNavbarOpen ? "250px" : "50px",
                   transition: "padding-left 0.3s",

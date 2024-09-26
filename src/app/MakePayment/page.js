@@ -8,14 +8,6 @@ import { toPng } from "html-to-image";
 import Image from "next/image";
 import Loading from "../components/Loading";
 
-const GlobalStyle = createGlobalStyle`
-  body, html {
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-`;
-
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -138,137 +130,136 @@ export default function MakePayment() {
 
   return (
     <>
-      <GlobalStyle />
-      <Wrapper>
-        <Title>Registrar Pago</Title>
-        <Receipt ref={receiptRef}>
-          <ReceiptHeader>
-            <LogoContainer>
-              <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
-            </LogoContainer>
-            <h2>Recibo de Pago #0000</h2>
-            <p>Fecha: {date}</p>
-          </ReceiptHeader>
-          <ReceiptBody>
-            <Label>Alumno</Label>
-            <Select value={selectedStudent} onChange={(e) => { setSelectedStudent(e.target.value); handleInputChange(); }}>
-              <option value="">Seleccione un alumno</option>
-              {students.map((student, index) => (
-                <option key={index} value={student.name}>{student.name}</option>
-              ))}
-            </Select>
+    <Wrapper>
+      <Title>Registrar Pago</Title>
+      <Receipt ref={receiptRef}>
+        <ReceiptHeader>
+          <LogoContainer>
+            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+          </LogoContainer>
+          <h2>Recibo de Pago #0000</h2>
+          <p>Fecha: {date}</p>
+        </ReceiptHeader>
+        <ReceiptBody>
+          <Label>Alumno</Label>
+          <Select value={selectedStudent} onChange={(e) => { setSelectedStudent(e.target.value); handleInputChange(); }}>
+            <option value="">Seleccione un alumno</option>
+            {students.map((student, index) => (
+              <option key={index} value={student.name}>{student.name}</option>
+            ))}
+          </Select>
 
-            <Label>Por concepto de</Label>
-            <Select value={selectedMonth} onChange={handleMonthChange} disabled={!selectedStudent}>
-              <option value="">Seleccione una opción...</option>
-              {["Mensualidad", "Clases Privadas", tallerGroups.length > 0 && "Taller"].filter(Boolean).map((month, index) => (
-                <option key={index} value={month}>{month}</option>
-              ))}
-            </Select>
+          <Label>Por concepto de</Label>
+          <Select value={selectedMonth} onChange={handleMonthChange} disabled={!selectedStudent}>
+            <option value="">Seleccione una opción...</option>
+            {["Mensualidad", "Clases Privadas", tallerGroups.length > 0 && "Taller"].filter(Boolean).map((month, index) => (
+              <option key={index} value={month}>{month}</option>
+            ))}
+          </Select>
 
-            {selectedMonth === "Mensualidad" && (
-              <>
-                <Label>Grupos</Label>
-                <GroupList>
-                  {groups.map((group, index) => (
-                    <GroupItem key={index}>{group}</GroupItem>
-                  ))}
-                </GroupList>
-              </>
-            )}
+          {selectedMonth === "Mensualidad" && (
+            <>
+              <Label>Grupos</Label>
+              <GroupList>
+                {groups.map((group, index) => (
+                  <GroupItem key={index}>{group}</GroupItem>
+                ))}
+              </GroupList>
+            </>
+          )}
 
-            {selectedMonth === "Taller" && (
-              <>
-                <Label>Seleccione un Taller</Label>
-                <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
-                  <option value="">Seleccione un taller...</option>
-                  {tallerGroups.map((taller, index) => (
-                    <option key={index} value={taller}>{taller}</option>
-                  ))}
-                </Select>
-              </>
-            )}
+          {selectedMonth === "Taller" && (
+            <>
+              <Label>Seleccione un Taller</Label>
+              <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
+                <option value="">Seleccione un taller...</option>
+                {tallerGroups.map((taller, index) => (
+                  <option key={index} value={taller}>{taller}</option>
+                ))}
+              </Select>
+            </>
+          )}
 
-            <Label>Monto</Label>
-            <Input 
-              type="text" 
-              value={(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`} 
-              readOnly={selectedMonth !== "Clases Privadas" && selectedMonth !== "Taller"} 
-              onChange={handleAmountChange} 
-              onBlur={handleAmountBlur}
-            />
+          <Label>Monto</Label>
+          <Input 
+            type="text" 
+            value={(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`} 
+            readOnly={selectedMonth !== "Clases Privadas" && selectedMonth !== "Taller"} 
+            onChange={handleAmountChange} 
+            onBlur={handleAmountBlur}
+          />
 
-            <Label>Forma de Pago</Label>
-            <Select value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); handleInputChange(); }}>
-              <option value="">Seleccione una forma de pago</option>
-              <option value="SINPE">SINPE</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Transferencia">Transferencia</option>
-            </Select>
-          </ReceiptBody>
-          <Description>
-            *** Este recibo es por concepto de clases de baile en Merecumbé ***
-          </Description>
-        </Receipt>
-        {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-        <ButtonContainer>
-          <GenerateButton onClick={handleGenerateImage}>Generar Recibo</GenerateButton>
-        </ButtonContainer>
+          <Label>Forma de Pago</Label>
+          <Select value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); handleInputChange(); }}>
+            <option value="">Seleccione una forma de pago</option>
+            <option value="SINPE">SINPE</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+          </Select>
+        </ReceiptBody>
+        <Description>
+          *** Este recibo es por concepto de clases de baile en Merecumbé ***
+        </Description>
+      </Receipt>
+      {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+      <ButtonContainer>
+        <GenerateButton onClick={handleGenerateImage}>Generar Recibo</GenerateButton>
+      </ButtonContainer>
 
-        {showPreview && (
-            <Modal>
-              <ModalContent>
-                <Receipt ref={receiptRef}>
-                  <ReceiptHeader>
-                    <LogoContainer>
-                      <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
-                    </LogoContainer>
-                    <h2>Recibo de Pago #0000</h2>
-                    <p>Fecha: {date}</p>
-                  </ReceiptHeader>
-                  <ReceiptBody>
-                    <Label>Alumno</Label>
-                    <p>{selectedStudent}</p>
+      {showPreview && (
+          <Modal>
+            <ModalContent>
+              <Receipt ref={receiptRef}>
+                <ReceiptHeader>
+                  <LogoContainer>
+                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+                  </LogoContainer>
+                  <h2>Recibo de Pago #0000</h2>
+                  <p>Fecha: {date}</p>
+                </ReceiptHeader>
+                <ReceiptBody>
+                  <Label>Alumno</Label>
+                  <p>{selectedStudent}</p>
 
-                    <Label>Por concepto de</Label>
-                    <p>{selectedMonth}</p>
+                  <Label>Por concepto de</Label>
+                  <p>{selectedMonth}</p>
 
-                    {selectedMonth === "Mensualidad" && (
-                      <>
-                        <Label>Grupos</Label>
-                        <GroupList>
-                          {groups.map((group, index) => (
-                            <GroupItem key={index}>{group}</GroupItem>
-                          ))}
-                        </GroupList>
-                      </>
-                    )}
+                  {selectedMonth === "Mensualidad" && (
+                    <>
+                      <Label>Grupos</Label>
+                      <GroupList>
+                        {groups.map((group, index) => (
+                          <GroupItem key={index}>{group}</GroupItem>
+                        ))}
+                      </GroupList>
+                    </>
+                  )}
 
-                    {selectedMonth === "Taller" && (
-                      <>
-                        <Label>Especificación</Label>
-                        <p>{selectedTaller}</p>
-                      </>
-                    )}
+                  {selectedMonth === "Taller" && (
+                    <>
+                      <Label>Especificación</Label>
+                      <p>{selectedTaller}</p>
+                    </>
+                  )}
 
-                    <Label>Monto</Label>
-                    <p>{(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`}</p>
+                  <Label>Monto</Label>
+                  <p>{(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`}</p>
 
-                    <Label>Forma de Pago</Label>
-                    <p>{paymentMethod}</p>
-                  </ReceiptBody>
-                  <Description>
-                    *** Este recibo es por concepto de clases de baile en Merecumbé ***
-                  </Description>
-                </Receipt>
-                <ButtonContainer>
-                  <CancelButton onClick={handleCancelReceipt}>Cancelar</CancelButton>
-                  <GenerateButton onClick={handleConfirmReceipt}>Confirmar</GenerateButton>
-                </ButtonContainer>
-              </ModalContent>
-            </Modal>
-        )}
-      </Wrapper>
+                  <Label>Forma de Pago</Label>
+                  <p>{paymentMethod}</p>
+                </ReceiptBody>
+                <Description>
+                  *** Este recibo es por concepto de clases de baile en Merecumbé ***
+                </Description>
+              </Receipt>
+              <ButtonContainer>
+                <CancelButton onClick={handleCancelReceipt}>Cancelar</CancelButton>
+                <GenerateButton onClick={handleConfirmReceipt}>Confirmar</GenerateButton>
+              </ButtonContainer>
+            </ModalContent>
+          </Modal>
+      )}
+    </Wrapper>
     </>
   );
 }
