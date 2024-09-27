@@ -59,7 +59,21 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setError("Todos los campos son requeridos.");
       return;
     }
-
+    if (phone.length  !== 9 || emergencyPhone.length !== 9){
+      setError("Formato del teléfono inválido");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Verificar si hay espacios en la entrada
+    if (email.includes(' ')) {
+      setError("El correo electrónico no debe contener espacios.");
+      return;
+    }
+     // Validación de formato del correo electrónico
+    if (!emailRegex.test(email)) {
+      setError("Por favor ingresa un correo electrónico válido.");
+      return;
+    }
     setError("");
 
     const studentData = {
