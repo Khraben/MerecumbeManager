@@ -14,6 +14,8 @@ export default function GroupList() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [viewingGroupId, setViewingGroupId] = useState(null);
 
   const loadGroups = async () => {
     setLoading(true);
@@ -29,15 +31,22 @@ export default function GroupList() {
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setIsEditing(false);
     loadGroups();
   };
 
   const handleViewGroupDetails = (groupId) => {
+    setViewingGroupId(groupId);
+  };
+
+  const handleEditGroup = (groupId) => {
     setSelectedGroupId(groupId);
+    setIsEditing(true);
+    setIsModalOpen(true);
   };
 
   const handleBack = () => {
-    setSelectedGroupId(null);
+    setViewingGroupId(null);
   };
 
   const filteredGroups = groups.filter(group =>
@@ -48,8 +57,8 @@ export default function GroupList() {
     return <Loading />;
   }
 
-  if (selectedGroupId) {
-    return <GroupDetails groupId={selectedGroupId} onBack={handleBack} />;
+  if (viewingGroupId) {
+    return <GroupDetails groupId={viewingGroupId} onBack={handleBack} />;
   }
 
   return (
@@ -80,7 +89,7 @@ export default function GroupList() {
                 <td>{group.instructor}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                  <EditIcon />
+                  <EditIcon onClick={() => handleEditGroup(group.id)} />
                   <DeleteIcon />
                 </td>
               </tr>
@@ -89,7 +98,13 @@ export default function GroupList() {
         </Table>
       </TableContainer>
       <AddButton onClick={handleOpenModal}>Agregar Grupo</AddButton>
-      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} onGroupAdded={loadGroups} />
+      <GroupModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        group={groups.find(group => group.id === selectedGroupId)}
+        mode={isEditing ? "edit" : "view"}
+        onGroupAdded={loadGroups}
+      />
     </Wrapper>
   );
 }

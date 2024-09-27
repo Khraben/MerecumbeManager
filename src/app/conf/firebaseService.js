@@ -183,3 +183,8 @@ export const fetchExistingGroups = async () => {
 export const addGroup = async (newGroup) => {
  await addDoc(collection(db, "groups"), newGroup);
 };
+
+export const updateGroup = async (groupId, updatedGroup) => {
+  const groupRef = doc(db, "groups", groupId);
+  await updateDoc(groupRef, updatedGroup);
+};

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { fetchInstructors, fetchExistingGroups, addGroup } from "../conf/firebaseService";
+import { fetchInstructors, fetchExistingGroups, addGroup, updateGroup } from "../conf/firebaseService";
 
-const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
+const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   const [instructor, setInstructor] = useState("");
   const [day, setDay] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -19,6 +19,15 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
       document.body.classList.add("no-scroll");
       fetchInstructorsData();
       fetchExistingGroupsData();
+      if (mode === "edit" && group) {
+        setInstructor(group.instructor);
+        setDay(group.day);
+        setStartTime(group.startTime);
+        setEndTime(group.endTime);
+        setLevel(group.level);
+        setWorkshopName(group.workshopName);
+        setStartDate(group.startDate);
+      }
     } else {
       document.body.classList.remove("no-scroll");
       resetFields();
@@ -26,7 +35,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
     return () => {
       document.body.classList.remove("no-scroll");
     };
-  }, [isOpen]);
+  }, [isOpen, mode, group]);
 
   const fetchInstructorsData = async () => {
     const instructorsData = await fetchInstructors();
@@ -82,10 +91,15 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
     };
 
     try {
-      await addGroup(newGroup);
+      if (mode === "edit") {
+        await updateGroup(group.id, newGroup);
+      } else {
+        await addGroup(newGroup);
+      }
       resetFields();
       onClose();
       if (onGroupAdded) {
+        onGroupAdded();
       }
     } catch (error) {
       setError("Error al agregar el grupo");
@@ -181,7 +195,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <h2>Agregar Nuevo Grupo</h2>
+          <h2>{mode === "edit" ? "Editar Grupo" : "Agregar Nuevo Grupo"}</h2>
         </ModalHeader>
         <ModalBody>
           <Form>
@@ -236,7 +250,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
         </ModalBody>
         <ModalFooter>
           <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
-          <SaveButton onClick={handleSave}>Guardar</SaveButton>
+          <SaveButton onClick={handleSave}>{mode === "edit" ? "Guardar Cambios" : "Guardar"}</SaveButton>
         </ModalFooter>
       </ModalContainer>
     </Overlay>
