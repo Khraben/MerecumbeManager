@@ -2,8 +2,7 @@
 
 import styled from "styled-components";
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "./conf/firebase";
+import { fetchGroupsByDay } from "./conf/firebaseService";
 import Loading from "./components/Loading";
 
 export default function Home() {
@@ -24,10 +23,7 @@ export default function Home() {
 
   const fetchGroups = async (date) => {
     const today = date.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
-    const querySnapshot = await getDocs(collection(db, "groups"));
-    const groupsData = querySnapshot.docs
-      .map(doc => doc.data())
-      .filter(group => group.day && group.day.toLowerCase() === today);
+    const groupsData = await fetchGroupsByDay(today);
     setGroups(groupsData);
     setLoading(false);
   };

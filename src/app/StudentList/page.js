@@ -1,56 +1,53 @@
+// page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash} from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails";
 import Loading from "../components/Loading"; 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../conf/firebase";
+import { fetchStudents } from "../conf/firebaseService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const [selectedStudentEdit, setSelectStudentEdit] = useState(null);
+  const [editingStudentId, setEditingStudentId] = useState(null);
   const [loading, setLoading] = useState(true); 
+
   useEffect(() => {
-    fetchStudents();
+    fetchStudentsData();
   }, []);
 
-  const fetchStudents = async () => {
+  const fetchStudentsData = async () => {
     setLoading(true);
-    const querySnapshot = await getDocs(collection(db, "students"));
-    const studentsData = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-      };
-    });
-    studentsData.sort((a, b) => a.name.localeCompare(b.name));
-    setStudents(studentsData);
+    try {
+      const studentsData = await fetchStudents(); 
+      setStudents(studentsData);
+    } catch (error) {
+      console.error("Error fetching students: ", error);
+    }
     setLoading(false); 
   };
 
-  const handleOpenModal = () => setIsModalOpen(true);
+  const handleOpenModal = (studentId = null) => {
+    setEditingStudentId(studentId);
+    setIsModalOpen(true);
+  };
+  
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    fetchStudents();
+    fetchStudentsData();
   };
 
   const handleViewStudentDetails = (studentId) => {
     setSelectedStudentId(studentId);
   };
 
-  const handleStudenEdit = (studentId) => {
-    setSelectStudentEdit(studentId);
-  };
   const handleBack = () => {
     setSelectedStudentId(null);
-    setSelectStudentEdit(null);
   };
 
   const filteredStudents = students.filter(student =>
@@ -62,11 +59,9 @@ export default function StudentList() {
   }
 
   if (selectedStudentId) {
-    return <StudentDetails  studentId={selectedStudentId} onBack={handleBack} isEditing={false} />;
+    return <StudentDetails studentId={selectedStudentId} onBack={handleBack} />;
   }
-  if (selectedStudentEdit) {
-    return <StudentDetails  studentId={selectedStudentEdit} onBack={handleBack} isEditing={true} />;
-  }
+
   return (
     <Wrapper>
       <Title>Lista General de Alumnos</Title>
@@ -95,7 +90,11 @@ export default function StudentList() {
                 <td>{student.phone}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
-                  <EditIcon onClick={()  => handleStudenEdit(student.id)}/>
+                  <a> </a>
+                  <a> </a>
+                  <EditIcon onClick={() => handleOpenModal(student.id)} />
+                  <a> </a>
+                  <a> </a>
                   <DeleteIcon />
                 </td>
               </tr>
@@ -103,8 +102,8 @@ export default function StudentList() {
           </tbody>
         </Table>
       </TableContainer>
-      <AddButton onClick={handleOpenModal}>Agregar Alumno</AddButton>
-      <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <AddButton onClick={() => handleOpenModal()}>Agregar Alumno</AddButton>
+      <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} studentId={editingStudentId} />
     </Wrapper>
   );
 }
@@ -133,7 +132,6 @@ const Title = styled.h1`
 const AddButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
-  margin-bottom: 20px;
   font-size: 14px;
   font-weight: bold;
   color: #fff;
@@ -273,8 +271,6 @@ const EditIcon = styled(FaEdit)`
   color: #0b0f8b;
   cursor: pointer;
   font-size: 20px;
-  margin-right: 10px;
-  margin-left: 10px;
 
   &:hover {
     color: #073e8a;

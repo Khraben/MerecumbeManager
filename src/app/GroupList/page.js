@@ -6,8 +6,7 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading"; 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../conf/firebase";
+import { fetchGroups } from "../conf/firebaseService";
 
 export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,40 +15,21 @@ export default function GroupList() {
   const [loading, setLoading] = useState(true);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  const fetchGroups = async () => {
+  const loadGroups = async () => {
     setLoading(true);
-    const instructorsSnapshot = await getDocs(collection(db, "instructors"));
-    const instructorsMap = {};
-    instructorsSnapshot.docs.forEach(doc => {
-      instructorsMap[doc.id] = doc.data().name;
-    });
-    const groupsSnapshot = await getDocs(collection(db, "groups"));
-    const groupsData = groupsSnapshot.docs.map(doc => {
-      const group = doc.data();
-      return {
-        id: doc.id, // Asegurarse de incluir el ID del documento
-        ...group,
-        instructor: instructorsMap[group.instructor] || "Instructor no encontrado"
-      };
-    });
-    groupsData.sort((a, b) => {
-      const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
-      if (dayComparison !== 0) return dayComparison;
-      return a.startTime.localeCompare(b.startTime);
-    });
+    const groupsData = await fetchGroups();
     setGroups(groupsData);
     setLoading(false);
   };
 
+  useEffect(() => {
+    loadGroups();
+  }, []);
+
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    fetchGroups();
+    loadGroups();
   };
 
   const handleViewGroupDetails = (groupId) => {
@@ -109,7 +89,7 @@ export default function GroupList() {
         </Table>
       </TableContainer>
       <AddButton onClick={handleOpenModal}>Agregar Grupo</AddButton>
-      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} onGroupAdded={loadGroups} />
     </Wrapper>
   );
 }

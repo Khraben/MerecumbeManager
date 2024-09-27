@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaArrowLeft } from "react-icons/fa";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../conf/firebase";
+import { fetchGroupDetails } from "../conf/firebaseService";
 import Loading from "./Loading";
 
 export default function GroupDetails({ groupId, onBack }) {
@@ -12,40 +11,20 @@ export default function GroupDetails({ groupId, onBack }) {
   const [selectedMonth, setSelectedMonth] = useState("");
 
   useEffect(() => {
-    fetchGroupDetails();
+    fetchGroupDetailsData();
   }, [groupId]);
 
-  const fetchGroupDetails = async () => {
+  const fetchGroupDetailsData = async () => {
     setLoading(true);
     try {
-      const groupDoc = await getDoc(doc(db, "groups", groupId));
-      if (groupDoc.exists()) {
-        const groupData = groupDoc.data();
-        const instructorDoc = await getDoc(doc(db, "instructors", groupData.instructor));
-        if (instructorDoc.exists()) {
-          groupData.instructor = instructorDoc.data().name;
-        } else {
-          groupData.instructor = "Instructor no encontrado";
-        }
+      const { groupData, studentsData } = await fetchGroupDetails(groupId);
+      setGroup(groupData);
+      setStudents(studentsData);
 
-        setGroup(groupData);
-        const studentsSnapshot = await getDocs(collection(db, "students"));
-        const studentsData = studentsSnapshot.docs
-          .map((doc) => ({
-            ...doc.data(),
-            id: doc.id,
-          }))
-          .filter((student) => student.groups.includes(groupId));
-
-        setStudents(studentsData);
-
-        const [day, month, year] = groupData.startDate.split("/");
-        const startDate = new Date(`${year}-${month}-${day}`);
-        setSelectedMonth(startDate.toLocaleString('default', { month: 'long', year: 'numeric' }));
-        setLoading(false);
-      } else {
-        console.error("Grupo no encontrado.");
-      }
+      const [day, month, year] = groupData.startDate.split("/");
+      const startDate = new Date(`${year}-${month}-${day}`);
+      setSelectedMonth(startDate.toLocaleString('default', { month: 'long', year: 'numeric' }));
+      setLoading(false);
     } catch (error) {
       console.error("Error al obtener detalles del grupo:", error);
     }

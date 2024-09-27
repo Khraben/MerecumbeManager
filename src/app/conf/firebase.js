@@ -12,7 +12,6 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);

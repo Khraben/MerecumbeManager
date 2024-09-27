@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { db } from "../conf/firebase";
+import { fetchInstructors, fetchExistingGroups, addGroup } from "../conf/firebaseService";
 
-const GroupModal = ({ isOpen, onClose }) => {
+const GroupModal = ({ isOpen, onClose, onGroupAdded }) => {
   const [instructor, setInstructor] = useState("");
   const [day, setDay] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -18,8 +17,8 @@ const GroupModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("no-scroll");
-      fetchInstructors();
-      fetchExistingGroups();
+      fetchInstructorsData();
+      fetchExistingGroupsData();
     } else {
       document.body.classList.remove("no-scroll");
       resetFields();
@@ -29,18 +28,13 @@ const GroupModal = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  const fetchInstructors = async () => {
-    const querySnapshot = await getDocs(collection(db, "instructors"));
-    const instructorsData = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name
-    }));
+  const fetchInstructorsData = async () => {
+    const instructorsData = await fetchInstructors();
     setInstructors(instructorsData);
   };
 
-  const fetchExistingGroups = async () => {
-    const querySnapshot = await getDocs(collection(db, "groups"));
-    const groupsData = querySnapshot.docs.map(doc => doc.data());
+  const fetchExistingGroupsData = async () => {
+    const groupsData = await fetchExistingGroups();
     setExistingGroups(groupsData);
   };
 
@@ -88,9 +82,11 @@ const GroupModal = ({ isOpen, onClose }) => {
     };
 
     try {
-      await addDoc(collection(db, "groups"), newGroup);
+      await addGroup(newGroup);
       resetFields();
       onClose();
+      if (onGroupAdded) {
+      }
     } catch (error) {
       setError("Error al agregar el grupo");
     }

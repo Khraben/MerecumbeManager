@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { addDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../conf/firebase"; 
-import { FaPlus, FaTimes } from "react-icons/fa"; 
+import { FaPlus, FaTimes } from "react-icons/fa";
+import { fetchGroups, addStudent, fetchStudentById, updateStudent } from "../conf/firebaseService";
 
-export default function StudentModal({ isOpen, onClose }) {
+export default function StudentModal({ isOpen, onClose, onStudentAdded, studentId }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -12,13 +11,16 @@ export default function StudentModal({ isOpen, onClose }) {
   const [additionalGroups, setAdditionalGroups] = useState([]);
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("no-scroll");
-      fetchGroups();
+      fetchGroupsData();
+      if (studentId) {
+        fetchStudentData(studentId);
+      }
     } else {
       document.body.classList.remove("no-scroll");
       resetFields();
@@ -26,36 +28,29 @@ export default function StudentModal({ isOpen, onClose }) {
     return () => {
       document.body.classList.remove("no-scroll");
     };
-  }, [isOpen]);
+  }, [isOpen, studentId]);
 
-  const fetchGroups = async () => {
-    const querySnapshot = await getDocs(collection(db, "groups"));
-    const groupsData = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || "Nombre no especificado",
-        day: data.day || "Día no especificado",
-        startTime: data.startTime || "00:00"
-      };
-    });
-    groupsData.sort((a, b) => {
-      const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
-      if (dayComparison !== 0) return dayComparison;
-      return a.startTime.localeCompare(b.startTime);
-    });
-    setGroups(groupsData);
+  const fetchGroupsData = async () => {
+    try {
+      const groupsData = await fetchGroups();
+      setGroups(groupsData);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
   };
 
-
-
-  const addStudent = async (student) => {
+  const fetchStudentData = async (id) => {
     try {
-      const docRef = await addDoc(collection(db, "students"), student);
-      console.log("Estudiante agregado con ID: ", docRef.id);
-    } catch (e) {
-      console.error("Error al agregar estudiante: ", e);
+      const studentData = await fetchStudentById(id);
+      setName(studentData.name);
+      setPhone(studentData.phone);
+      setEmail(studentData.email);
+      setGroup(studentData.groups[0]);
+      setAdditionalGroups(studentData.groups.slice(1));
+      setEmergencyName(studentData.emergencyName);
+      setEmergencyPhone(studentData.emergencyPhone);
+    } catch (error) {
+      console.error("Error fetching student data:", error);
     }
   };
 
@@ -67,7 +62,7 @@ export default function StudentModal({ isOpen, onClose }) {
 
     setError("");
 
-    const newStudent = {
+    const studentData = {
       name,
       phone,
       email,
@@ -76,9 +71,20 @@ export default function StudentModal({ isOpen, onClose }) {
       groups: [group, ...additionalGroups],
     };
 
-    await addStudent(newStudent);
-    resetFields();
-    onClose();
+    try {
+      if (studentId) {
+        await updateStudent(studentId, studentData);
+      } else {
+        await addStudent(studentData);
+      }
+      resetFields();
+      onClose();
+      if (onStudentAdded) {
+        onStudentAdded(studentData);
+      }
+    } catch (error) {
+      setError("Error al guardar estudiante.");
+    }
   };
 
   const resetFields = () => {
@@ -98,7 +104,7 @@ export default function StudentModal({ isOpen, onClose }) {
   };
 
   const handleAddGroup = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (group && !additionalGroups.includes("")) {
       setAdditionalGroups([...additionalGroups, ""]);
     } else {
@@ -143,7 +149,7 @@ export default function StudentModal({ isOpen, onClose }) {
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <h2>Agregar Nuevo Alumno</h2>
+          <h2>{studentId ? "Editar Alumno" : "Agregar Nuevo Alumno"}</h2>
         </ModalHeader>
         <ModalBody>
           <Form>
@@ -228,7 +234,6 @@ export default function StudentModal({ isOpen, onClose }) {
   );
 }
 
-// Estilos CSS
 const Overlay = styled.div`
   position: fixed;
   top: 0;

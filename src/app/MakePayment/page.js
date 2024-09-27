@@ -2,11 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import styled, { createGlobalStyle } from "styled-components";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "../conf/firebase";
 import { toPng } from "html-to-image";
 import Image from "next/image";
 import Loading from "../components/Loading";
+import { fetchStudents, fetchGroupsByIds } from "../conf/firebaseService";
 
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
@@ -24,14 +23,21 @@ export default function MakePayment() {
   const receiptRef = useRef(null);
 
   useEffect(() => {
-    fetchStudents();
+    const loadStudents = async () => {
+      setLoading(true);
+      const studentsData = await fetchStudents();
+      setStudents(studentsData);
+      setLoading(false);
+    };
+
+    loadStudents();
   }, []);
 
   useEffect(() => {
     if (selectedStudent) {
       const student = students.find(s => s.name === selectedStudent);
       if (student) {
-        fetchGroups(student.groups);
+        loadGroups(student.groups);
       }
     } else {
       setGroups([]);
@@ -40,20 +46,8 @@ export default function MakePayment() {
     }
   }, [selectedStudent, selectedMonth]);
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    const querySnapshot = await getDocs(collection(db, "students"));
-    const studentsData = querySnapshot.docs.map(doc => doc.data());
-    setStudents(studentsData);
-    setLoading(false); 
-  };
-
-  const fetchGroups = async (groupIds) => {
-    const groupPromises = groupIds.map(async (groupId) => {
-      const groupDoc = await getDoc(doc(db, "groups", groupId));
-      return groupDoc.exists() ? { name: groupDoc.data().name, level: groupDoc.data().level } : { name: "Grupo no encontrado", level: "" };
-    });
-    const groupData = await Promise.all(groupPromises);
+  const loadGroups = async (groupIds) => {
+    const groupData = await fetchGroupsByIds(groupIds);
     const validGroups = groupData.filter(group => group.level !== "Taller");
     const tallerGroups = groupData.filter(group => group.level === "Taller");
     setGroups(validGroups.map(group => group.name));
