@@ -73,7 +73,13 @@ const StudentDetails = ({ studentId, onBack, isEditing}) => {
       return;
     }
     // Validación de formato del correo electrónico
-    const emailRegex = /\S+@\S+\.\S+/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Verificar si hay espacios en la entrada
+    if (editData.email.includes(' ')) {
+      setError("El correo electrónico no debe contener espacios.");
+      return;
+    }
+
     if (!emailRegex.test(editData.email)) {
       setError("Por favor ingresa un correo electrónico válido.");
       return;
