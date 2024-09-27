@@ -14,6 +14,7 @@ export default function StudentList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [selectedStudentEdit, setSelectStudentEdit] = useState(null);
   const [loading, setLoading] = useState(true); 
   useEffect(() => {
     fetchStudents();
@@ -44,8 +45,12 @@ export default function StudentList() {
     setSelectedStudentId(studentId);
   };
 
+  const handleStudenEdit = (studentId) => {
+    setSelectStudentEdit(studentId);
+  };
   const handleBack = () => {
     setSelectedStudentId(null);
+    setSelectStudentEdit(null);
   };
 
   const filteredStudents = students.filter(student =>
@@ -57,9 +62,11 @@ export default function StudentList() {
   }
 
   if (selectedStudentId) {
-    return <StudentDetails studentId={selectedStudentId} onBack={handleBack} />;
+    return <StudentDetails  studentId={selectedStudentId} onBack={handleBack} isEditing={false} />;
   }
-
+  if (selectedStudentEdit) {
+    return <StudentDetails  studentId={selectedStudentEdit} onBack={handleBack} isEditing={true} />;
+  }
   return (
     <Wrapper>
       <Title>Lista General de Alumnos</Title>
@@ -88,7 +95,7 @@ export default function StudentList() {
                 <td>{student.phone}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
-                  <EditIcon />
+                  <EditIcon onClick={()  => handleStudenEdit(student.id)}/>
                   <DeleteIcon />
                 </td>
               </tr>
