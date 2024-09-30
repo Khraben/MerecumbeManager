@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaArrowLeft } from "react-icons/fa";
-import { fetchStudentDetails } from "../conf/firebaseService"; // Importa la función fetchStudentDetails
+import { fetchStudentDetails } from "../conf/firebaseService";
 import Loading from "./Loading";
 
 const StudentDetails = ({ studentId, onBack }) => {
@@ -11,7 +11,7 @@ const StudentDetails = ({ studentId, onBack }) => {
   useEffect(() => {
     const fetchStudent = async () => {
       try {
-        const { studentData, groupNames } = await fetchStudentDetails(studentId); // Usa la función fetchStudentDetails
+        const { studentData, groupNames } = await fetchStudentDetails(studentId); 
         setStudent(studentData);
         setGroupNames(groupNames);
       } catch (error) {

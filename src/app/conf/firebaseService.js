@@ -1,6 +1,23 @@
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc} from "firebase/firestore";
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc} from "firebase/firestore";
 import { db } from "./firebase";
 
+//ADD
+export const addStudent = async (student) => {
+  try {
+    const docRef = await addDoc(collection(db, "students"), student);
+    console.log("Estudiante agregado con ID: ", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error al agregar estudiante: ", e);
+    throw e;
+  }
+};
+
+export const addGroup = async (newGroup) => {
+  await addDoc(collection(db, "groups"), newGroup);
+ };
+
+ //FETCH
 export const fetchInstructors = async () => {
   const querySnapshot = await getDocs(collection(db, "instructors"));
   const instructorsData = querySnapshot.docs.map(doc => ({
@@ -30,7 +47,10 @@ export const fetchStudentDetails = async (studentId) => {
   }
 
   const studentData = studentDoc.data();
-  const groupNamesPromises = studentData.groups.map(async (groupId) => {
+  const groupNamesPromises = studentData.groups.map(async (groupId, index) => {
+    if (index === 0 && groupId === "INACTIVO") {
+      return "INACTIVO";
+    }
     const groupDoc = await getDoc(doc(db, "groups", groupId));
     return groupDoc.exists() ? groupDoc.data().name : "Desconocido";
   });
@@ -50,28 +70,6 @@ export const fetchStudentById = async (studentId) => {
     }
   } catch (e) {
     console.error("Error fetching student by ID: ", e);
-    throw e;
-  }
-};
-
-export const addStudent = async (student) => {
-  try {
-    const docRef = await addDoc(collection(db, "students"), student);
-    console.log("Estudiante agregado con ID: ", docRef.id);
-    return docRef.id;
-  } catch (e) {
-    console.error("Error al agregar estudiante: ", e);
-    throw e;
-  }
-};
-
-export const updateStudent = async (studentId, studentData) => {
-  try {
-    const studentRef = doc(db, "students", studentId);
-    await updateDoc(studentRef, studentData);
-    console.log("Estudiante actualizado con ID: ", studentId);
-  } catch (e) {
-    console.error("Error al actualizar estudiante: ", e);
     throw e;
   }
 };
@@ -180,11 +178,60 @@ export const fetchExistingGroups = async () => {
  return groupsData;
 };
 
-export const addGroup = async (newGroup) => {
- await addDoc(collection(db, "groups"), newGroup);
+//UPDATE
+export const updateStudent = async (studentId, studentData) => {
+  try {
+    const studentRef = doc(db, "students", studentId);
+    await updateDoc(studentRef, studentData);
+    console.log("Estudiante actualizado con ID: ", studentId);
+  } catch (e) {
+    console.error("Error al actualizar estudiante: ", e);
+    throw e;
+  }
 };
 
 export const updateGroup = async (groupId, updatedGroup) => {
   const groupRef = doc(db, "groups", groupId);
   await updateDoc(groupRef, updatedGroup);
+};
+
+//DELETE
+export const deleteStudent = async (studentId) => {
+  try {
+    const studentRef = doc(db, "students", studentId);
+    await deleteDoc(studentRef);
+    console.log("Estudiante eliminado con ID: ", studentId);
+  } catch (e) {
+    console.error("Error al eliminar estudiante: ", e);
+    throw e;
+  }
+};
+
+export const deleteGroup = async (groupId) => {
+  try {
+    const groupRef = doc(db, "groups", groupId);
+
+    const studentsQuery = query(collection(db, "students"), where("groups", "array-contains", groupId));
+    const studentsSnapshot = await getDocs(studentsQuery);
+
+    const batch = db.batch();
+    studentsSnapshot.forEach((studentDoc) => {
+      const studentData = studentDoc.data();
+      const updatedGroups = studentData.groups.filter((group) => group !== groupId);
+
+      if (updatedGroups.length === 0) {
+        updatedGroups.push("INACTIVO");
+      }
+
+      batch.update(studentDoc.ref, { groups: updatedGroups });
+    });
+
+    await batch.commit();
+
+    await deleteDoc(groupRef);
+    console.log("Grupo eliminado con ID: ", groupId);
+  } catch (e) {
+    console.error("Error al eliminar grupo: ", e);
+    throw e;
+  }
 };

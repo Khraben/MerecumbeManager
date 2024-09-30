@@ -52,21 +52,6 @@ export default function MakePayment() {
     const tallerGroups = groupData.filter(group => group.level === "Taller");
     setGroups(validGroups.map(group => group.name));
     setTallerGroups(tallerGroups.map(group => group.name));
-    if (selectedMonth === "Mensualidad") {
-      calculateAmount(validGroups);
-    }
-  };
-
-  const calculateAmount = (validGroups) => {
-    let baseAmount = 20000;
-    const groupCount = validGroups.length;
-
-    if (groupCount === 2) {
-      baseAmount = 23000;
-    } else if (groupCount > 2) {
-      baseAmount = 23000 + (groupCount - 2) * 2000;
-    }
-    setAmount(baseAmount);
   };
 
   const handleGenerateImage = async () => {
@@ -97,15 +82,13 @@ export default function MakePayment() {
     setErrorMessage("");
   };
 
-  const handleAmountChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    setAmount(value);
+  const formatAmount = (value) => {
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   };
 
-  const handleAmountBlur = () => {
-    if (amount && (selectedMonth === "Clases Privadas" || selectedMonth === "Taller")) {
-      setAmount(`₡${amount}`);
-    }
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setAmount(formatAmount(value));
   };
 
   const handleMonthChange = (e) => {
@@ -177,10 +160,8 @@ export default function MakePayment() {
           <Label>Monto</Label>
           <Input 
             type="text" 
-            value={(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`} 
-            readOnly={selectedMonth !== "Clases Privadas" && selectedMonth !== "Taller"} 
+            value={`₡${amount}`} 
             onChange={handleAmountChange} 
-            onBlur={handleAmountBlur}
           />
 
           <Label>Forma de Pago</Label>
@@ -237,7 +218,7 @@ export default function MakePayment() {
                   )}
 
                   <Label>Monto</Label>
-                  <p>{(selectedMonth === "Clases Privadas" || selectedMonth === "Taller") ? amount : `₡${amount}`}</p>
+                  <p>{`₡${amount}`}</p>
 
                   <Label>Forma de Pago</Label>
                   <p>{paymentMethod}</p>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import styled from "styled-components";
-import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
 export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
@@ -53,6 +53,9 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
             <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
               <FaFileInvoiceDollar />
             </HiddenLink>
+            <HiddenLink onClick={() => handleLinkClick_Hidden("/Reports")}>
+              <FaChartBar />
+            </HiddenLink>
             <HiddenLink onClick={handleLogout}>
               <FaSignOutAlt style={{ color: "red" }} />
             </HiddenLink>
@@ -73,12 +76,17 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
           </NavItem>
           <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
-              <FaUserGraduate /> Alumnos
+              <FaUserGraduate /> Alumnos  
             </StyledLink>
           </NavItem>
           <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/MakePayment")}>
               <FaFileInvoiceDollar /> Facturar
+            </StyledLink>
+          </NavItem>
+          <NavItem>
+            <StyledLink onClick={() => handleLinkClick_Show("/Reports")}>
+              <FaChartBar /> Reportes
             </StyledLink>
           </NavItem>
           <NavItem>

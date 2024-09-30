@@ -1,4 +1,3 @@
-// page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,7 +6,7 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails";
 import Loading from "../components/Loading"; 
-import { fetchStudents } from "../conf/firebaseService"; 
+import { fetchStudents, deleteStudent } from "../conf/firebaseService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +47,15 @@ export default function StudentList() {
 
   const handleBack = () => {
     setSelectedStudentId(null);
+  };
+
+  const handleDeleteStudent = async (studentId) => {
+    try {
+      await deleteStudent(studentId);
+      fetchStudentsData();
+    } catch (error) {
+      console.error("Error deleting student: ", error);
+    }
   };
 
   const filteredStudents = students.filter(student =>
@@ -95,7 +103,7 @@ export default function StudentList() {
                   <EditIcon onClick={() => handleOpenModal(student.id)} />
                   <a> </a>
                   <a> </a>
-                  <DeleteIcon />
+                  <DeleteIcon onClick={() => handleDeleteStudent(student.id)} />
                 </td>
               </tr>
             ))}
