@@ -6,7 +6,8 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading"; 
-import { fetchGroups } from "../conf/firebaseService";
+import ConfirmationModal from "../components/ConfirmationModal"; // Importa el modal de confirmación
+import { fetchGroups, deleteGroup } from "../conf/firebaseService";
 
 export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,6 +17,8 @@ export default function GroupList() {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [viewingGroupId, setViewingGroupId] = useState(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); // Estado para el modal de confirmación
+  const [groupToDelete, setGroupToDelete] = useState(null); // Estado para almacenar el grupo a eliminar
 
   const loadGroups = async () => {
     setLoading(true);
@@ -35,6 +38,16 @@ export default function GroupList() {
     loadGroups();
   };
 
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroup(groupToDelete.id);
+      await loadGroups(); // Actualiza la lista de grupos después de eliminar
+      setIsConfirmationOpen(false); // Cierra el modal de confirmación
+    } catch (error) {
+      console.error("Error al eliminar grupo: ", error);
+    }
+  };
+
   const handleViewGroupDetails = (groupId) => {
     setViewingGroupId(groupId);
   };
@@ -47,6 +60,16 @@ export default function GroupList() {
 
   const handleBack = () => {
     setViewingGroupId(null);
+  };
+
+  const handleOpenConfirmation = (group) => {
+    setGroupToDelete(group);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setIsConfirmationOpen(false);
+    setGroupToDelete(null);
   };
 
   const filteredGroups = groups.filter(group =>
@@ -90,7 +113,7 @@ export default function GroupList() {
                 <td>
                   <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
                   <EditIcon onClick={() => handleEditGroup(group.id)} />
-                  <DeleteIcon />
+                  <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
                 </td>
               </tr>
             ))}
@@ -105,6 +128,12 @@ export default function GroupList() {
         mode={isEditing ? "edit" : "view"}
         onGroupAdded={loadGroups}
       />
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={handleCloseConfirmation}
+        onConfirm={handleDeleteGroup}
+        message={`¿Estás seguro de que deseas eliminar el grupo "${groupToDelete?.name}"?`}
+      />
     </Wrapper>
   );
 }
@@ -114,7 +143,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
 `;
 
 const Title = styled.h1`

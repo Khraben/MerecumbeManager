@@ -1,12 +1,108 @@
+"use client";
+
 import React from 'react';
+import styled from 'styled-components';
 
 const Reports = () => {
   return (
-    <div>
-      <h1>Reportes</h1>
-      <p>Aquí puedes generar reportes sobre asistencias, pagos y demás.</p>
-    </div>
+    <Wrapper>
+      <Title>Reportes</Title>
+      <Description>Aquí puedes generar reportes sobre asistencias, pagos y demás.</Description>
+      <Section>
+        <Subtitle>Ingresos</Subtitle>
+        <ReportContent>
+          <p>Genera un reporte detallado de los ingresos.</p>
+          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de ingresos */}
+        </ReportContent>
+      </Section>
+      <Section>
+        <Subtitle>Morosos</Subtitle>
+        <ReportContent>
+          <p>Genera un reporte de los alumnos morosos.</p>
+          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de morosos */}
+        </ReportContent>
+      </Section>
+      <Section>
+        <Subtitle>Asistencia</Subtitle>
+        <ReportContent>
+          <p>Genera un reporte de la asistencia de los alumnos.</p>
+          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de asistencia */}
+        </ReportContent>
+      </Section>
+    </Wrapper>
   );
 };
+
+const Wrapper = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const Title = styled.h1`
+  font-size: 24px;
+  color: #0b0f8b;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+`;
+
+const Description = styled.p`
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`;
+
+const Section = styled.section`
+  width: 100%;
+  max-width: 1200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px 0;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
+`;
+
+const Subtitle = styled.h2`
+  font-size: 20px;
+  color: #0b0f8b;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: 600;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const ReportContent = styled.div`
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`;
 
 export default Reports;

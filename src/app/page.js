@@ -56,7 +56,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
 `;
 
 const Section = styled.section`

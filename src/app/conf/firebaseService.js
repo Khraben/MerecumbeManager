@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc} from "firebase/firestore";
+import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch} from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -214,7 +214,7 @@ export const deleteGroup = async (groupId) => {
     const studentsQuery = query(collection(db, "students"), where("groups", "array-contains", groupId));
     const studentsSnapshot = await getDocs(studentsQuery);
 
-    const batch = db.batch();
+    const batch = writeBatch(db);
     studentsSnapshot.forEach((studentDoc) => {
       const studentData = studentDoc.data();
       const updatedGroups = studentData.groups.filter((group) => group !== groupId);
@@ -227,7 +227,6 @@ export const deleteGroup = async (groupId) => {
     });
 
     await batch.commit();
-
     await deleteDoc(groupRef);
     console.log("Grupo eliminado con ID: ", groupId);
   } catch (e) {

@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import styled, { createGlobalStyle } from "styled-components";
+import styled from "styled-components";
 import { toPng } from "html-to-image";
 import Image from "next/image";
 import Loading from "../components/Loading";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale, setDefaultLocale } from "react-datepicker";
+import es from "date-fns/locale/es"; 
 import { fetchStudents, fetchGroupsByIds } from "../conf/firebaseService";
+
+registerLocale("es", es);
+setDefaultLocale("es"); 
 
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
@@ -17,6 +24,7 @@ export default function MakePayment() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedTaller, setSelectedTaller] = useState("");
+  const [specifiedMonth, setSpecifiedMonth] = useState(null); // Estado para almacenar el mes especificado
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true); 
@@ -101,6 +109,10 @@ export default function MakePayment() {
     }
   };
 
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -142,12 +154,21 @@ export default function MakePayment() {
                   <GroupItem key={index}>{group}</GroupItem>
                 ))}
               </GroupList>
+              <Label>Especificación</Label>
+              <StyledDatePicker
+                selected={specifiedMonth}
+                onChange={(date) => setSpecifiedMonth(date)}
+                dateFormat="MM/yyyy"
+                showMonthYearPicker
+                locale="es"
+                placeholderText="Seleccionar mes y año"
+              />
             </>
           )}
 
           {selectedMonth === "Taller" && (
             <>
-              <Label>Seleccione un Taller</Label>
+              <Label>Especificación</Label>
               <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
                 <option value="">Seleccione un taller...</option>
                 {tallerGroups.map((taller, index) => (
@@ -207,6 +228,8 @@ export default function MakePayment() {
                           <GroupItem key={index}>{group}</GroupItem>
                         ))}
                       </GroupList>
+                      <Label>Especificación</Label>
+                      <p>{specifiedMonth ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" })) : ""}</p>
                     </>
                   )}
 
@@ -244,7 +267,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
   height: 100%;
 `;
 
@@ -319,6 +341,23 @@ const Input = styled.input`
   width: 100%;
   box-sizing: border-box;
   outline: none;
+
+  &:focus {
+    border-color: #0b0f8b;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    font-size: 12px;
+  }
+`;
+
+const StyledDatePicker = styled(DatePicker)`
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 93%;
 
   &:focus {
     border-color: #0b0f8b;
