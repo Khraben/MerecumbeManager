@@ -102,6 +102,7 @@ export default function GroupList() {
             <tr>
               <th>Grupo</th>
               <th>Instructor</th>
+              <th>Nivel</th>
               <th></th>
             </tr>
           </thead>
@@ -110,6 +111,7 @@ export default function GroupList() {
               <tr key={index}>
                 <td>{group.name}</td>
                 <td>{group.instructor}</td>
+                <td>{group.level}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
                   <EditIcon onClick={() => handleEditGroup(group.id)} />

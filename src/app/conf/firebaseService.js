@@ -90,26 +90,19 @@ export const fetchGroups = async () => {
       instructor: instructorsMap[group.instructor] || "Instructor no encontrado"
     };
   });
+
   groupsData.sort((a, b) => {
+    const levelsOrder = ["Nivel I", "Nivel II", "Nivel III", "Nivel IV", "Taller"];
     const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+    const levelComparison = levelsOrder.indexOf(a.level) - levelsOrder.indexOf(b.level);
+    if (levelComparison !== 0) return levelComparison;
+
     const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
     if (dayComparison !== 0) return dayComparison;
 
-    const convertTo24HourFormat = (time) => {
-      const [hours, minutes, period] = time.match(/(\d+):(\d+)(\w+)/).slice(1);
-      let hours24 = parseInt(hours);
-      if (period.toLowerCase() === "pm" && hours !== "12") {
-        hours24 += 12;
-      }
-      if (period.toLowerCase() === "am" && hours === "12") {
-        hours24 = 0;
-      }
-      return `${hours24.toString().padStart(2, '0')}:${minutes}`;
-    };
-
-    const startTimeA = convertTo24HourFormat(a.startTime);
-    const startTimeB = convertTo24HourFormat(b.startTime);
-    return startTimeA.localeCompare(startTimeB);
+    const timeComparison = new Date(`1970-01-01T${a.startTime}`).getTime() - new Date(`1970-01-01T${b.startTime}`).getTime();
+    return timeComparison;
   });
 
   return groupsData;

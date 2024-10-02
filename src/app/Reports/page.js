@@ -7,26 +7,23 @@ const Reports = () => {
   return (
     <Wrapper>
       <Title>Reportes</Title>
-      <Description>Aquí puedes generar reportes sobre asistencias, pagos y demás.</Description>
+      <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
       <Section>
         <Subtitle>Ingresos</Subtitle>
         <ReportContent>
           <p>Genera un reporte detallado de los ingresos.</p>
-          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de ingresos */}
         </ReportContent>
       </Section>
       <Section>
         <Subtitle>Morosos</Subtitle>
         <ReportContent>
           <p>Genera un reporte de los alumnos morosos.</p>
-          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de morosos */}
         </ReportContent>
       </Section>
       <Section>
         <Subtitle>Asistencia</Subtitle>
         <ReportContent>
           <p>Genera un reporte de la asistencia de los alumnos.</p>
-          {/* Aquí puedes añadir más contenido o componentes relacionados con el reporte de asistencia */}
         </ReportContent>
       </Section>
     </Wrapper>

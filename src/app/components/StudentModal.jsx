@@ -217,7 +217,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                 <option value="">INACTIVO</option>
                 {groups.map((group) => (
                   <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                    {group.name}
+                    {group.level + ' - '+ group.name}
                   </option>
                 ))}
               </Select>
@@ -229,7 +229,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                   <option value="">Seleccione un grupo</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                      {group.name}
+                      {group.level + ' - '+ group.name}
                     </option>
                   ))}
                 </Select>
