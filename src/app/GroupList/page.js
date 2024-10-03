@@ -6,7 +6,7 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading"; 
-import ConfirmationModal from "../components/ConfirmationModal"; // Importa el modal de confirmación
+import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchGroups, deleteGroup } from "../conf/firebaseService";
 
 export default function GroupList() {
@@ -17,8 +17,8 @@ export default function GroupList() {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [viewingGroupId, setViewingGroupId] = useState(null);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); // Estado para el modal de confirmación
-  const [groupToDelete, setGroupToDelete] = useState(null); // Estado para almacenar el grupo a eliminar
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); 
+  const [groupToDelete, setGroupToDelete] = useState(null); 
 
   const loadGroups = async () => {
     setLoading(true);
@@ -41,8 +41,8 @@ export default function GroupList() {
   const handleDeleteGroup = async () => {
     try {
       await deleteGroup(groupToDelete.id);
-      await loadGroups(); // Actualiza la lista de grupos después de eliminar
-      setIsConfirmationOpen(false); // Cierra el modal de confirmación
+      await loadGroups(); 
+      setIsConfirmationOpen(false); 
     } catch (error) {
       console.error("Error al eliminar grupo: ", error);
     }

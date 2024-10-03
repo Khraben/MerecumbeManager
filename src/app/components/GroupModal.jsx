@@ -13,7 +13,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   const [error, setError] = useState("");
   const [workshopName, setWorkshopName] = useState("");
   const [startDate, setStartDate] = useState("");
-
+ 
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("no-scroll");
@@ -71,7 +71,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   };
 
   const handleSave = async () => {
-    if (!instructor || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
+    if ((!instructor || instructor == "Seleccione un instructor") || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
       setError("Todos los campos son obligatorios");
       return;
     }
@@ -201,14 +201,14 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
           <Form>
             <label>Instructor</label>
             <Select value={instructor} onChange={handleInputChange(setInstructor)}>
-              <option value="">Seleccione un instructor</option>
+              <option value="" disabled hidden>Seleccione un instructor</option>
               {instructors.map((inst, index) => (
                 <option key={index} value={inst.id}>{inst.name}</option>
               ))}
             </Select>
             <label>Día y Horario</label>
             <Select value={day} onChange={handleDayChange}>
-              <option value="">Seleccione un día</option>
+              <option value="" disabled hidden>Seleccione un día</option>
               <option value="Lunes">Lunes</option>
               <option value="Martes">Martes</option>
               <option value="Miércoles">Miércoles</option>
