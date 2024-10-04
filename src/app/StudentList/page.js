@@ -6,7 +6,7 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails";
 import Loading from "../components/Loading"; 
-import ConfirmationModal from "../components/ConfirmationModal"; // Importa el modal de confirmación
+import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchStudents, deleteStudent } from "../conf/firebaseService"; 
 
 export default function StudentList() {
@@ -16,8 +16,8 @@ export default function StudentList() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [editingStudentId, setEditingStudentId] = useState(null);
   const [loading, setLoading] = useState(true); 
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); // Estado para el modal de confirmación
-  const [studentToDelete, setStudentToDelete] = useState(null); // Estado para almacenar el alumno a eliminar
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); 
+  const [studentToDelete, setStudentToDelete] = useState(null);
 
   useEffect(() => {
     fetchStudentsData();
@@ -56,7 +56,7 @@ export default function StudentList() {
     try {
       await deleteStudent(studentToDelete.id);
       fetchStudentsData();
-      setIsConfirmationOpen(false); // Cierra el modal de confirmación
+      setIsConfirmationOpen(false); 
     } catch (error) {
       console.error("Error deleting student: ", error);
     }

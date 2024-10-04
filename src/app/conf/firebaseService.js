@@ -108,6 +108,21 @@ export const fetchGroups = async () => {
   return groupsData;
 };
 
+export const fetchGroupById = async (groupId) => {
+  try {
+    const groupRef = doc(db, "groups", groupId);
+    const groupSnap = await getDoc(groupRef);
+    if (groupSnap.exists()) {
+      return groupSnap.data();
+    } else {
+      throw new Error("No such group!");
+    }
+  } catch (e) {
+    console.error("Error fetching group by ID: ", e);
+    throw e;
+  }
+};
+
 export const fetchGroupsByIds = async (groupIds) => {
   const groupPromises = groupIds.map(async (groupId) => {
     const groupDoc = await getDoc(doc(db, "groups", groupId));

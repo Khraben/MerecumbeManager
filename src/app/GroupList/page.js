@@ -1,11 +1,11 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails";
-import Loading from "../components/Loading"; 
+import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchGroups, deleteGroup } from "../conf/firebaseService";
 
@@ -13,53 +13,53 @@ export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [viewingGroupId, setViewingGroupId] = useState(null);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); 
-  const [groupToDelete, setGroupToDelete] = useState(null); 
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState(null);
 
-  const loadGroups = async () => {
+  useEffect(() => {
+    fetchGroupsData();
+  }, []);
+
+  const fetchGroupsData = async () => {
     setLoading(true);
-    const groupsData = await fetchGroups();
-    setGroups(groupsData);
+    try {
+      const groupsData = await fetchGroups();
+      setGroups(groupsData);
+    } catch (error) {
+      console.error("Error fetching groups: ", error);
+    }
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadGroups();
-  }, []);
+  const handleOpenModal = (groupId = null) => {
+    setEditingGroupId(groupId);
+    setIsModalOpen(true);
+  };
 
-  const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setIsEditing(false);
-    loadGroups();
+    fetchGroupsData();
+  };
+
+  const handleViewGroupDetails = (groupId) => {
+    setSelectedGroupId(groupId);
+  };
+
+  const handleBack = () => {
+    setSelectedGroupId(null);
   };
 
   const handleDeleteGroup = async () => {
     try {
       await deleteGroup(groupToDelete.id);
-      await loadGroups(); 
-      setIsConfirmationOpen(false); 
+      fetchGroupsData();
+      setIsConfirmationOpen(false);
     } catch (error) {
-      console.error("Error al eliminar grupo: ", error);
+      console.error("Error deleting group: ", error);
     }
-  };
-
-  const handleViewGroupDetails = (groupId) => {
-    setViewingGroupId(groupId);
-  };
-
-  const handleEditGroup = (groupId) => {
-    setSelectedGroupId(groupId);
-    setIsEditing(true);
-    setIsModalOpen(true);
-  };
-
-  const handleBack = () => {
-    setViewingGroupId(null);
   };
 
   const handleOpenConfirmation = (group) => {
@@ -80,8 +80,8 @@ export default function GroupList() {
     return <Loading />;
   }
 
-  if (viewingGroupId) {
-    return <GroupDetails groupId={viewingGroupId} onBack={handleBack} />;
+  if (selectedGroupId) {
+    return <GroupDetails groupId={selectedGroupId} onBack={handleBack} />;
   }
 
   return (
@@ -114,7 +114,7 @@ export default function GroupList() {
                 <td>{group.level}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                  <EditIcon onClick={() => handleEditGroup(group.id)} />
+                  <EditIcon onClick={() => handleOpenModal(group.id)} />
                   <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
                 </td>
               </tr>
@@ -122,14 +122,8 @@ export default function GroupList() {
           </tbody>
         </Table>
       </TableContainer>
-      <AddButton onClick={handleOpenModal}>Agregar Grupo</AddButton>
-      <GroupModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        group={groups.find(group => group.id === selectedGroupId)}
-        mode={isEditing ? "edit" : "view"}
-        onGroupAdded={loadGroups}
-      />
+      <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={handleCloseConfirmation}
@@ -163,7 +157,6 @@ const Title = styled.h1`
 const AddButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
-  margin-bottom: 20px;  
   font-size: 14px;
   font-weight: bold;
   color: #fff;
@@ -196,14 +189,6 @@ const TableContainer = styled.div`
   overflow-x: auto;
   overflow-y: auto;
   max-height: 500px;
-
-  @media (max-width: 768px) {
-    padding: 0 10px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 5px;
-  }
 `;
 
 const Table = styled.table`
@@ -265,14 +250,6 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
-
-  @media (max-width: 768px) {
-    padding: 0 10px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 5px;
-  }
 `;
 
 const SearchInput = styled.input`

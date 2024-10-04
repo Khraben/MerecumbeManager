@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { fetchInstructors, fetchExistingGroups, addGroup, updateGroup } from "../conf/firebaseService";
+import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../conf/firebaseService";
 
-const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
+const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const [instructor, setInstructor] = useState("");
   const [day, setDay] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -13,20 +13,15 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   const [error, setError] = useState("");
   const [workshopName, setWorkshopName] = useState("");
   const [startDate, setStartDate] = useState("");
- 
+  const [isStartDateDisabled, setIsStartDateDisabled] = useState(false);
+
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add("no-scroll");
       fetchInstructorsData();
       fetchExistingGroupsData();
-      if (mode === "edit" && group) {
-        setInstructor(group.instructor);
-        setDay(group.day);
-        setStartTime(group.startTime);
-        setEndTime(group.endTime);
-        setLevel(group.level);
-        setWorkshopName(group.workshopName);
-        setStartDate(group.startDate);
+      if (groupId) {
+        fetchGroupData(groupId);
       }
     } else {
       document.body.classList.remove("no-scroll");
@@ -35,7 +30,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
     return () => {
       document.body.classList.remove("no-scroll");
     };
-  }, [isOpen, mode, group]);
+  }, [isOpen, groupId]);
 
   const fetchInstructorsData = async () => {
     const instructorsData = await fetchInstructors();
@@ -45,6 +40,33 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   const fetchExistingGroupsData = async () => {
     const groupsData = await fetchExistingGroups();
     setExistingGroups(groupsData);
+  };
+
+  const fetchGroupData = async (id) => {
+    try {
+      const groupData = await fetchGroupById(id);
+      setInstructor(groupData.instructor);
+      setDay(groupData.day);
+      setStartTime(groupData.startTime);
+      setEndTime(groupData.endTime);
+      setLevel(groupData.level);
+      setStartDate(groupData.startDate);
+      if (groupData.level === "Taller") {
+        setWorkshopName(groupData.name);
+      }
+      if (isPastDate(groupData.startDate)) {
+        setIsStartDateDisabled(true);
+      }
+    } catch (error) {
+      console.error("Error fetching group data:", error);
+    }
+  };
+
+  const isPastDate = (date) => {
+    const [day, month, year] = date.split("/").map(Number);
+    const selectedDate = new Date(year, month - 1, day);
+    const today = new Date();
+    return selectedDate < today;
   };
 
   const handleStartTimeChange = (e) => {
@@ -71,14 +93,14 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
   };
 
   const handleSave = async () => {
-    if ((!instructor || instructor == "Seleccione un instructor") || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
+    if (!instructor || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
       setError("Todos los campos son obligatorios");
       return;
     }
 
     setError("");
 
-    const name = level === "Taller" ? `Taller ${workshopName}` : `${day} ${startTime}`;
+    const name = level === "Taller" ? `${workshopName}` : `${day} ${startTime}`;
 
     const newGroup = {
       instructor,
@@ -91,15 +113,15 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
     };
 
     try {
-      if (mode === "edit") {
-        await updateGroup(group.id, newGroup);
+      if (groupId) {
+        await updateGroup(groupId, newGroup);
       } else {
         await addGroup(newGroup);
       }
       resetFields();
       onClose();
       if (onGroupAdded) {
-        onGroupAdded();
+        onGroupAdded(newGroup);
       }
     } catch (error) {
       setError("Error al agregar el grupo");
@@ -115,6 +137,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
     setWorkshopName("");
     setError("");
     setStartDate("");
+    setIsStartDateDisabled(false);
   };
 
   const handleInputChange = (setter) => (e) => {
@@ -195,20 +218,20 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <h2>{mode === "edit" ? "Editar Grupo" : "Agregar Nuevo Grupo"}</h2>
+          <h2>{groupId ? "Editar Grupo" : "Agregar Nuevo Grupo"}</h2>
         </ModalHeader>
         <ModalBody>
           <Form>
             <label>Instructor</label>
             <Select value={instructor} onChange={handleInputChange(setInstructor)}>
-              <option value="" disabled hidden>Seleccione un instructor</option>
+              <option value="">Seleccione un instructor</option>
               {instructors.map((inst, index) => (
                 <option key={index} value={inst.id}>{inst.name}</option>
               ))}
             </Select>
             <label>Día y Horario</label>
             <Select value={day} onChange={handleDayChange}>
-              <option value="" disabled hidden>Seleccione un día</option>
+              <option value="">Seleccione un día</option>
               <option value="Lunes">Lunes</option>
               <option value="Martes">Martes</option>
               <option value="Miércoles">Miércoles</option>
@@ -216,7 +239,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
               <option value="Viernes">Viernes</option>
               <option value="Sábado">Sábado</option>
             </Select>
-            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day}>
+            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled}>
               <option value="">Fecha de inicio</option>
               {generateDateOptions().map((date, index) => (
                 <option key={index} value={date}>{date}</option>
@@ -250,7 +273,7 @@ const GroupModal = ({ isOpen, onClose, group, mode, onGroupAdded }) => {
         </ModalBody>
         <ModalFooter>
           <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
-          <SaveButton onClick={handleSave}>{mode === "edit" ? "Guardar Cambios" : "Guardar"}</SaveButton>
+          <SaveButton onClick={handleSave}>Guardar</SaveButton>
         </ModalFooter>
       </ModalContainer>
     </Overlay>
