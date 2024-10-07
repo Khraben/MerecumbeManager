@@ -7,7 +7,7 @@ import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails";
 import Loading from "../components/Loading"; 
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchStudents, deleteStudent } from "../conf/firebaseService"; 
+import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../conf/firebaseService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,7 +27,12 @@ export default function StudentList() {
     setLoading(true);
     try {
       const studentsData = await fetchStudents(); 
-      setStudents(studentsData);
+      const studentsWithLevels = await Promise.all(studentsData.map(async student => {
+        const groups = await fetchGroupsByIds(student.groups);
+        const highestLevel = getHighestLevel(groups);
+        return { ...student, highestLevel };
+      }));
+      setStudents(studentsWithLevels);
     } catch (error) {
       console.error("Error fetching students: ", error);
     }
@@ -76,6 +81,19 @@ export default function StudentList() {
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const levelsOrder = ["Nivel I", "Nivel II", "Nivel III", "Nivel IV"];
+
+  const getHighestLevel = (groups) => {
+    let highestLevelIndex = -1;
+    groups.forEach(group => {
+      const levelIndex = levelsOrder.indexOf(group.level);
+      if (levelIndex > highestLevelIndex) {
+        highestLevelIndex = levelIndex;
+      }
+    });
+    return highestLevelIndex !== -1 ? levelsOrder[highestLevelIndex] : "N/A";
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -102,6 +120,7 @@ export default function StudentList() {
             <tr>
               <th>Nombre</th>
               <th>Celular</th>
+              <th>Nivel</th>
               <th> </th>
             </tr>
           </thead>
@@ -110,6 +129,7 @@ export default function StudentList() {
               <tr key={index}>
                 <td>{student.name}</td>
                 <td>{student.phone}</td>
+                <td>{student.highestLevel}</td>
                 <td>
                   <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
                   <EditIcon onClick={() => handleOpenModal(student.id)} />
