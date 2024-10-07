@@ -122,8 +122,8 @@ export default function GroupDetails({ groupId, onBack }) {
                 </tr>
               ))}
               {femaleStudents.length > 0 && maleStudents.length > 0 && (
-                <tr>
-                  <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
+                <tr className="divider-row">
+                  <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>                  
                 </tr>
               )}
               {maleStudents.map((student) => (
@@ -304,6 +304,11 @@ const Table = styled.table`
     background-color: #f1f1f1;
     color: #000;
     text-align: left;
+  }
+
+  .divider-row td {
+    background-color: transparent;
+    border: none;
   }
 `;
 
