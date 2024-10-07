@@ -52,7 +52,6 @@ export default function GroupDetails({ groupId, onBack }) {
     let dates = [];
     let date = new Date(selectedYear, month, 1);
 
-  
     while (date.getDay() !== dayOfWeekIndex) {
       date.setDate(date.getDate() + 1);
     }
@@ -66,6 +65,9 @@ export default function GroupDetails({ groupId, onBack }) {
   };
 
   if (loading) return <Loading />;
+
+  const femaleStudents = students.filter(student => student.gender === "Mujer");
+  const maleStudents = students.filter(student => student.gender === "Hombre");
 
   return (
     <DetailsWrapper>
@@ -108,7 +110,23 @@ export default function GroupDetails({ groupId, onBack }) {
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => (
+              {femaleStudents.map((student) => (
+                <tr key={student.id}>
+                  <StudentName>{student.name}</StudentName>
+                  {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                    <AttendanceCell key={date.toString()}></AttendanceCell>
+                  ))}
+                  <PaymentStatus status={student.paymentStatus}>
+                    {student.paymentDate}
+                  </PaymentStatus>
+                </tr>
+              ))}
+              {femaleStudents.length > 0 && maleStudents.length > 0 && (
+                <tr>
+                  <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
+                </tr>
+              )}
+              {maleStudents.map((student) => (
                 <tr key={student.id}>
                   <StudentName>{student.name}</StudentName>
                   {getAttendanceDates(selectedMonth, group.day).map((date) => (
@@ -121,6 +139,10 @@ export default function GroupDetails({ groupId, onBack }) {
               ))}
             </tbody>
           </Table>
+          <Summary>
+            <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
+            <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
+          </Summary>
         </AttendanceControl>
 
         <ButtonContainer>
@@ -293,8 +315,19 @@ const AttendanceCell = styled.td`
   width: 20px;
 `;
 
+
 const PaymentStatus = styled.td`
   color: ${(props) => (props.status === "paid" ? "green" : "red")};
+`;
+
+const Summary = styled.div`
+  margin-top: 20px;
+  font-size: 16px;
+  color: #333;
+
+  p {
+    margin: 5px 0;
+  }
 `;
 
 const ButtonContainer = styled.div`
