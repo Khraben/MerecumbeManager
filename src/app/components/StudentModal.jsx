@@ -11,6 +11,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   const [additionalGroups, setAdditionalGroups] = useState([]);
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [gender, setGender] = useState(""); // Nuevo estado para género
+  const [paymentDate, setPaymentDate] = useState(""); // Nuevo estado para fecha de pago
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
 
@@ -49,13 +51,15 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setAdditionalGroups(studentData.groups.slice(1));
       setEmergencyName(studentData.emergencyName);
       setEmergencyPhone(studentData.emergencyPhone);
+      setGender(studentData.gender || ""); // Inicializar género
+      setPaymentDate(studentData.paymentDate || ""); // Inicializar fecha de pago
     } catch (error) {
       console.error("Error fetching student data:", error);
     }
   };
 
   const handleSave = async () => {
-    if (!name || !phone || !email || !emergencyName || !emergencyPhone || additionalGroups.includes("")) {
+    if (!name || !phone || !email || !emergencyName || !emergencyPhone || !gender || !paymentDate || additionalGroups.includes("")) {
       setError("Todos los campos son requeridos.");
       return;
     }
@@ -72,6 +76,10 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setError("Por favor ingresa un correo electrónico válido.");
       return;
     }
+    if (isNaN(paymentDate) || paymentDate < 1 || paymentDate > 30) {
+      setError("Por favor ingresa una fecha de pago válida (1-30).");
+      return;
+    }
     setError("");
   
     const primaryGroup = group === "" ? "INACTIVO" : group;
@@ -82,6 +90,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       email,
       emergencyName,
       emergencyPhone,
+      gender, // Incluir género
+      paymentDate, // Incluir fecha de pago
       groups: [primaryGroup, ...additionalGroups],
     };
   
@@ -109,6 +119,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setAdditionalGroups([]);
     setEmergencyName("");
     setEmergencyPhone("");
+    setGender(""); // Resetear género
+    setPaymentDate(""); // Resetear fecha de pago
     setError("");
   };
 
@@ -192,6 +204,10 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
               value={email}
               onChange={handleInputChange(setEmail)}
             />
+            <Select value={gender} onChange={handleInputChange(setGender)}>
+              <option value="Hombre">Hombre</option>
+              <option value="Mujer">Mujer</option>
+            </Select>
             <label>Contacto de Emergencia</label>
             <Input
               type="text"
@@ -210,6 +226,15 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                 }
               }}
               maxLength="9"
+            />            
+            <label>Fecha de Pago</label>
+            <Input
+              type="number"
+              placeholder="(1-30)"
+              value={paymentDate}
+              onChange={handleInputChange(setPaymentDate)}
+              min="1"
+              max="30"
             />
             <label>Grupos</label>
             <GroupContainer>
@@ -266,8 +291,8 @@ const ModalContainer = styled.div`
   padding: 20px;
   width: 400px;
   max-width: 90vw;
-  max-height: 60vh; /* Tamaño máximo del modal */
-  overflow-y: auto; /* Scrollbar cuando el contenido excede el tamaño */
+  max-height: 60vh;
+  overflow-y: auto; 
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1003;

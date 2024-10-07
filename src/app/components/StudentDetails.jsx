@@ -36,6 +36,7 @@ const StudentDetails = ({ studentId, onBack }) => {
         <p><strong>Nombre:</strong> {student.name}</p>
         <p><strong>Celular:</strong> {student.phone}</p>
         <p><strong>Correo:</strong> {student.email}</p>
+        <p><strong>Género:</strong> {student.gender}</p>
         <p><strong>Contacto de Emergencia:</strong> {student.emergencyName}</p>
         <p><strong>Teléfono de Emergencia:</strong> {student.emergencyPhone}</p>
         <p><strong>Grupos:</strong></p>
@@ -44,6 +45,7 @@ const StudentDetails = ({ studentId, onBack }) => {
             <li key={index}>{name}</li>
           ))}
         </GroupList>
+        <p><strong>Fecha de Pago:</strong> {student.paymentDate}</p>
       </DetailsContainer>
     </DetailsWrapper>
   );
