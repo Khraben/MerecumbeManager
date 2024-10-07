@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
-import StudentDetails from "../components/StudentDetails";
+import StudentDetails from "../components/StudentDetails"; 
 import Loading from "../components/Loading"; 
 import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../conf/firebaseService"; 
@@ -53,7 +53,7 @@ export default function StudentList() {
     setSelectedStudentId(studentId);
   };
 
-  const handleBack = () => {
+  const handleCloseDetailsModal = () => {
     setSelectedStudentId(null);
   };
 
@@ -98,10 +98,6 @@ export default function StudentList() {
     return <Loading />;
   }
 
-  if (selectedStudentId) {
-    return <StudentDetails studentId={selectedStudentId} onBack={handleBack} />;
-  }
-
   return (
     <Wrapper>
       <Title>Lista General de Alumnos</Title>
@@ -142,6 +138,11 @@ export default function StudentList() {
       </TableContainer>
       <AddButton onClick={() => handleOpenModal()}>Agregar Alumno</AddButton>
       <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} studentId={editingStudentId} />
+      <StudentDetails
+        isOpen={!!selectedStudentId}
+        onClose={handleCloseDetailsModal}
+        studentId={selectedStudentId}
+      />
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={handleCloseConfirmation}
