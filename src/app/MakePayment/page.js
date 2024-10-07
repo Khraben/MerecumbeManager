@@ -62,6 +62,16 @@ export default function MakePayment() {
     setTallerGroups(tallerGroups.map(group => group.name));
   };
 
+  const handleStudentChange = (e) => {
+    setSelectedStudent(e.target.value);
+    setSelectedMonth("");
+    setSpecifiedMonth(null);
+    setSelectedTaller("");
+    setAmount("");
+    setPaymentMethod("");
+    handleInputChange();
+  };
+
   const handleGenerateImage = async () => {
     if (!selectedStudent || !paymentMethod || !selectedMonth || !amount) {
       setErrorMessage("Por favor complete todos los campos.");
@@ -131,19 +141,18 @@ export default function MakePayment() {
         </ReceiptHeader>
         <ReceiptBody>
           <Label>Alumno</Label>
-          <Select value={selectedStudent} onChange={(e) => { setSelectedStudent(e.target.value); handleInputChange(); }}>
+          <Select value={selectedStudent} onChange={handleStudentChange}>
             <option value="">Seleccione un alumno</option>
             {students.map((student, index) => (
               <option key={index} value={student.name}>{student.name}</option>
             ))}
           </Select>
-
           <Label>Por concepto de</Label>
           <Select value={selectedMonth} onChange={handleMonthChange} disabled={!selectedStudent}>
             <option value="">Seleccione una opción...</option>
-            {["Mensualidad", "Clases Privadas", tallerGroups.length > 0 && "Taller"].filter(Boolean).map((month, index) => (
-              <option key={index} value={month}>{month}</option>
-            ))}
+            {groups.length > 0 && groups[0] !== "Grupo no encontrado" && <option value="Mensualidad">Mensualidad</option>}
+            <option value="Clases Privadas">Clases Privadas</option>
+            {tallerGroups.length > 0 && <option value="Taller">Taller</option>}
           </Select>
 
           {selectedMonth === "Mensualidad" && (
@@ -314,7 +323,7 @@ const ReceiptHeader = styled.div`
 const LogoContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 
   img {
     filter: invert(24%) sepia(100%) saturate(7472%) hue-rotate(223deg) brightness(91%) contrast(101%);
@@ -334,7 +343,7 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
-  padding: 10px;
+  padding: 5px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -347,13 +356,13 @@ const Input = styled.input`
   }
 
   @media (max-width: 480px) {
-    padding: 8px;
+    padding: 4px;
     font-size: 12px;
   }
 `;
 
 const StyledDatePicker = styled(DatePicker)`
-  padding: 10px;
+  padding: 5px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -364,13 +373,13 @@ const StyledDatePicker = styled(DatePicker)`
   }
 
   @media (max-width: 480px) {
-    padding: 8px;
+    padding: 4px;
     font-size: 12px;
   }
 `;
 
 const Select = styled.select`
-  padding: 10px;
+  padding: 5px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -382,7 +391,7 @@ const Select = styled.select`
   }
 
   @media (max-width: 480px) {
-    padding: 8px;
+    padding: 4px;
     font-size: 12px;
   }
 `;
@@ -398,9 +407,8 @@ const GroupList = styled.ul`
 
 const GroupItem = styled.li`
   flex: 1 1 calc(50% - 10px);
-  padding: 10px;
+  padding: 5px;
   font-size: 14px;
-  background-color: #f9f9f9;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -413,13 +421,13 @@ const GroupItem = styled.li`
 
   @media (max-width: 480px) {
     flex: 1 1 100%;
-    padding: 8px;
+    padding: 4px;
     font-size: 12px;
   }
 `;
 
 const Description = styled.p`
-  margin-top: 20px;
+  margin-top: 10px;
   font-size: 12px;
   color: #333;
   text-align: center;
@@ -489,7 +497,7 @@ const ErrorMessage = styled.p`
   color: red;
   font-size: 14px;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 5px;
 `;
 
 const Modal = styled.div`
