@@ -47,16 +47,16 @@ export const fetchStudentDetails = async (studentId) => {
   }
 
   const studentData = studentDoc.data();
-  const groupNamesPromises = studentData.groups.map(async (groupId, index) => {
+  const groupDetailsPromises = studentData.groups.map(async (groupId, index) => {
     if (index === 0 && groupId === "INACTIVO") {
-      return "INACTIVO";
+      return { name: "INACTIVO", level: "" };
     }
     const groupDoc = await getDoc(doc(db, "groups", groupId));
-    return groupDoc.exists() ? groupDoc.data().name : "Desconocido";
+    return groupDoc.exists() ? { name: groupDoc.data().name, level: groupDoc.data().level } : { name: "Desconocido", level: "" };
   });
 
-  const groupNames = await Promise.all(groupNamesPromises);
-  return { studentData, groupNames };
+  const groupDetails = await Promise.all(groupDetailsPromises);
+  return { studentData, groupDetails };
 };
 
 export const fetchStudentById = async (studentId) => {
