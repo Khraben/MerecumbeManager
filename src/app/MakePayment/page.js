@@ -24,7 +24,7 @@ export default function MakePayment() {
   const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedTaller, setSelectedTaller] = useState("");
-  const [specifiedMonth, setSpecifiedMonth] = useState(null); // Estado para almacenar el mes especificado
+  const [specifiedMonth, setSpecifiedMonth] = useState(null); 
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true); 

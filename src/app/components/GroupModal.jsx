@@ -175,19 +175,22 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const isTimeDisabled = (time) => {
     const selectedTime24 = convertTo24HourFormat(time);
     const [selectedHours, selectedMinutes] = selectedTime24.split(":").map(Number);
-
+    const selectedTimeInMinutes = selectedHours * 60 + selectedMinutes;
+  
     return existingGroups.some(group => {
       if (group.day !== day) return false;
-
+  
       const groupStart24 = convertTo24HourFormat(group.startTime);
       const groupEnd24 = convertTo24HourFormat(group.endTime);
       const [groupStartHours, groupStartMinutes] = groupStart24.split(":").map(Number);
       const [groupEndHours, groupEndMinutes] = groupEnd24.split(":").map(Number);
-      const selectedTimeInMinutes = selectedHours * 60 + selectedMinutes;
       const groupStartTimeInMinutes = groupStartHours * 60 + groupStartMinutes;
       const groupEndTimeInMinutes = groupEndHours * 60 + groupEndMinutes;
-
-      return selectedTimeInMinutes >= groupStartTimeInMinutes && selectedTimeInMinutes < groupEndTimeInMinutes;
+  
+      return (
+        selectedTimeInMinutes >= groupStartTimeInMinutes - 60 &&
+        selectedTimeInMinutes < groupEndTimeInMinutes
+      );
     });
   };
 
