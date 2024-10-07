@@ -205,6 +205,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
               onChange={handleInputChange(setEmail)}
             />
             <Select value={gender} onChange={handleInputChange(setGender)}>
+              <option value="">Seleccione un género</option>
               <option value="Hombre">Hombre</option>
               <option value="Mujer">Mujer</option>
             </Select>
