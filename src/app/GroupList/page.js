@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
-import GroupDetails from "../components/GroupDetails";
+import GroupDetails from "../components/GroupDetails"; 
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchGroups, deleteGroup } from "../conf/firebaseService";
@@ -48,7 +48,7 @@ export default function GroupList() {
     setSelectedGroupId(groupId);
   };
 
-  const handleBack = () => {
+  const handleCloseGroupDetails = () => {
     setSelectedGroupId(null);
   };
 
@@ -78,10 +78,6 @@ export default function GroupList() {
 
   if (loading) {
     return <Loading />;
-  }
-
-  if (selectedGroupId) {
-    return <GroupDetails groupId={selectedGroupId} onBack={handleBack} />;
   }
 
   return (
@@ -124,6 +120,11 @@ export default function GroupList() {
       </TableContainer>
       <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
       <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
+      <GroupDetails
+        isOpen={!!selectedGroupId}
+        onClose={handleCloseGroupDetails}
+        groupId={selectedGroupId}
+      />
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={handleCloseConfirmation}

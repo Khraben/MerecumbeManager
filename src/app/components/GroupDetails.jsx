@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import { fetchGroupDetails } from "../conf/firebaseService";
 import Loading from "./Loading";
 
-export default function GroupDetails({ groupId, onBack }) {
+const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [group, setGroup] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
 
   useEffect(() => {
-    fetchGroupDetailsData();
-  }, [groupId]);
+    if (isOpen) {
+      fetchGroupDetailsData();
+    }
+  }, [isOpen, groupId]);
 
   const fetchGroupDetailsData = async () => {
     setLoading(true);
@@ -64,95 +66,167 @@ export default function GroupDetails({ groupId, onBack }) {
     return dates;
   };
 
+  if (!isOpen) return null;
+
   if (loading) return <Loading />;
 
   const femaleStudents = students.filter(student => student.gender === "Mujer");
   const maleStudents = students.filter(student => student.gender === "Hombre");
 
   return (
-    <DetailsWrapper>
-      <BackButton onClick={onBack}>
-        <FaArrowLeft /> Volver
-      </BackButton>
-      <DetailsContainer>
-        <Title>CONTROL ASISTENCIA</Title>
-        <GroupName>{group.name.toUpperCase()}</GroupName>
-        <GroupInfo>
-          <Column>
-            <p><strong>Instructor:</strong> {group.instructor}</p>
-            <p><strong>Nivel:</strong> {group.level}</p>
-          </Column>
-          <Column>
-            <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
-            <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
-          </Column>
-        </GroupInfo>
+    <Overlay>
+      <ModalContainer>
+        <ModalHeader>
+          <CloseButton onClick={onClose}><FaTimes /></CloseButton>
+        </ModalHeader>
+        <ModalBody>
+          <DetailsWrapper>
+              <Title>CONTROL ASISTENCIA</Title>
+              <GroupName>{group.name.toUpperCase()}</GroupName>
+              <GroupInfo>
+                <Column>
+                  <p><strong>Instructor:</strong> {group.instructor}</p>
+                  <p><strong>Nivel:</strong> {group.level}</p>
+                </Column>
+                <Column>
+                  <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
+                  <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
+                </Column>
+              </GroupInfo>
 
-        <AttendanceControl>
-          <ControlTitle>Control de:</ControlTitle>
-          <SelectMonth
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          >
-            <option value={selectedMonth}>{selectedMonth}</option>
-          </SelectMonth>
+              <AttendanceControl>
+                <ControlTitle>Control de:</ControlTitle>
+                <SelectMonth
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                >
+                  <option value={selectedMonth}>{selectedMonth}</option>
+                </SelectMonth>
 
-          <Table>
-            <thead>
-              <tr>
-                <th>Nombre Alumno</th>
-                {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                  <th key={date.toString()} style={{ width: "20px" }}>
-                    {date.getDate()}
-                  </th>
-                ))}
-                <th>Fecha Pago</th>
-              </tr>
-            </thead>
-            <tbody>
-              {femaleStudents.map((student) => (
-                <tr key={student.id}>
-                  <StudentName>{student.name}</StudentName>
-                  {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                    <AttendanceCell key={date.toString()}></AttendanceCell>
-                  ))}
-                  <PaymentStatus status={student.paymentStatus}>
-                    {student.paymentDate}
-                  </PaymentStatus>
-                </tr>
-              ))}
-              {femaleStudents.length > 0 && maleStudents.length > 0 && (
-                <tr className="divider-row">
-                  <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>                  
-                </tr>
-              )}
-              {maleStudents.map((student) => (
-                <tr key={student.id}>
-                  <StudentName>{student.name}</StudentName>
-                  {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                    <AttendanceCell key={date.toString()}></AttendanceCell>
-                  ))}
-                  <PaymentStatus status={student.paymentStatus}>
-                    {student.paymentDate}
-                  </PaymentStatus>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-          <Summary>
-            <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
-            <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
-          </Summary>
-        </AttendanceControl>
-
-        <ButtonContainer>
-          <ActionButton>Recordar Clase</ActionButton>
-          <ActionButton>Pasar Asistencia</ActionButton>
-        </ButtonContainer>
-      </DetailsContainer>
-    </DetailsWrapper>
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Nombre Alumno</th>
+                      {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                        <th key={date.toString()} style={{ width: "20px" }}>
+                          {date.getDate()}
+                        </th>
+                      ))}
+                      <th>Fecha Pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {femaleStudents.map((student) => (
+                      <tr key={student.id}>
+                        <StudentName>{student.name}</StudentName>
+                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                          <AttendanceCell key={date.toString()}></AttendanceCell>
+                        ))}
+                        <PaymentStatus status={student.paymentStatus}>
+                          {student.paymentDate}
+                        </PaymentStatus>
+                      </tr>
+                    ))}
+                    {femaleStudents.length > 0 && maleStudents.length > 0 && (
+                      <tr className="divider-row">
+                        <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>                  
+                      </tr>
+                    )}
+                    {maleStudents.map((student) => (
+                      <tr key={student.id}>
+                        <StudentName>{student.name}</StudentName>
+                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                          <AttendanceCell key={date.toString()}></AttendanceCell>
+                        ))}
+                        <PaymentStatus status={student.paymentStatus}>
+                          {student.paymentDate}
+                        </PaymentStatus>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+                <Summary>
+                  <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
+                  <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
+                </Summary>
+              </AttendanceControl>
+              <ButtonContainer>
+                <ActionButton>Recordar Clase</ActionButton>
+                <ActionButton>Pasar Asistencia</ActionButton>
+              </ButtonContainer>
+          </DetailsWrapper>
+        </ModalBody>
+      </ModalContainer>
+    </Overlay>
   );
-}
+};
+
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+`;
+
+const ModalContainer = styled.div`
+  background-color: white;
+  padding: 20px;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1003;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 15px;
+  }
+
+  @media (max-width: 480px) {
+    width: 95%;
+    padding: 10px;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: right;
+  align-items: center;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #0b0f8b;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const ModalBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
 
 const DetailsWrapper = styled.div`
   width: 100%;
@@ -160,50 +234,6 @@ const DetailsWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   padding-top: 20px;
-`;
-
-const BackButton = styled.button`
-  padding: 10px 20px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #fff;
-  background-color: #0b0f8b;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #073e8a;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 16px;
-    font-size: 12px;
-  }
-`;
-
-const DetailsContainer = styled.div`
-  width: 100%;
-  max-width: 800px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-
-  @media (max-width: 768px) {
-    padding: 15px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 10px;
-  }
 `;
 
 const Title = styled.h2`
@@ -232,16 +262,18 @@ const GroupInfo = styled.div`
   justify-content: space-between;
   margin-bottom: 20px;
   text-align: left;
+  width: 90%;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
   }
 `;
 
 const Column = styled.div`
   flex: 1;
-  padding: 0 10px;
+  padding: 0 20px;
 
   p {
     margin-bottom: 5px;
@@ -320,7 +352,6 @@ const AttendanceCell = styled.td`
   width: 20px;
 `;
 
-
 const PaymentStatus = styled.td`
   color: ${(props) => (props.status === "paid" ? "green" : "red")};
 `;
@@ -365,3 +396,5 @@ const ActionButton = styled.button`
     font-size: 12px;
   }
 `;
+
+export default GroupDetails;
