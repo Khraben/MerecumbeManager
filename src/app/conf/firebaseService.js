@@ -101,7 +101,16 @@ export const fetchGroups = async () => {
     const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
     if (dayComparison !== 0) return dayComparison;
 
-    const timeComparison = new Date(`1970-01-01T${a.startTime}`).getTime() - new Date(`1970-01-01T${b.startTime}`).getTime();
+    const convertTo24Hour = (time) => {
+      const [hours, minutes] = time.match(/(\d+):(\d+)/).slice(1);
+      const period = time.match(/(AM|PM)/i)[1].toUpperCase();
+      let hours24 = parseInt(hours, 10);
+      if (period === "PM" && hours24 !== 12) hours24 += 12;
+      if (period === "AM" && hours24 === 12) hours24 = 0;
+      return `${hours24.toString().padStart(2, '0')}:${minutes}`;
+    };
+
+    const timeComparison = convertTo24Hour(a.startTime).localeCompare(convertTo24Hour(b.startTime));
     return timeComparison;
   });
 
