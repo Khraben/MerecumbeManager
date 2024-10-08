@@ -40,7 +40,9 @@ export default function Home() {
         <GroupList>
           {groups.length > 0 ? (
             groups.map((group, index) => (
-              <GroupItem key={index}>{group.name}</GroupItem>
+              <GroupItem key={index}>
+                {group.name}
+              </GroupItem>
             ))
           ) : (
             <NoGroupsMessage>No hay grupos</NoGroupsMessage>
@@ -56,6 +58,11 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const Section = styled.section`
@@ -73,6 +80,7 @@ const Section = styled.section`
 
   @media (max-width: 480px) {
     padding: 10px;
+    margin: 10px 0;
   }
 `;
 
@@ -111,16 +119,24 @@ const GroupList = styled.div`
 
 const GroupItem = styled.div`
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  background-color: #f0f0f0;
-  border-radius: 5px;
+  padding: 15px;
+  margin: 10px 0;
+  background-color: #f9f9f9;
+  border-radius: 10px;
   text-align: center;
   font-size: 18px;
   color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+
+  &:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.05);
+  }
 
   @media (max-width: 480px) {
     font-size: 16px;
+    padding: 10px;
   }
 `;
 

@@ -8,24 +8,18 @@ const Reports = () => {
     <Wrapper>
       <Title>Reportes</Title>
       <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
-      <Section>
-        <Subtitle>Ingresos</Subtitle>
-        <ReportContent>
-          <p>Genera un reporte detallado de los ingresos.</p>
-        </ReportContent>
-      </Section>
-      <Section>
+      <ReportTypeSection>
+        <Subtitle>Registro de Pagos</Subtitle>
+        <p>Genera un reporte detallado de los pagos.</p>
+      </ReportTypeSection>
+      <ReportTypeSection>
         <Subtitle>Morosos</Subtitle>
-        <ReportContent>
-          <p>Genera un reporte de los alumnos morosos.</p>
-        </ReportContent>
-      </Section>
-      <Section>
+        <p>Genera un reporte de los alumnos morosos.</p>
+      </ReportTypeSection>
+      <ReportTypeSection>
         <Subtitle>Asistencia</Subtitle>
-        <ReportContent>
-          <p>Genera un reporte de la asistencia de los alumnos.</p>
-        </ReportContent>
-      </Section>
+        <p>Genera un reporte de la asistencia de los alumnos.</p>
+      </ReportTypeSection>
     </Wrapper>
   );
 };
@@ -35,6 +29,11 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const Title = styled.h1`
@@ -61,7 +60,7 @@ const Description = styled.p`
   }
 `;
 
-const Section = styled.section`
+const ReportTypeSection = styled.section`
   width: 100%;
   max-width: 1200px;
   background: white;
@@ -69,6 +68,17 @@ const Section = styled.section`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin: 20px 0;
+  transition: background-color 0.3s, transform 0.3s;
+  cursor: pointer;
+
+  p {
+    text-align: center;
+  }
+
+  &:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.05);
+  }
 
   @media (max-width: 768px) {
     padding: 15px;
@@ -76,6 +86,7 @@ const Section = styled.section`
 
   @media (max-width: 480px) {
     padding: 10px;
+    margin: 10px 0;
   }
 `;
 
@@ -89,16 +100,6 @@ const Subtitle = styled.h2`
 
   @media (max-width: 480px) {
     font-size: 18px;
-  }
-`;
-
-const ReportContent = styled.div`
-  font-size: 16px;
-  color: #333;
-  text-align: center;
-
-  @media (max-width: 480px) {
-    font-size: 14px;
   }
 `;
 

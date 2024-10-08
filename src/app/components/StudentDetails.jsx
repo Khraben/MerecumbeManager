@@ -98,7 +98,7 @@ const ModalContainer = styled.div`
   width: 600px;
   height: 730px;
   max-width: 90vw;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow-y: auto; 
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
