@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchGroupsByIds } from "../conf/firebaseService";
+import { fetchStudents, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
 
 registerLocale("es", es);
 setDefaultLocale("es"); 
@@ -28,17 +28,20 @@ export default function MakePayment() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true); 
+  const [receiptNumber, setReceiptNumber] = useState(null);
   const receiptRef = useRef(null);
 
-  useEffect(() => {
-    const loadStudents = async () => {
-      setLoading(true);
-      const studentsData = await fetchStudents();
-      setStudents(studentsData);
-      setLoading(false);
-    };
+  const loadInitialData = async () => {
+    setLoading(true);
+    const studentsData = await fetchStudents();
+    setStudents(studentsData);
+    const lastReceiptNumber = await fetchLastReceiptNumber();
+    setReceiptNumber(lastReceiptNumber + 1);
+    setLoading(false);
+  };
 
-    loadStudents();
+  useEffect(() => {
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -89,7 +92,26 @@ export default function MakePayment() {
       link.download = 'recibo.png';
       link.click();
     }
+
+    const receiptData = {
+      studentId: students.find(s => s.name === selectedStudent).id,
+      paymentDate: new Date(),
+      specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
+      concept: selectedMonth,
+      amount,
+      receiptNumber,
+    };
+
+    await addReceipt(receiptData);
+
     setShowPreview(false);
+    loadInitialData();
+    setSelectedStudent("");
+    setSelectedMonth("");
+    setSpecifiedMonth(null);
+    setSelectedTaller("");
+    setAmount("");
+    setPaymentMethod("");
   };
 
   const handleCancelReceipt = () => {
@@ -136,7 +158,7 @@ export default function MakePayment() {
           <LogoContainer>
             <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
           </LogoContainer>
-          <h2>Recibo de Pago #0000</h2>
+          <h2>Recibo de Pago #{receiptNumber}</h2>
           <p>Fecha: {date}</p>
         </ReceiptHeader>
         <ReceiptBody>
@@ -203,7 +225,7 @@ export default function MakePayment() {
           </Select>
         </ReceiptBody>
         <Description>
-          *** Este recibo es por concepto de clases de baile en Merecumbé ***
+          *** Este recibo es por concepto de clases de baile en Merecumbé San Ramón ***
         </Description>
       </Receipt>
       {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
@@ -219,7 +241,7 @@ export default function MakePayment() {
                   <LogoContainer>
                     <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
                   </LogoContainer>
-                  <h2>Recibo de Pago #0000</h2>
+                  <h2>Recibo de Pago #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>
                 </ReceiptHeader>
                 <ReceiptBody>
@@ -256,7 +278,7 @@ export default function MakePayment() {
                   <p>{paymentMethod}</p>
                 </ReceiptBody>
                 <Description>
-                  *** Este recibo es por concepto de clases de baile en Merecumbé ***
+                  *** Este recibo es por concepto de clases de baile en Merecumbé San Ramón ***
                 </Description>
               </Receipt>
               <ButtonContainer>
@@ -370,6 +392,15 @@ const StyledDatePicker = styled(DatePicker)`
 
   &:focus {
     border-color: #0b0f8b;
+  }
+
+  &:hover {
+    border-color: #ff5733;
+  }
+
+  .react-datepicker__day--selected {
+    background-color: #33c1ff;
+    color: white;
   }
 
   @media (max-width: 480px) {

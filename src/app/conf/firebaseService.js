@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch} from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch} from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -16,6 +16,24 @@ export const addStudent = async (student) => {
 export const addGroup = async (newGroup) => {
   await addDoc(collection(db, "groups"), newGroup);
  };
+
+ export const addReceipt = async (receiptData) => {
+  const receiptsCollection = collection(db, 'receipts');
+  await addDoc(receiptsCollection, receiptData);
+
+  const metadataDoc = doc(db, 'metadata', 'receiptNumber');
+  const lastReceiptNumber = receiptData.receiptNumber;
+  await setDoc(metadataDoc, { lastReceiptNumber });
+};
+
+export const addAttendance = async (attendanceData) => {
+  try {
+    await addDoc(collection(db, "attendances"), attendanceData);
+  } catch (e) {
+    console.error("Error adding attendance: ", e);
+    throw e;
+  }
+};
 
  //FETCH
 export const fetchInstructors = async () => {
@@ -195,6 +213,72 @@ export const fetchExistingGroups = async () => {
  return groupsData;
 };
 
+export const fetchLastReceiptNumber = async () => {
+  const metadataDoc = doc(db, 'metadata', 'receiptNumber');
+  const metadataSnapshot = await getDoc(metadataDoc);
+
+  if (metadataSnapshot.exists()) {
+    const data = metadataSnapshot.data();
+    return data.lastReceiptNumber;
+  } else {
+    // Si el documento no existe, inicializamos el número de recibo en 0
+    await setDoc(metadataDoc, { lastReceiptNumber: 0 });
+    return 0;
+  }
+};
+
+export const fetchReceipts = async () => {
+  try {
+    const receiptsCollection = collection(db, "receipts");
+    const querySnapshot = await getDocs(receiptsCollection);
+    
+    const receiptsData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    return receiptsData;
+  } catch (e) {
+    console.error("Error fetching receipts: ", e);
+    throw e;
+  }
+};
+
+export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
+  try {
+    const receiptsCollection = collection(db, "receipts");
+    const q = query(receiptsCollection, where("studentId", "==", studentId), where("concept", "==", concept));
+    const querySnapshot = await getDocs(q);
+    
+    const receiptsData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    return receiptsData;
+  } catch (e) {
+    console.error("Error fetching receipts: ", e);
+    throw e;
+  }
+};
+
+export const fetchAttendances = async () => {
+  try {
+    const attendancesCollection = collection(db, "attendances");
+    const querySnapshot = await getDocs(attendancesCollection);
+    
+    const attendancesData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    return attendancesData;
+  } catch (e) {
+    console.error("Error fetching attendances: ", e);
+    throw e;
+  }
+};
+
 //UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -248,6 +332,16 @@ export const deleteGroup = async (groupId) => {
     console.log("Grupo eliminado con ID: ", groupId);
   } catch (e) {
     console.error("Error al eliminar grupo: ", e);
+    throw e;
+  }
+};
+
+export const deleteAttendance = async (attendanceId) => {
+  try {
+    const attendanceDoc = doc(db, "attendances", attendanceId);
+    await deleteDoc(attendanceDoc);
+  } catch (e) {
+    console.error("Error deleting attendance: ", e);
     throw e;
   }
 };
