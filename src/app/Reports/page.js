@@ -1,25 +1,40 @@
 "use client";
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-
+import PaymentHistory from "../components/PaymentHistory";
 const Reports = () => {
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  // Función para manejar el clic en el apartado "Registro de Pagos"
+  const handleShowPaymentHistory = () => {
+    setShowPaymentHistory(true);
+  };
+
+ 
   return (
     <Wrapper>
-      <Title>Reportes</Title>
-      <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
-      <ReportTypeSection>
-        <Subtitle>Registro de Pagos</Subtitle>
-        <p>Genera un reporte detallado de los pagos.</p>
-      </ReportTypeSection>
-      <ReportTypeSection>
-        <Subtitle>Morosos</Subtitle>
-        <p>Genera un reporte de los alumnos morosos.</p>
-      </ReportTypeSection>
-      <ReportTypeSection>
-        <Subtitle>Asistencia</Subtitle>
-        <p>Genera un reporte de la asistencia de los alumnos.</p>
-      </ReportTypeSection>
+      
+      {showPaymentHistory ? (
+        // Si el estado es true, muestra el historial de pagos
+        <PaymentHistory />
+      ) : (
+        
+        <>
+          <Title>Reportes</Title>
+          <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
+          <ReportTypeSection onClick={handleShowPaymentHistory}>
+            <Subtitle>Registro de Pagos</Subtitle>
+            <p>Genera un reporte detallado de los pagos.</p>
+          </ReportTypeSection>
+          <ReportTypeSection>
+            <Subtitle>Morosos</Subtitle>
+            <p>Genera un reporte de los alumnos morosos.</p>
+          </ReportTypeSection>
+          <ReportTypeSection>
+            <Subtitle>Asistencia</Subtitle>
+            <p>Genera un reporte de la asistencia de los alumnos.</p>
+          </ReportTypeSection>
+        </>
+      )}
     </Wrapper>
   );
 };
