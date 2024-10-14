@@ -2,22 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
+
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
-  // Función para manejar el clic en el apartado "Registro de Pagos"
+
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
 
- 
+  const handleBackToReports = () => {
+    setShowPaymentHistory(false);
+  };
+
   return (
     <Wrapper>
-      
       {showPaymentHistory ? (
-        // Si el estado es true, muestra el historial de pagos
-        <PaymentHistory />
+        <PaymentHistory onBack={handleBackToReports} />
       ) : (
-        
         <>
           <Title>Reportes</Title>
           <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>

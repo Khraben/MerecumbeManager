@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch} from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy} from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -230,25 +230,8 @@ export const fetchLastReceiptNumber = async () => {
 export const fetchReceipts = async () => {
   try {
     const receiptsCollection = collection(db, "receipts");
-    const querySnapshot = await getDocs(receiptsCollection);
-    
-    const receiptsData = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    
-    return receiptsData;
-  } catch (e) {
-    console.error("Error fetching receipts: ", e);
-    throw e;
-  }
-};
-
-export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
-  try {
-    const receiptsCollection = collection(db, "receipts");
-    const q = query(receiptsCollection, where("studentId", "==", studentId), where("concept", "==", concept));
-    const querySnapshot = await getDocs(q);
+    const receiptsQuery = query(receiptsCollection, orderBy("paymentDate"));
+    const querySnapshot = await getDocs(receiptsQuery);
     
     const receiptsData = querySnapshot.docs.map(doc => ({
       id: doc.id,

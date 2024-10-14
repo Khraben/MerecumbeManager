@@ -5,9 +5,9 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
 import Loading from "./Loading"; 
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt} from 'react-icons/fa';
 
-const PaymentHistory = () => {
+const PaymentHistory = ({ onBack }) => {
   const [payments, setPayments] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedConcept, setSelectedConcept] = useState('');
@@ -93,59 +93,59 @@ const PaymentHistory = () => {
     <Wrapper>
       <Title>Historial de Pagos</Title>
       <FilterSection>
-        <label>
-          Alumno:
-          <input
+        <SearchContainer>
+          <SearchInput
             type="text"
             value={selectedStudent}
             onChange={(e) => setSelectedStudent(e.target.value)}
-            placeholder="Nombre del alumno"
+            placeholder="Filtrar por nombre..."
           />
-        </label>
-        <label>
-          Concepto:
-          <input
+          <SearchIcon />
+        </SearchContainer>
+        <SearchContainer>
+          <SearchInput
             type="text"
             value={selectedConcept}
             onChange={(e) => setSelectedConcept(e.target.value)}
-            placeholder="Ej. Mensualidad"
+            placeholder="Filtrar por concepto..."
           />
-        </label>
-        <label>
-          Fecha específica:
+          <SearchIcon />
+        </SearchContainer>
+        <SearchContainer>
           <StyledDatePicker
             selected={selectedMonth}
             onChange={(date) => setselectedMonth(date)}
             dateFormat="dd/MM/yyyy"
-            locale={ es }
-            placeholderText="Seleccione una fecha"
+            locale={es}
+            placeholderText="Seleccione fecha"
           />
-        </label>
+          <CalendarIcon />
+        </SearchContainer>
       </FilterSection>
       <TableContainer>
         <PaymentTable>
           <thead>
             <tr>
+              <th># Recibo</th>
               <th>Alumno</th>
-              <th>Fecha de Pago</th>
-              <th>Detalles</th>
+              <th>Fecha Pagó</th>
               <th>Concepto</th>
+              <th>Detalles</th>
               <th>Monto</th>
-              <th>Número de Recibo</th>
             </tr>
           </thead>
           <tbody>
             {currentPayments.map((payment, index) => (
               <tr key={index}>
+                <td>{payment.receiptNumber}</td>
                 <td>{payment.studentName}</td>
                 <td>{payment.paymentDate && payment.paymentDate.toDate
                       ? payment.paymentDate.toDate().toLocaleDateString("es-CR")
                       : new Date(payment.paymentDate).toLocaleDateString("es-CR")}
                 </td>
-                <td>{payment.specification ? payment.specification : "sin detalles"}</td>
                 <td>{payment.concept}</td>
+                <td>{payment.specification ? payment.specification : "Sin detalles"}</td>
                 <td>{payment.amount}</td>
-                <td>{payment.receiptNumber}</td>
               </tr>
             ))}
           </tbody>
@@ -153,9 +153,9 @@ const PaymentHistory = () => {
       </TableContainer>
       <Pagination>
         {currentPage > 1 && (
-          <PageButton onClick={() => paginate(currentPage - 1)}>
+          <PageIcon onClick={() => paginate(currentPage - 1)}>
             <FaArrowLeft />
-          </PageButton>
+          </PageIcon>
         )}
         {getPageNumbers().map((page) => (
           <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
@@ -163,14 +163,15 @@ const PaymentHistory = () => {
           </PageButton>
         ))}
         {currentPage < totalPages && (
-          <PageButton onClick={() => paginate(currentPage + 1)}>
+          <PageIcon onClick={() => paginate(currentPage + 1)}>
             <FaArrowRight />
-          </PageButton>
+          </PageIcon>
         )}
       </Pagination>
+      <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
-};
+}
 
 const Wrapper = styled.div`
   width: 100%;
@@ -197,12 +198,11 @@ const FilterSection = styled.div`
   display: flex;
   justify-content: space-around;
   width: 100%;
-  label {
-    margin-right: 10px;
-  }
-  input {
-    padding: 5px;
-    margin-left: 5px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -298,9 +298,124 @@ const PageButton = styled.button`
   }
 `;
 
+const PageIcon = styled.div`
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #0b0f8b;
+  cursor: pointer;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+
+const BackButton = styled.button`
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #0b0f8b;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+`;
+
 const StyledDatePicker = styled(DatePicker)`
-  padding: 5px;
-  margin-left: 5px;
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  outline: none;
+  background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 220px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+  position: relative;
+
+  @media (max-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 10px 40px 10px 15px; /
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  outline: none;
+  background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 35px 8px 12px; 
+    font-size: 12px;
+  }
+`;
+
+const SearchIcon = styled(FaSearch)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
+`;
+
+const CalendarIcon = styled(FaCalendarAlt)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
 `;
 
 export default PaymentHistory;
