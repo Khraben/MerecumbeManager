@@ -22,7 +22,7 @@ const Reports = () => {
           <Title>Reportes</Title>
           <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
-            <Subtitle>Registro de Pagos</Subtitle>
+            <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
           <ReportTypeSection>
