@@ -128,7 +128,7 @@ const PaymentHistory = ({ onBack }) => {
             <tr>
               <th># Recibo</th>
               <th>Alumno</th>
-              <th>Fecha Pagó</th>
+              <th>Fecha de Pago</th>
               <th>Concepto</th>
               <th>Detalles</th>
               <th>Monto</th>
@@ -198,7 +198,6 @@ const FilterSection = styled.div`
   display: flex;
   justify-content: space-around;
   width: 100%;
-  flex-wrap: wrap;
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -220,13 +219,12 @@ const PaymentTable = styled.table`
   border-collapse: collapse;
   background-color: transparent;
   border-radius: 8px;
-
+ 
   thead {
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
     color: white;
-    z-index: 1;
   }
 
   th, td {
@@ -353,9 +351,9 @@ const StyledDatePicker = styled(DatePicker)`
   font-size: 14px;
   border: 2px solid #0b0f8b;
   border-radius: 5px;
-  outline: none;
   background-color: transparent;
-
+  z-index: 5;
+  position: relative;  /* Asegura que el input tenga control sobre el calendario */
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
@@ -417,5 +415,4 @@ const CalendarIcon = styled(FaCalendarAlt)`
     font-size: 16px;
   }
 `;
-
 export default PaymentHistory;
