@@ -101,10 +101,15 @@ export default function MakePayment() {
           setErrorMessage("No se pudo obtener el correo del alumno.");
           return;
         }
+
+        const studentName = student.name.replace(/\s+/g, '');
+
         setLoading(true);
         await axios.post('/api/send-email', {
           email: studentEmail, 
           image: dataUrl.split(',')[1],
+          studentName: studentName,
+          receiptNumber: receiptNumber,
         });
 
         console.log('Correo enviado con éxito');

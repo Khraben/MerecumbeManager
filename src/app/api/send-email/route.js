@@ -1,10 +1,9 @@
 import nodemailer from 'nodemailer';
 
 export async function POST(request) {
-  const { email, image } = await request.json();
-
-  if (!email || !image) {
-    return new Response(JSON.stringify({ message: 'Faltan datos: email o imagen' }), {
+  const { email, image, studentName, receiptNumber } = await request.json();
+  if (!email || !image || !studentName || !receiptNumber) {
+    return new Response(JSON.stringify({ message: 'Faltan datos: email, imagen, nombre del alumno o número de recibo' }), {
       status: 400,
       headers: {
         'Content-Type': 'application/json',
@@ -20,14 +19,16 @@ export async function POST(request) {
     },
   });
 
+  const fileName = `Recibo-MerecumbéSR-${studentName}-Ref${receiptNumber}.png`;
+
   const mailOptions = {
-    from: '"Pago Completado" <justinalonsomm@gmail.com>', 
+    from: 'Merecumbé San Ramón' + '<' + process.env.NEXT_PUBLIC_EMAIL_USER + '>', 
     to: email,                                           
     subject: 'Comprobante de Pago',
-    text: 'Adjunto encontrarás tu comprobante de pago.',
+    text: 'Adjunto encontrarás tu comprobante de pago.\n\n¡Gracias por ser parte de nuestra academia!',
     attachments: [
       {
-        filename: 'recibo.png',
+        filename: fileName,
         content: image, 
         encoding: 'base64',
       },
@@ -43,7 +44,6 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error('Error al enviar el correo:', error);
     return new Response(JSON.stringify({ message: 'Error al enviar el correo', error }), {
       status: 500,
       headers: {
