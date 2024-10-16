@@ -339,7 +339,7 @@ const Receipt = styled.div`
   border: 1px solid #ccc;
   border-radius: 10px;
   padding: 20px;
-  background-color: #fff;
+  background-color: #dddddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin: 0 auto; 
 `;
@@ -419,7 +419,7 @@ const StyledDatePicker = styled(DatePicker)`
 
   .react-datepicker__day--selected {
     background-color: #33c1ff;
-    color: white;
+    color: #dddddd;
   }
 
   @media (max-width: 480px) {
@@ -496,7 +496,7 @@ const GenerateButton = styled.button`
   padding: 10px 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -522,7 +522,7 @@ const CancelButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   background-color: #999;
-  color: #fff;
+  color: #dddddd;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -564,7 +564,7 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
+  background: #dddddd;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

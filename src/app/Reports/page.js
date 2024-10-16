@@ -79,7 +79,7 @@ const Description = styled.p`
 const ReportTypeSection = styled.section`
   width: 100%;
   max-width: 1200px;
-  background: white;
+  background: #dddddd;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;

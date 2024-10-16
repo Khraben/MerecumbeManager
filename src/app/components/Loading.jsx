@@ -44,7 +44,7 @@ const SpinnerContainer = styled.div`
 
 const FaSpinnerIcon = styled(FaSpinner)`
   font-size: 50px;
-  color: #fff;
+  color: #dddddd;
   animation: ${spin} 2s linear infinite;
 `;
 

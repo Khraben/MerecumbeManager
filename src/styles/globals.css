@@ -59,6 +59,7 @@ input::placeholder {
   }
 }
 
+/*Reducciones de tamaño para el Watermark*/
 @media (max-width: 768px) {
   img[alt="Marca de Agua"] {
     max-width: 100%;

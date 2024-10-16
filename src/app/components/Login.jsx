@@ -71,7 +71,7 @@ const Background = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  color: white;
+  color: #dddddd;
   margin: 0;
   padding: 0;
   font-family: 'Quicksand', sans-serif;
@@ -137,7 +137,7 @@ const Input = styled.input`
 
 const Button = styled.button`
   padding: 10px;
-  background-color: #fff;
+  background-color: #dddddd;
   color: #0b0f8b;
   border: none;
   border-radius: 5px;

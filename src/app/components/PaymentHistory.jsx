@@ -223,6 +223,7 @@ const TableContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  background-color: rgba(221, 221, 221, 1);
 `;
 const PaymentTable = styled.table`
   width: 100%;
@@ -235,7 +236,7 @@ const PaymentTable = styled.table`
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
-    color: white;
+    color: #dddddd;
   }
 
   th, td {
@@ -284,7 +285,7 @@ const PageButton = styled.button`
   margin: 0 5px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
   border: none;
   border-radius: 5px;
@@ -331,7 +332,7 @@ const BackButton = styled.button`
   margin-top: 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
