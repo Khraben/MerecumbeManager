@@ -11,7 +11,9 @@ const PaymentHistory = ({ onBack }) => {
   const [payments, setPayments] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedConcept, setSelectedConcept] = useState('');
-  const [selectedMonth, setselectedMonth] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true); 
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,22 +57,26 @@ const PaymentHistory = ({ onBack }) => {
         payment.concept && payment.concept.toLowerCase().includes(selectedConcept.toLowerCase())
       );
     }
-    if (selectedMonth) {
-      const selectedDate = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), selectedMonth.getDate());
+    if (startDate) {
       filtered = filtered.filter(payment => {
         const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
-        return paymentDate.toDateString() === selectedDate.toDateString();
+        return paymentDate >= startDate && (!endDate || paymentDate <= endDate);
       });
     }
     setFilteredPayments(filtered);
-  }, [selectedStudent, selectedConcept, selectedMonth, payments]);
+  }, [selectedStudent, selectedConcept, startDate, endDate, payments]);
 
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+    setIsEndDateDisabled(!date);
+    if (!date) {
+      setEndDate(null);
+    }
+  };
   const indexOfLastPayment = currentPage * paymentsPerPage;
   const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
   const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
-
   const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const getPageNumbers = () => {
@@ -81,14 +87,11 @@ const PaymentHistory = ({ onBack }) => {
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-
     return pages;
   };
-
   if (loading) {
     return <Loading />;
   }
-
   return (
     <Wrapper>
       <Title>Historial de Pagos</Title>
@@ -113,14 +116,27 @@ const PaymentHistory = ({ onBack }) => {
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
-            selected={selectedMonth}
-            onChange={(date) => setselectedMonth(date)}
+            selected={startDate}
+            onChange={handleStartDateChange}
             dateFormat="dd/MM/yyyy"
             locale={es}
-            placeholderText="Seleccione fecha"
+            placeholderText="Fecha de inicio"
           />
           <CalendarIcon />
         </SearchContainer>
+        {startDate && (
+          <SearchContainer>
+            <StyledDatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              dateFormat="dd/MM/yyyy"
+              locale={es}
+              placeholderText="Fecha de fin"
+              disabled={isEndDateDisabled}
+            />
+            <CalendarIcon />
+          </SearchContainer>
+        )}
       </FilterSection>
       <TableContainer>
         <PaymentTable>
@@ -172,14 +188,12 @@ const PaymentHistory = ({ onBack }) => {
     </Wrapper>
   );
 }
-
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 `;
-
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -192,7 +206,6 @@ const Title = styled.h1`
     font-size: 20px;
   }
 `;
-
 const FilterSection = styled.div`
   margin-bottom: 20px;
   display: flex;
@@ -204,7 +217,6 @@ const FilterSection = styled.div`
     align-items: center;
   }
 `;
-
 const TableContainer = styled.div`
   width: 100%;
   padding: 0 20px;
@@ -212,7 +224,6 @@ const TableContainer = styled.div`
   justify-content: center;
   align-items: flex-start;
 `;
-
 const PaymentTable = styled.table`
   width: 100%;
   max-width: 1200px;
@@ -263,13 +274,11 @@ const PaymentTable = styled.table`
     }
   }
 `;
-
 const Pagination = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 20px;
 `;
-
 const PageButton = styled.button`
   padding: 10px 15px;
   margin: 0 5px;
@@ -295,7 +304,6 @@ const PageButton = styled.button`
     font-size: 12px;
   }
 `;
-
 const PageIcon = styled.div`
   padding: 10px 15px;
   margin: 0 5px;
@@ -318,7 +326,6 @@ const PageIcon = styled.div`
     font-size: 12px;
   }
 `;
-
 const BackButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
@@ -344,7 +351,6 @@ const BackButton = styled.button`
     font-size: 12px;
   }
 `;
-
 const StyledDatePicker = styled(DatePicker)`
   width: 100%;
   padding: 10px 15px;
@@ -359,7 +365,6 @@ const StyledDatePicker = styled(DatePicker)`
     font-size: 12px;
   }
 `;
-
 const SearchContainer = styled.div`
   display: flex;
   align-items: center;
@@ -374,7 +379,6 @@ const SearchContainer = styled.div`
     align-items: center;
   }
 `;
-
 const SearchInput = styled.input`
   width: 100%;
   padding: 10px 40px 10px 15px; /
@@ -389,7 +393,6 @@ const SearchInput = styled.input`
     font-size: 12px;
   }
 `;
-
 const SearchIcon = styled(FaSearch)`
   position: absolute;
   right: 30px; 
@@ -402,7 +405,6 @@ const SearchIcon = styled(FaSearch)`
     font-size: 16px;
   }
 `;
-
 const CalendarIcon = styled(FaCalendarAlt)`
   position: absolute;
   right: 30px; 
