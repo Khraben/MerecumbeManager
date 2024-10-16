@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy} from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp} from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -255,6 +255,22 @@ export const fetchReceipts = async () => {
     console.error("Error fetching receipts: ", e);
     throw e;
   }
+};
+
+export const fetchPaymentsToday = async () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const paymentsQuery = query(
+    collection(db, "receipts"),
+    where("paymentDate", ">=", Timestamp.fromDate(today)),
+    where("paymentDate", "<", Timestamp.fromDate(tomorrow))
+  );
+
+  const querySnapshot = await getDocs(paymentsQuery);
+  return querySnapshot.docs.map(doc => doc.data());
 };
 
 export const fetchAttendances = async () => {
