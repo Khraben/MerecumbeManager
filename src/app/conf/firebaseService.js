@@ -26,12 +26,15 @@ export const addGroup = async (newGroup) => {
   await setDoc(metadataDoc, { lastReceiptNumber });
 };
 
-export const addAttendance = async (attendanceData) => {
+export const addAttendance = async (date, groupId, studentId) => {
   try {
-    await addDoc(collection(db, "attendances"), attendanceData);
-  } catch (e) {
-    console.error("Error adding attendance: ", e);
-    throw e;
+    await addDoc(collection(db, 'attendance'), {
+      date: date,
+      groupId: groupId,
+      studentId: studentId,
+    });
+  } catch (error) {
+    console.error("Error adding attendance: ", error);
   }
 };
 
@@ -264,7 +267,7 @@ export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
 
 export const fetchAttendances = async () => {
   try {
-    const attendancesCollection = collection(db, "attendances");
+    const attendancesCollection = collection(db, "attendance");
     const querySnapshot = await getDocs(attendancesCollection);
     
     const attendancesData = querySnapshot.docs.map(doc => ({
@@ -278,7 +281,25 @@ export const fetchAttendances = async () => {
     throw e;
   }
 };
-
+export const fetchAttendancesByGroup = async (groupId) => {
+  try {
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId));
+    const querySnapshot = await getDocs(q);
+    const attendances = {};
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      attendances[doc.id] = {
+        groupId: data.groupId,
+        studentId: data.studentId,
+        date: data.date
+      };
+    });
+    return attendances;
+  } catch (error) {
+    console.error("Error fetching attendances: ", error);
+    return {};
+  }
+};
 //UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -338,10 +359,23 @@ export const deleteGroup = async (groupId) => {
 
 export const deleteAttendance = async (attendanceId) => {
   try {
-    const attendanceDoc = doc(db, "attendances", attendanceId);
+    const attendanceDoc = doc(db, "attendance", attendanceId);
     await deleteDoc(attendanceDoc);
   } catch (e) {
     console.error("Error deleting attendance: ", e);
     throw e;
   }
 };
+export const findAttendance = async (groupId, studentId, date) => {
+  try {
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', date));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    return querySnapshot.docs[0].id;
+  } catch (error) {
+    console.error("Error finding attendance: ", error);
+    return null;
+  }
+}

@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes } from "react-icons/fa";
-import { fetchGroupDetails } from "../conf/firebaseService";
+import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance } from "../conf/firebaseService";
 import Loading from "./Loading";
-
+import { Timestamp } from "firebase/firestore";
 const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [group, setGroup] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [attendance, setAttendance] = useState({});
 
   useEffect(() => {
     if (isOpen) {
+      fetchAttendancesData();
       fetchGroupDetailsData();
     }
   }, [isOpen, groupId]);
@@ -29,6 +32,18 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       setLoading(false);
     } catch (error) {
       console.error("Error al obtener detalles del grupo:", error);
+    }
+  };
+
+  const fetchAttendancesData = async () => {
+    setAttendanceLoading(true);
+    try {
+      const attendances = await fetchAttendancesByGroup(groupId);
+      setAttendance(attendances);
+      setAttendanceLoading(false);
+    } catch (error) {
+      console.error("Error fetching attendances: ", error);
+      setAttendanceLoading(false);
     }
   };
 
@@ -66,9 +81,55 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     return dates;
   };
 
+  const handleAttendanceClick = async (studentId, date) => {
+    const timestampDate = Timestamp.fromDate(date);
+    try {
+      const attendanceId = await findAttendance(groupId, studentId, date);
+      if (attendanceId) {
+        await deleteAttendance(attendanceId);
+        setAttendance((prevAttendance) => {
+          const updatedAttendance = { ...prevAttendance };
+          if (updatedAttendance[attendanceId]) {
+            delete updatedAttendance[attendanceId];
+          }
+          return updatedAttendance;
+        });
+      } else {
+        await addAttendance(date, groupId, studentId);
+        const newAttendanceId = await findAttendance(groupId, studentId, date);
+        
+        if (!newAttendanceId) {
+          throw new Error("Attendance ID not found after adding attendance");
+        }
+        setAttendance((prevAttendance) => ({
+          ...prevAttendance,
+          [newAttendanceId]: {
+            groupId,
+            studentId,
+            date: timestampDate,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Error handling attendance click: ", error);
+    }
+  };
+  
+
+  const getAttendanceCellColor = (studentId, date) => {
+    const timestampDate = Timestamp.fromDate(date);
+    for (const [docId, attendanceRecord] of Object.entries(attendance)) {
+      if (attendanceRecord.studentId === studentId) {
+        if (attendanceRecord.date.isEqual(timestampDate)) {
+          return "green";
+        }
+      }
+    }
+    return "white";
+  };
   if (!isOpen) return null;
 
-  if (loading) return <Loading />;
+  if (loading || attendanceLoading) return <Loading />;
 
   const femaleStudents = students.filter(student => student.gender === "Mujer");
   const maleStudents = students.filter(student => student.gender === "Hombre");
@@ -120,7 +181,11 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                       <tr key={student.id}>
                         <StudentName>{student.name}</StudentName>
                         {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                          <AttendanceCell key={date.toString()}></AttendanceCell>
+                          <AttendanceCell
+                            key={date.toString()}
+                            style={{ backgroundColor: getAttendanceCellColor(student.id, date) }}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                          ></AttendanceCell>
                         ))}
                         <PaymentStatus status={student.paymentStatus}>
                           {student.paymentDate}
@@ -136,7 +201,11 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                       <tr key={student.id}>
                         <StudentName>{student.name}</StudentName>
                         {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                          <AttendanceCell key={date.toString()}></AttendanceCell>
+                          <AttendanceCell
+                            key={date.toString()}
+                            style={{ backgroundColor: getAttendanceCellColor(student.id, date) }}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                          ></AttendanceCell>
                         ))}
                         <PaymentStatus status={student.paymentStatus}>
                           {student.paymentDate}
@@ -227,7 +296,6 @@ const ModalBody = styled.div`
   flex-direction: column;
   gap: 10px;
 `;
-
 
 const DetailsWrapper = styled.div`
   width: 100%;
@@ -351,6 +419,7 @@ const StudentName = styled.td`
 
 const AttendanceCell = styled.td`
   width: 20px;
+  cursor: pointer;
 `;
 
 const PaymentStatus = styled.td`
