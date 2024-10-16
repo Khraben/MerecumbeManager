@@ -32,40 +32,41 @@ export default function RootLayout({ children }) {
               <main
                 id="content"
                 style={{
-                  position: "relative", // Necesario para centrar la imagen
-                  paddingLeft: isSideNavbarOpen ? "250px" : "50px",
+                  position: "relative", 
+                  paddingLeft: isSideNavbarOpen ? "240px" : "40px",
                   transition: "padding-left 0.3s",
                   marginTop: "70px",
                   paddingTop: "20px",
                   display: "flex",
                   justifyContent: "center",
                   minHeight: "calc(100vh - 70px)",
-                  zIndex: 1, // Asegura que el contenido esté sobre la marca de agua
+                  zIndex: 1, 
                 }}
               >
-                {/* Contenedor para la marca de agua */}
                 <div
                   style={{
                     position: "absolute",
-                    top: "45%",
-                    left: "57.5%",
-                    transform: "translate(-50%, -50%)",
+                    top: 0,
+                    left: isSideNavbarOpen ? "230px" : "30px",
+                    width: `calc(100% - ${isSideNavbarOpen ? "230px" : "30px"})`,
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                     zIndex: 0, 
-                    opacity: 0.1, 
+                    opacity: 0.3, 
                   }}
                 >
                   <img
                     src="/logo.svg"
                     alt="Marca de Agua"
                     style={{
-                      width: "75vh",
-                      height: "auto",
+                      width: "auto", 
+                      height: "80vh",
                     }}
                     draggable="false"
                   />
                 </div>
-
-                {/* El contenido principal */}
                 <div style={{ zIndex: 1 }}>{children}</div>
               </main>
             </>
