@@ -297,7 +297,9 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background-color: white;
+  margin-left: 80px;
+  margin-right: 20px;
+  background-color: #dddddd;
   padding: 20px;
   width: 400px;
   max-width: 90vw;
@@ -396,7 +398,7 @@ const ModalFooter = styled.div`
 
 const CancelButton = styled.button`
   background-color: #999;
-  color: #fff;
+  color: #dddddd;
   padding: 10px;
   border: none;
   border-radius: 5px;
@@ -420,7 +422,7 @@ const CancelButton = styled.button`
 
 const SaveButton = styled.button`
   background-color: #0b0f8b;
-  color: #fff;
+  color: #dddddd;
   padding: 10px;
   border: none;
   border-radius: 5px;

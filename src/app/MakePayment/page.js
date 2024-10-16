@@ -9,10 +9,11 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
+import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
+import axios from 'axios'; 
 
 registerLocale("es", es);
-setDefaultLocale("es"); 
+setDefaultLocale("es");
 
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
@@ -85,33 +86,57 @@ export default function MakePayment() {
   };
 
   const handleConfirmReceipt = async () => {
-    if (receiptRef.current) {
-      const dataUrl = await toPng(receiptRef.current);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'recibo.png';
-      link.click();
+    try {
+      if (receiptRef.current) {
+        const dataUrl = await toPng(receiptRef.current);
+        
+        const student = students.find(s => s.name === selectedStudent);
+        if (!student) {
+          setErrorMessage("No se pudo encontrar el alumno.");
+          return;
+        }
+
+        const studentEmail = await fetchStudentEmail(student.id); 
+        if (!studentEmail) {
+          setErrorMessage("No se pudo obtener el correo del alumno.");
+          return;
+        }
+
+        const studentName = student.name.replace(/\s+/g, '');
+
+        setLoading(true);
+        await axios.post('/api/send-email', {
+          email: studentEmail, 
+          image: dataUrl.split(',')[1],
+          studentName: studentName,
+          receiptNumber: receiptNumber,
+        });
+
+        console.log('Correo enviado con éxito');
+      }
+
+      const receiptData = {
+        studentId: students.find(s => s.name === selectedStudent).id,
+        paymentDate: new Date(),
+        specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
+        concept: selectedMonth,
+        amount: `₡${amount}`,
+        receiptNumber,
+      };
+
+      await addReceipt(receiptData);
+      setLoading(false);
+      setShowPreview(false);
+      loadInitialData();
+      setSelectedStudent("");
+      setSelectedMonth("");
+      setSpecifiedMonth(null);
+      setSelectedTaller("");
+      setAmount("");
+      setPaymentMethod("");
+    } catch (error) {
+      console.error('Error al confirmar y enviar el recibo:', error);
     }
-
-    const receiptData = {
-      studentId: students.find(s => s.name === selectedStudent).id,
-      paymentDate: new Date(),
-      specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
-      concept: selectedMonth,
-      amount,
-      receiptNumber,
-    };
-
-    await addReceipt(receiptData);
-
-    setShowPreview(false);
-    loadInitialData();
-    setSelectedStudent("");
-    setSelectedMonth("");
-    setSpecifiedMonth(null);
-    setSelectedTaller("");
-    setAmount("");
-    setPaymentMethod("");
   };
 
   const handleCancelReceipt = () => {
@@ -156,7 +181,7 @@ export default function MakePayment() {
       <Receipt ref={receiptRef}>
         <ReceiptHeader>
           <LogoContainer>
-            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
           </LogoContainer>
           <h2>Recibo de Pago #{receiptNumber}</h2>
           <p>Fecha: {date}</p>
@@ -185,7 +210,7 @@ export default function MakePayment() {
                   <GroupItem key={index}>{group}</GroupItem>
                 ))}
               </GroupList>
-              <Label>Especificación</Label>
+              <Label>Detalle</Label>
               <StyledDatePicker
                 selected={specifiedMonth}
                 onChange={(date) => setSpecifiedMonth(date)}
@@ -199,7 +224,7 @@ export default function MakePayment() {
 
           {selectedMonth === "Taller" && (
             <>
-              <Label>Especificación</Label>
+              <Label>Detalle</Label>
               <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
                 <option value="">Seleccione un taller...</option>
                 {tallerGroups.map((taller, index) => (
@@ -221,7 +246,6 @@ export default function MakePayment() {
             <option value="">Seleccione una forma de pago</option>
             <option value="SINPE">SINPE</option>
             <option value="Efectivo">Efectivo</option>
-            <option value="Transferencia">Transferencia</option>
           </Select>
         </ReceiptBody>
         <Description>
@@ -239,7 +263,7 @@ export default function MakePayment() {
               <Receipt ref={receiptRef}>
                 <ReceiptHeader>
                   <LogoContainer>
-                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
                   </LogoContainer>
                   <h2>Recibo de Pago #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>
@@ -259,14 +283,14 @@ export default function MakePayment() {
                           <GroupItem key={index}>{group}</GroupItem>
                         ))}
                       </GroupList>
-                      <Label>Especificación</Label>
+                      <Label>Detalle</Label>
                       <p>{specifiedMonth ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" })) : ""}</p>
                     </>
                   )}
 
                   {selectedMonth === "Taller" && (
                     <>
-                      <Label>Especificación</Label>
+                      <Label>Detalle</Label>
                       <p>{selectedTaller}</p>
                     </>
                   )}
@@ -320,7 +344,7 @@ const Receipt = styled.div`
   border: 1px solid #ccc;
   border-radius: 10px;
   padding: 20px;
-  background-color: #fff;
+  background-color: #dddddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin: 0 auto; 
 `;
@@ -400,7 +424,7 @@ const StyledDatePicker = styled(DatePicker)`
 
   .react-datepicker__day--selected {
     background-color: #33c1ff;
-    color: white;
+    color: #dddddd;
   }
 
   @media (max-width: 480px) {
@@ -477,7 +501,7 @@ const GenerateButton = styled.button`
   padding: 10px 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -503,7 +527,7 @@ const CancelButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   background-color: #999;
-  color: #fff;
+  color: #dddddd;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -545,7 +569,7 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
+  background: #dddddd;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

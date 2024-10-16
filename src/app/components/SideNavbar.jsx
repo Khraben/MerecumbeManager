@@ -132,7 +132,7 @@ const ToggleButton = styled.button`
   top: 10px;
   left: 10px;
   background-color: #0b0f8b;
-  color: white;
+  color: #dddddd;
   border: none;
   padding: 10px;
   cursor: pointer;
@@ -152,7 +152,7 @@ const Tooltip = styled.span`
   visibility: hidden;
   width: 100px;
   background-color: #0b0f8b;
-  color: white;
+  color: #dddddd;
   text-align: center;
   border-radius: 6px;
   padding: 5px 0;
@@ -200,7 +200,7 @@ const HiddenLinkContainer = styled.div`
 
 const HiddenLink = styled.button`
   background-color: #0b0f8b;
-  color: white;
+  color: #dddddd;
   border: none;
   padding: 10px;
   cursor: pointer;
@@ -253,7 +253,7 @@ const NavItem = styled.li`
 `;
 
 const StyledLink = styled.a`
-  color: white;
+  color: #dddddd;
   text-decoration: none;
   font-weight: bold;
   display: flex;
@@ -266,7 +266,7 @@ const StyledLink = styled.a`
   z-index: 1000; 
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(221, 221, 221, 0.2);
   }
 
   @media (max-width: 480px) {
@@ -282,7 +282,7 @@ const StyledLink = styled.a`
 const LogoutButton = styled.button`
   background: none;
   border: none;
-  color: white;
+  color: #dddddd;
   cursor: pointer;
   font-weight: bold;
   width: calc(100%); 
@@ -296,7 +296,7 @@ const LogoutButton = styled.button`
   transition: background-color 0.3s ease-in-out;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(221, 221, 221, 0.2);
     color: red;
   }
 

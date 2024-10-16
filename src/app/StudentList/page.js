@@ -178,7 +178,7 @@ const AddButton = styled.button`
   margin-top: 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -208,6 +208,11 @@ const TableContainer = styled.div`
   overflow-x: auto;
   overflow-y: auto;
   max-height: 500px;
+  background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 
 const Table = styled.table`
@@ -221,7 +226,7 @@ const Table = styled.table`
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
-    color: white;
+    color: #dddddd;
     z-index: 1;
   }
 

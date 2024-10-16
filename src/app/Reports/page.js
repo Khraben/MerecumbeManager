@@ -2,27 +2,28 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
+
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
-  // Función para manejar el clic en el apartado "Registro de Pagos"
+
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
 
- 
+  const handleBackToReports = () => {
+    setShowPaymentHistory(false);
+  };
+
   return (
     <Wrapper>
-      
       {showPaymentHistory ? (
-        // Si el estado es true, muestra el historial de pagos
-        <PaymentHistory />
+        <PaymentHistory onBack={handleBackToReports} />
       ) : (
-        
         <>
           <Title>Reportes</Title>
           <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
-            <Subtitle>Registro de Pagos</Subtitle>
+            <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
           <ReportTypeSection>
@@ -72,13 +73,15 @@ const Description = styled.p`
 
   @media (max-width: 480px) {
     font-size: 14px;
+    word-wrap: break-word;
+    width: 70%;
   }
 `;
 
 const ReportTypeSection = styled.section`
   width: 100%;
   max-width: 1200px;
-  background: white;
+  background: #dddddd;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 20px;
@@ -88,6 +91,7 @@ const ReportTypeSection = styled.section`
 
   p {
     text-align: center;
+    word-wrap: break-word; 
   }
 
   &:hover {
@@ -97,11 +101,13 @@ const ReportTypeSection = styled.section`
 
   @media (max-width: 768px) {
     padding: 15px;
+    margin: 15px 0;
   }
 
   @media (max-width: 480px) {
     padding: 10px;
     margin: 10px 0;
+    max-width: 75%;
   }
 `;
 

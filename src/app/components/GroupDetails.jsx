@@ -244,7 +244,9 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background-color: white;
+  margin-left: 80px;
+  margin-right: 20px;
+  background-color: #dddddd;
   padding: 20px;
   width: 600px;
   height: 730px;
@@ -398,7 +400,7 @@ const Table = styled.table`
 
   th {
     background-color: #0b0f8b;
-    color: #fff;
+    color: #dddddd;
   }
 
   td {
@@ -446,7 +448,7 @@ const ActionButton = styled.button`
   padding: 10px 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;

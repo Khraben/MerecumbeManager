@@ -29,18 +29,46 @@ export default function RootLayout({ children }) {
           {isLoggedIn ? (
             <>
               <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
-              <main id="content"
+              <main
+                id="content"
                 style={{
-                  paddingLeft: isSideNavbarOpen ? "250px" : "50px",
+                  position: "relative", 
+                  paddingLeft: isSideNavbarOpen ? "240px" : "40px",
                   transition: "padding-left 0.3s",
-                  marginTop: "70px", 
+                  marginTop: "70px",
                   paddingTop: "20px",
+                  marginLeft: "20px",
                   display: "flex",
-                  justifyContent: "center", 
-                  minHeight: "calc(100vh - 70px)"
+                  justifyContent: "center",
+                  minHeight: "calc(100vh - 70px)",
+                  zIndex: 1, 
                 }}
               >
-                {children}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: isSideNavbarOpen ? "230px" : "30px",
+                    width: `calc(100% - ${isSideNavbarOpen ? "230px" : "30px"})`,
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 0, 
+                    opacity: 0.3, 
+                  }}
+                >
+                  <img
+                    src="/logo.svg"
+                    alt="Marca de Agua"
+                    style={{
+                      width: "auto", 
+                      height: "80vh",
+                    }}
+                    draggable="false"
+                  />
+                </div>
+                <div style={{ zIndex: 1 }}>{children}</div>
               </main>
             </>
           ) : (

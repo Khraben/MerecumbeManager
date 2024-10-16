@@ -5,22 +5,26 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
 import Loading from "./Loading"; 
+import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt} from 'react-icons/fa';
 
-const PaymentHistory = () => {
+const PaymentHistory = ({ onBack }) => {
   const [payments, setPayments] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedConcept, setSelectedConcept] = useState('');
-  const [selectedMonth, setselectedMonth] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true); 
-  const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const [paymentsPerPage] = useState(10); // Cantidad de pagos por página
+  const [currentPage, setCurrentPage] = useState(1);
+  const paymentsPerPage = 10;
+  const maxPageButtons = 4;
+
   useEffect(() => {
     const loadPayments = async () => {
-    setLoading(true); // Iniciar la carga
+      setLoading(true); 
       try {
         const allPayments = await fetchReceipts();
-        // Obtener los nombres de los estudiantes
         const paymentsWithStudentNames = await Promise.all(allPayments.map(async (payment) => {
           const studentData = await fetchStudentById(payment.studentId);
           return {
@@ -29,151 +33,183 @@ const PaymentHistory = () => {
           };
         }));
         setPayments(paymentsWithStudentNames);
-        setFilteredPayments(paymentsWithStudentNames); // Inicialmente mostrar todos los pagos
+        setFilteredPayments(paymentsWithStudentNames);
       } catch (error) {
         console.error("Error al cargar los pagos: ", error);
-      }finally{
-        setLoading(false); // Finalizar la carga
+      } finally {
+        setLoading(false); 
       }
     };
 
     loadPayments();
   }, []);
-  // Filtrar pagos cuando se cambian los filtros de alumno o fecha
+
   useEffect(() => {
-      let filtered = payments;
-      // Filtro por nombre del alumno
-      if (selectedStudent) {
-        filtered = filtered.filter(payment => 
-          payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
-        );
-      }
-      // Filtro por concepto
-      if (selectedConcept) {
-        filtered = filtered.filter(payment => 
-          payment.concept && payment.concept.toLowerCase().includes(selectedConcept.toLowerCase())
-        );
-      }
-     // Filtro por fecha seleccionada
-    if (selectedMonth) {
-        const selectedDate = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), selectedMonth.getDate());
-        filtered = filtered.filter(payment => {
+    let filtered = payments;
+
+    if (selectedStudent) {
+      filtered = filtered.filter(payment => 
+        payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
+      );
+    }
+    if (selectedConcept) {
+      filtered = filtered.filter(payment => 
+        payment.concept && payment.concept.toLowerCase().includes(selectedConcept.toLowerCase())
+      );
+    }
+    if (startDate) {
+      filtered = filtered.filter(payment => {
         const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
-        return paymentDate.toDateString() === selectedDate.toDateString();
-    });
+        return paymentDate >= startDate && (!endDate || paymentDate <= new Date(endDate).setHours(23, 59, 59, 999));
+      });
+    }
+    setFilteredPayments(filtered);
+  }, [selectedStudent, selectedConcept, startDate, endDate, payments]);
+
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+    setIsEndDateDisabled(!date);
+    if (!date) {
+      setEndDate(null);
+    }
+  };
+  const indexOfLastPayment = currentPage * paymentsPerPage;
+  const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
+  const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    const endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+  if (loading) {
+    return <Loading />;
   }
-      setFilteredPayments(filtered);
-      setCurrentPage(1);
-    }, [selectedStudent, selectedConcept, selectedMonth, payments]);
-
-
-    const indexOfLastPayment = currentPage * paymentsPerPage;
-    const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
-    const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
-    // Calcular el número de páginas
-    const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
-    const nextPage = () => {
-      if (currentPage < totalPages) {
-        setCurrentPage(currentPage + 1);
-      }
-    };
-    const prevPage = () => {
-      if (currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-    };
-    if (loading) {
-        return <Loading />; // Mostrar el spinner mientras se carga
-      }
   return (
     <Wrapper>
       <Title>Historial de Pagos</Title>
-      {/* Filtros */}
       <FilterSection>
-        <label>
-            Alumno:
-            <input
+        <SearchContainer>
+          <SearchInput
             type="text"
             value={selectedStudent}
             onChange={(e) => setSelectedStudent(e.target.value)}
-            placeholder="Nombre del alumno"
-            />
-        </label>
-        <label>
-            Concepto:
-            <input
+            placeholder="Filtrar por nombre..."
+          />
+          <SearchIcon />
+        </SearchContainer>
+        <SearchContainer>
+          <SearchInput
             type="text"
             value={selectedConcept}
             onChange={(e) => setSelectedConcept(e.target.value)}
-            placeholder="Ej. Mensualidad"
-            />
-        </label>
-        <label>
-            Fecha específica:
-            <StyledDatePicker
-            selected={selectedMonth}
-            onChange={(date) => setselectedMonth(date)}
-            dateFormat="dd/MM/yyyy"
-            locale={ es }
-            placeholderText="Seleccione una fecha"
+            placeholder="Filtrar por concepto..."
           />
-        </label>
-    </FilterSection>
-      {/* Tabla de pagos */}
-      <PaymentTable>
-        <thead>
-          <tr>
-            <th>Alumno</th>
-            <th>Fecha de Pago</th>
-            <th>Detalles</th>
-            <th>Concepto</th>
-            <th>Monto</th>
-            <th>Número de Recibo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentPayments.map((payment, index) => (
-            <tr key={index}>
-              <td>{payment.studentName}</td>
-              <td>{payment.paymentDate && payment.paymentDate.toDate
-                    ? payment.paymentDate.toDate().toLocaleDateString("es-CR")
-                    : new Date(payment.paymentDate).toLocaleDateString("es-CR")}
-              </td>
-              <td>{payment.specification? payment.specification:"sin detalles"}</td>
-              <td>{payment.concept}</td>
-              <td>{payment.amount}</td>
-              <td>{payment.receiptNumber}</td>
+          <SearchIcon />
+        </SearchContainer>
+        <SearchContainer>
+          <StyledDatePicker
+            selected={startDate}
+            onChange={handleStartDateChange}
+            dateFormat="dd/MM/yyyy"
+            locale={es}
+            placeholderText="Fecha de inicio"
+          />
+          <CalendarIcon />
+        </SearchContainer>
+        {startDate && (
+          <SearchContainer>
+            <StyledDatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              dateFormat="dd/MM/yyyy"
+              locale={es}
+              placeholderText="Fecha de fin"
+              disabled={isEndDateDisabled}
+            />
+            <CalendarIcon />
+          </SearchContainer>
+        )}
+      </FilterSection>
+      <TableContainer>
+        <PaymentTable>
+          <thead>
+            <tr>
+              <th># Recibo</th>
+              <th>Alumno</th>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Detalle</th>
+              <th>Monto</th>
             </tr>
-          ))}
-        </tbody>
-      </PaymentTable>
-      {/* Paginación */}
+          </thead>
+          <tbody>
+            {currentPayments.map((payment, index) => (
+              <tr key={index}>
+                <td>{payment.receiptNumber}</td>
+                <td>{payment.studentName}</td>
+                <td>{payment.paymentDate && payment.paymentDate.toDate
+                      ? payment.paymentDate.toDate().toLocaleDateString("es-CR")
+                      : new Date(payment.paymentDate).toLocaleDateString("es-CR")}
+                </td>
+                <td>{payment.concept}</td>
+                <td>{payment.specification ? payment.specification : "Sin detalles"}</td>
+                <td>{payment.amount}</td>
+              </tr>
+            ))}
+          </tbody>
+        </PaymentTable>
+      </TableContainer>
       <Pagination>
-        <button onClick={prevPage} disabled={currentPage === 1}>Anterior</button>
-        <span>Página {currentPage} de {totalPages}</span>
-        <button onClick={nextPage} disabled={currentPage === totalPages}>Siguiente</button>
+        {currentPage > 1 && (
+          <PageIcon onClick={() => paginate(currentPage - 1)}>
+            <FaArrowLeft />
+          </PageIcon>
+        )}
+        {getPageNumbers().map((page) => (
+          <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
+            {page}
+          </PageButton>
+        ))}
+        {currentPage < totalPages && (
+          <PageIcon onClick={() => paginate(currentPage + 1)}>
+            <FaArrowRight />
+          </PageIcon>
+        )}
       </Pagination>
+      <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
-};
-
+}
 const Wrapper = styled.div`
-  padding: 20px;
-  background-color: #f9f9f9;
-`;
-const Pagination = styled.div`
-  margin-top: 20px;
+  width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  button {
-    padding: 10px;
-    margin: 0 5px;
-    cursor: pointer;
-    &:disabled {
-      background-color: #ddd;
-      cursor: not-allowed;
-    }
+  padding: 10px;
+
+  @media (max-width: 480px) {
+    padding: 5px;
+  }
+`;
+const Title = styled.h1`
+  font-size: 24px;
+  color: #0b0f8b;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+    margin-bottom: 10px;
   }
 `;
 const FilterSection = styled.div`
@@ -181,39 +217,224 @@ const FilterSection = styled.div`
   display: flex;
   justify-content: space-around;
   width: 100%;
-  label {
-    margin-right: 10px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
   }
-  input {
-    padding: 5px;
-    margin-left: 5px;
+`;
+const TableContainer = styled.div`
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
   }
 `;
 const PaymentTable = styled.table`
   width: 100%;
+  max-width: 1200px;
   border-collapse: collapse;
-  margin-top: 20px;
+  background-color: transparent;
+  border-radius: 8px;
+ 
+  thead {
+    position: sticky;
+    top: 0;
+    background-color: #0b0f8b;
+    color: #dddddd;
+  }
+
   th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: center;
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
   }
+
   th {
-    background-color: #f4f4f4;
-    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 0.1em;
   }
-  tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+
+  td {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    th, td {
+      font-size: 12px;
+      padding: 12px 15px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    margin-left: 160px;
+    
+    th, td {
+      font-size: 10px;
+      padding: 10px 12px;
+    }
   }
 `;
-const Title = styled.h1`
-  font-size: 24px;
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+
+  @media (max-width: 480px) {
+    margin-top: 10px;
+  }
+`;
+const PageButton = styled.button`
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #dddddd;
+  background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+const PageIcon = styled.div`
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 14px;
+  font-weight: bold;
   color: #0b0f8b;
-  margin-bottom: 20px;
-  text-align: center;
+  cursor: pointer;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+const BackButton = styled.button`
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #dddddd;
+  background-color: #0b0f8b;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 12px;
+    margin-top: 10px;
+  }
 `;
 const StyledDatePicker = styled(DatePicker)`
-  padding: 5px;
-  margin-left: 5px;
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  background-color: transparent;
+  z-index: 5;
+  position: relative; 
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 220px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+  position: relative;
+
+  @media (max-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 10px;
+  }
+`;
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  outline: none;
+  background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 35px 8px 12px; 
+    font-size: 12px;
+  }
+`;
+const SearchIcon = styled(FaSearch)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
+`;
+const CalendarIcon = styled(FaCalendarAlt)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
 `;
 export default PaymentHistory;

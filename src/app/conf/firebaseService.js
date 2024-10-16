@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch} from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp} from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -92,6 +92,18 @@ export const fetchStudentById = async (studentId) => {
   } catch (e) {
     console.error("Error fetching student by ID: ", e);
     throw e;
+  }
+};
+
+export const fetchStudentEmail = async (studentId) => {
+  const studentRef = doc(db, 'students', studentId); 
+  const studentSnap = await getDoc(studentRef);
+
+  if (studentSnap.exists()) {
+    return studentSnap.data().email; 
+  } else {
+    console.log("No se encontró el alumno con el ID proporcionado");
+    return null;
   }
 };
 
@@ -233,7 +245,8 @@ export const fetchLastReceiptNumber = async () => {
 export const fetchReceipts = async () => {
   try {
     const receiptsCollection = collection(db, "receipts");
-    const querySnapshot = await getDocs(receiptsCollection);
+    const receiptsQuery = query(receiptsCollection, orderBy("paymentDate"));
+    const querySnapshot = await getDocs(receiptsQuery);
     
     const receiptsData = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -247,22 +260,20 @@ export const fetchReceipts = async () => {
   }
 };
 
-export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
-  try {
-    const receiptsCollection = collection(db, "receipts");
-    const q = query(receiptsCollection, where("studentId", "==", studentId), where("concept", "==", concept));
-    const querySnapshot = await getDocs(q);
-    
-    const receiptsData = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    
-    return receiptsData;
-  } catch (e) {
-    console.error("Error fetching receipts: ", e);
-    throw e;
-  }
+export const fetchPaymentsToday = async () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const paymentsQuery = query(
+    collection(db, "receipts"),
+    where("paymentDate", ">=", Timestamp.fromDate(today)),
+    where("paymentDate", "<", Timestamp.fromDate(tomorrow))
+  );
+
+  const querySnapshot = await getDocs(paymentsQuery);
+  return querySnapshot.docs.map(doc => doc.data());
 };
 
 export const fetchAttendances = async () => {
@@ -320,8 +331,19 @@ export const updateGroup = async (groupId, updatedGroup) => {
 //DELETE
 export const deleteStudent = async (studentId) => {
   try {
+    const attendanceQuery = query(collection(db, "attendance"), where("studentId", "==", studentId));
+    const attendanceSnapshot = await getDocs(attendanceQuery);
+    const attendanceDeletions = attendanceSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(attendanceDeletions);
+
+    const receiptsQuery = query(collection(db, "receipts"), where("studentId", "==", studentId));
+    const receiptsSnapshot = await getDocs(receiptsQuery);
+    const receiptsDeletions = receiptsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(receiptsDeletions);
+
     const studentRef = doc(db, "students", studentId);
     await deleteDoc(studentRef);
+
     console.log("Estudiante eliminado con ID: ", studentId);
   } catch (e) {
     console.error("Error al eliminar estudiante: ", e);

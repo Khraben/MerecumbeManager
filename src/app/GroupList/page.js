@@ -109,9 +109,11 @@ export default function GroupList() {
                 <td>{group.instructor}</td>
                 <td>{group.level}</td>
                 <td>
-                  <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                  <EditIcon onClick={() => handleOpenModal(group.id)} />
-                  <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
+                  <IconContainer>
+                    <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
+                    <EditIcon onClick={() => handleOpenModal(group.id)} />
+                    <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
+                  </IconContainer>
                 </td>
               </tr>
             ))}
@@ -140,6 +142,11 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const Title = styled.h1`
@@ -160,7 +167,7 @@ const AddButton = styled.button`
   margin-top: 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -190,6 +197,11 @@ const TableContainer = styled.div`
   overflow-x: auto;
   overflow-y: auto;
   max-height: 500px;
+  background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 
 const Table = styled.table`
@@ -203,7 +215,7 @@ const Table = styled.table`
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
-    color: white;
+    color: #dddddd;
     z-index: 1;
   }
 
@@ -251,6 +263,10 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -276,6 +292,16 @@ const SearchIcon = styled(FaSearch)`
 
   @media (max-width: 480px) {
     font-size: 16px;
+  }
+`;
+
+const IconContainer = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  @media (max-width: 480px) {
+    justify-content: space-between;
   }
 `;
 

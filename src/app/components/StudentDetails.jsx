@@ -93,7 +93,9 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background-color: white;
+  margin-left: 80px;
+  margin-right: 20px;
+  background-color: #dddddd;
   padding: 20px;
   width: 600px;
   height: 730px;
