@@ -98,7 +98,7 @@ export default function MakePayment() {
       paymentDate: new Date(),
       specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
       concept: selectedMonth,
-      amount,
+      amount: `₡${amount}`,
       receiptNumber,
     };
 
@@ -185,7 +185,7 @@ export default function MakePayment() {
                   <GroupItem key={index}>{group}</GroupItem>
                 ))}
               </GroupList>
-              <Label>Especificación</Label>
+              <Label>Detalle</Label>
               <StyledDatePicker
                 selected={specifiedMonth}
                 onChange={(date) => setSpecifiedMonth(date)}
@@ -199,7 +199,7 @@ export default function MakePayment() {
 
           {selectedMonth === "Taller" && (
             <>
-              <Label>Especificación</Label>
+              <Label>Detalle</Label>
               <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
                 <option value="">Seleccione un taller...</option>
                 {tallerGroups.map((taller, index) => (
@@ -221,7 +221,6 @@ export default function MakePayment() {
             <option value="">Seleccione una forma de pago</option>
             <option value="SINPE">SINPE</option>
             <option value="Efectivo">Efectivo</option>
-            <option value="Transferencia">Transferencia</option>
           </Select>
         </ReceiptBody>
         <Description>
@@ -259,14 +258,14 @@ export default function MakePayment() {
                           <GroupItem key={index}>{group}</GroupItem>
                         ))}
                       </GroupList>
-                      <Label>Especificación</Label>
+                      <Label>Detalle</Label>
                       <p>{specifiedMonth ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" })) : ""}</p>
                     </>
                   )}
 
                   {selectedMonth === "Taller" && (
                     <>
-                      <Label>Especificación</Label>
+                      <Label>Detalle</Label>
                       <p>{selectedTaller}</p>
                     </>
                   )}

@@ -144,9 +144,9 @@ const PaymentHistory = ({ onBack }) => {
             <tr>
               <th># Recibo</th>
               <th>Alumno</th>
-              <th>Fecha de Pago</th>
+              <th>Fecha</th>
               <th>Concepto</th>
-              <th>Detalles</th>
+              <th>Detalle</th>
               <th>Monto</th>
             </tr>
           </thead>
