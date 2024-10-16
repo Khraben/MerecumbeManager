@@ -282,8 +282,19 @@ export const updateGroup = async (groupId, updatedGroup) => {
 //DELETE
 export const deleteStudent = async (studentId) => {
   try {
+    const attendanceQuery = query(collection(db, "attendance"), where("studentId", "==", studentId));
+    const attendanceSnapshot = await getDocs(attendanceQuery);
+    const attendanceDeletions = attendanceSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(attendanceDeletions);
+
+    const receiptsQuery = query(collection(db, "receipts"), where("studentId", "==", studentId));
+    const receiptsSnapshot = await getDocs(receiptsQuery);
+    const receiptsDeletions = receiptsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(receiptsDeletions);
+
     const studentRef = doc(db, "students", studentId);
     await deleteDoc(studentRef);
+
     console.log("Estudiante eliminado con ID: ", studentId);
   } catch (e) {
     console.error("Error al eliminar estudiante: ", e);
