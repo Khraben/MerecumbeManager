@@ -92,6 +92,18 @@ export const fetchStudentById = async (studentId) => {
   }
 };
 
+export const fetchStudentEmail = async (studentId) => {
+  const studentRef = doc(db, 'students', studentId); 
+  const studentSnap = await getDoc(studentRef);
+
+  if (studentSnap.exists()) {
+    return studentSnap.data().email; 
+  } else {
+    console.log("No se encontró el alumno con el ID proporcionado");
+    return null;
+  }
+};
+
 export const fetchGroups = async () => {
   const instructorsSnapshot = await getDocs(collection(db, "instructors"));
   const instructorsMap = {};

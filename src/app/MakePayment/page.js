@@ -9,10 +9,11 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
+import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
+import axios from 'axios'; 
 
 registerLocale("es", es);
-setDefaultLocale("es"); 
+setDefaultLocale("es");
 
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
@@ -85,33 +86,52 @@ export default function MakePayment() {
   };
 
   const handleConfirmReceipt = async () => {
-    if (receiptRef.current) {
-      const dataUrl = await toPng(receiptRef.current);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'recibo.png';
-      link.click();
+    try {
+      if (receiptRef.current) {
+        const dataUrl = await toPng(receiptRef.current);
+        
+        const student = students.find(s => s.name === selectedStudent);
+        if (!student) {
+          setErrorMessage("No se pudo encontrar el alumno.");
+          return;
+        }
+
+        const studentEmail = await fetchStudentEmail(student.id); 
+        if (!studentEmail) {
+          setErrorMessage("No se pudo obtener el correo del alumno.");
+          return;
+        }
+        setLoading(true);
+        await axios.post('/api/send-email', {
+          email: studentEmail, 
+          image: dataUrl.split(',')[1],
+        });
+
+        console.log('Correo enviado con éxito');
+      }
+
+      const receiptData = {
+        studentId: students.find(s => s.name === selectedStudent).id,
+        paymentDate: new Date(),
+        specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
+        concept: selectedMonth,
+        amount: `₡${amount}`,
+        receiptNumber,
+      };
+
+      await addReceipt(receiptData);
+      setLoading(false);
+      setShowPreview(false);
+      loadInitialData();
+      setSelectedStudent("");
+      setSelectedMonth("");
+      setSpecifiedMonth(null);
+      setSelectedTaller("");
+      setAmount("");
+      setPaymentMethod("");
+    } catch (error) {
+      console.error('Error al confirmar y enviar el recibo:', error);
     }
-
-    const receiptData = {
-      studentId: students.find(s => s.name === selectedStudent).id,
-      paymentDate: new Date(),
-      specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
-      concept: selectedMonth,
-      amount: `₡${amount}`,
-      receiptNumber,
-    };
-
-    await addReceipt(receiptData);
-
-    setShowPreview(false);
-    loadInitialData();
-    setSelectedStudent("");
-    setSelectedMonth("");
-    setSpecifiedMonth(null);
-    setSelectedTaller("");
-    setAmount("");
-    setPaymentMethod("");
   };
 
   const handleCancelReceipt = () => {
