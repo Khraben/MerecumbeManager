@@ -181,7 +181,7 @@ export default function MakePayment() {
       <Receipt ref={receiptRef}>
         <ReceiptHeader>
           <LogoContainer>
-            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
           </LogoContainer>
           <h2>Recibo de Pago #{receiptNumber}</h2>
           <p>Fecha: {date}</p>
@@ -263,7 +263,7 @@ export default function MakePayment() {
               <Receipt ref={receiptRef}>
                 <ReceiptHeader>
                   <LogoContainer>
-                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
                   </LogoContainer>
                   <h2>Recibo de Pago #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>

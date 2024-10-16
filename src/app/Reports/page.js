@@ -73,6 +73,8 @@ const Description = styled.p`
 
   @media (max-width: 480px) {
     font-size: 14px;
+    word-wrap: break-word;
+    width: 70%;
   }
 `;
 
@@ -89,6 +91,7 @@ const ReportTypeSection = styled.section`
 
   p {
     text-align: center;
+    word-wrap: break-word; 
   }
 
   &:hover {
@@ -98,11 +101,13 @@ const ReportTypeSection = styled.section`
 
   @media (max-width: 768px) {
     padding: 15px;
+    margin: 15px 0;
   }
 
   @media (max-width: 480px) {
     padding: 10px;
     margin: 10px 0;
+    max-width: 75%;
   }
 `;
 

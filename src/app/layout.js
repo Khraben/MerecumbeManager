@@ -37,6 +37,7 @@ export default function RootLayout({ children }) {
                   transition: "padding-left 0.3s",
                   marginTop: "70px",
                   paddingTop: "20px",
+                  marginLeft: "20px",
                   display: "flex",
                   justifyContent: "center",
                   minHeight: "calc(100vh - 70px)",

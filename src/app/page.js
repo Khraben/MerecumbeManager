@@ -32,9 +32,6 @@ export default function Home() {
     <Wrapper>
       <Title>Merecumbé San Ramón</Title>
       <ButtonSection>
-        <StyledButton onClick={() => handleLinkClick("/")}>
-          <FaHome /> Inicio
-        </StyledButton>
         <StyledButton onClick={() => handleLinkClick("/GroupList")}>
           <FaUsers /> Grupos
         </StyledButton>
@@ -78,7 +75,7 @@ const Wrapper = styled.div`
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
-  margin-bottom: 20px;
+  margin-bottom: 50px;
   text-transform: uppercase;
   font-weight: 700;
   text-align: center;

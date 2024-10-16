@@ -60,7 +60,7 @@ const PaymentHistory = ({ onBack }) => {
     if (startDate) {
       filtered = filtered.filter(payment => {
         const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
-        return paymentDate >= startDate && (!endDate || paymentDate <= endDate);
+        return paymentDate >= startDate && (!endDate || paymentDate <= new Date(endDate).setHours(23, 59, 59, 999));
       });
     }
     setFilteredPayments(filtered);
@@ -193,6 +193,11 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 10px;
+
+  @media (max-width: 480px) {
+    padding: 5px;
+  }
 `;
 const Title = styled.h1`
   font-size: 24px;
@@ -204,6 +209,7 @@ const Title = styled.h1`
 
   @media (max-width: 480px) {
     font-size: 20px;
+    margin-bottom: 10px;
   }
 `;
 const FilterSection = styled.div`
@@ -224,6 +230,10 @@ const TableContainer = styled.div`
   justify-content: center;
   align-items: flex-start;
   background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 const PaymentTable = styled.table`
   width: 100%;
@@ -269,6 +279,8 @@ const PaymentTable = styled.table`
   }
 
   @media (max-width: 480px) {
+    margin-left: 160px;
+    
     th, td {
       font-size: 10px;
       padding: 10px 12px;
@@ -279,6 +291,10 @@ const Pagination = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 20px;
+
+  @media (max-width: 480px) {
+    margin-top: 10px;
+  }
 `;
 const PageButton = styled.button`
   padding: 10px 15px;
@@ -350,6 +366,7 @@ const BackButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 16px;
     font-size: 12px;
+    margin-top: 10px;
   }
 `;
 const StyledDatePicker = styled(DatePicker)`
@@ -360,7 +377,7 @@ const StyledDatePicker = styled(DatePicker)`
   border-radius: 5px;
   background-color: transparent;
   z-index: 5;
-  position: relative;  /* Asegura que el input tenga control sobre el calendario */
+  position: relative; 
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
@@ -378,11 +395,13 @@ const SearchContainer = styled.div`
   @media (max-width: 480px) {
     flex-direction: row;
     align-items: center;
+    padding: 0 10px;
+    margin-bottom: 10px;
   }
 `;
 const SearchInput = styled.input`
   width: 100%;
-  padding: 10px 40px 10px 15px; /
+  padding: 10px 40px 10px 15px;
   font-size: 14px;
   border: 2px solid #0b0f8b;
   border-radius: 5px;

@@ -209,6 +209,10 @@ const TableContainer = styled.div`
   overflow-y: auto;
   max-height: 500px;
   background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 
 const Table = styled.table`

@@ -36,6 +36,8 @@ const Overlay = styled.div`
 `;
 
 const SpinnerContainer = styled.div`
+  margin-left: 80px;
+  margin-right: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
