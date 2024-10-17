@@ -569,6 +569,8 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
+  margin-left: 80px;
+  margin-right: 20px;
   background: #dddddd;
   padding: 20px;
   border-radius: 10px;

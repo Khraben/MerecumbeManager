@@ -69,13 +69,11 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const handleAttendanceClick = async (studentId, date) => {
     if (!isEditing) return;
   
-    // Optimistic UI update
     const attendanceId = Object.keys(attendance).find(
       (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
     );
   
     if (attendanceId) {
-      // Remove attendance optimistically
       setAttendance((prevAttendance) => {
         const updatedAttendance = { ...prevAttendance };
         delete updatedAttendance[attendanceId];
@@ -86,7 +84,6 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         await deleteAttendance(attendanceId);
       } catch (error) {
         console.error("Error deleting attendance: ", error);
-        // Revert UI change if server operation fails
         setAttendance((prevAttendance) => ({
           ...prevAttendance,
           [attendanceId]: {
@@ -97,7 +94,6 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         }));
       }
     } else {
-      // Add attendance optimistically
       const tempId = `temp-${studentId}-${date.getTime()}`;
       setAttendance((prevAttendance) => ({
         ...prevAttendance,
@@ -128,7 +124,6 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         });
       } catch (error) {
         console.error("Error adding attendance: ", error);
-        // Revert UI change if server operation fails
         setAttendance((prevAttendance) => {
           const updatedAttendance = { ...prevAttendance };
           delete updatedAttendance[tempId];

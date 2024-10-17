@@ -151,7 +151,7 @@ const ToggleButton = styled.button`
 const Tooltip = styled.span`
   visibility: hidden;
   width: 100px;
-  background-color: #0b0f8b;
+  background-color: #081075;
   color: #dddddd;
   text-align: center;
   border-radius: 6px;
@@ -159,7 +159,7 @@ const Tooltip = styled.span`
   position: absolute;
   z-index: 1;
   top: 50%; 
-  left: 105%; 
+  left: 110%; 
   margin-top: -15px; 
   opacity: 0;
   transition: opacity 0.3s;
@@ -173,7 +173,7 @@ const Tooltip = styled.span`
     margin-top: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #0b0f8b;
+    border-color: #081075;
   }
 `;
 
