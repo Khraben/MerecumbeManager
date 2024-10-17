@@ -64,6 +64,7 @@ const PaymentHistory = ({ onBack }) => {
       });
     }
     setFilteredPayments(filtered);
+    setCurrentPage(1);
   }, [selectedStudent, selectedConcept, startDate, endDate, payments]);
 
   const handleStartDateChange = (date) => {
