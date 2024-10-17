@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance } from "../conf/firebaseService";
 import Loading from "./Loading";
 
@@ -95,15 +95,15 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     }
   };
 
-  const getAttendanceCellColor = (studentId, date) => {
+  const getAttendanceCellComponent = (studentId, date) => {
     for (const [docId, attendanceRecord] of Object.entries(attendance)) {
       if (attendanceRecord.studentId === studentId) {
         if (attendanceRecord.date.getTime() === date.getTime()) {
-          return "green";
+          return <PresentIcon />;
         }
       }
     }
-    return "white";
+    return <AbsentIcon />;
   };
 
   const getDayOfWeekIndex = (day) => {
@@ -191,9 +191,10 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                         {getAttendanceDates(selectedMonth, group.day).map((date) => (
                           <AttendanceCell
                             key={date.toString()}
-                            style={{ backgroundColor: getAttendanceCellColor(student.id, date) }}
                             onClick={() => handleAttendanceClick(student.id, date)}
-                          ></AttendanceCell>
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
                         ))}
                         <PaymentStatus status={student.paymentStatus}>
                           {student.paymentDate}
@@ -211,9 +212,10 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                         {getAttendanceDates(selectedMonth, group.day).map((date) => (
                           <AttendanceCell
                             key={date.toString()}
-                            style={{ backgroundColor: getAttendanceCellColor(student.id, date) }}
                             onClick={() => handleAttendanceClick(student.id, date)}
-                          ></AttendanceCell>
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
                         ))}
                         <PaymentStatus status={student.paymentStatus}>
                           {student.paymentDate}
@@ -426,6 +428,16 @@ const StudentName = styled.td`
 const AttendanceCell = styled.td`
   width: 20px;
   cursor: pointer;
+`;
+
+const PresentIcon = styled(FaCheckCircle)`
+  color: #0b0f8b;
+  font-size: 20px;
+`;
+
+const AbsentIcon = styled(FaTimesCircle)`
+  color: #999;
+  font-size: 20px;
 `;
 
 const PaymentStatus = styled.td`
