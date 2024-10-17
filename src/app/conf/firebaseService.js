@@ -260,6 +260,21 @@ export const fetchReceipts = async () => {
   }
 };
 
+export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
+  try {
+    const receiptsQuery = query(
+      collection(db, "receipts"),
+      where("studentId", "==", studentId),
+      where("concept", "==", concept)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+    return querySnapshot.docs.map(doc => doc.data());
+  } catch (e) {
+    console.error("Error fetching receipts by student and concept: ", e);
+    throw e;
+  }
+};
+
 export const fetchPaymentsToday = async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

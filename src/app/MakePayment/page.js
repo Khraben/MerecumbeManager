@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt } from "../conf/firebaseService";
+import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept } from "../conf/firebaseService";
 import axios from 'axios'; 
 
 registerLocale("es", es);
@@ -30,6 +30,7 @@ export default function MakePayment() {
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true); 
   const [receiptNumber, setReceiptNumber] = useState(null);
+  const [paidMonths, setPaidMonths] = useState([]);
   const receiptRef = useRef(null);
 
   const loadInitialData = async () => {
@@ -64,6 +65,13 @@ export default function MakePayment() {
     const tallerGroups = groupData.filter(group => group.level === "Taller");
     setGroups(validGroups.map(group => group.name));
     setTallerGroups(tallerGroups.map(group => group.name));
+
+    const student = students.find(s => s.name === selectedStudent);
+    if (student) {
+      const receipts = await fetchReceiptsByStudentAndConcept(student.id, "Mensualidad");
+      const paidMonths = receipts.map(receipt => new Date(receipt.specification).getMonth());
+      setPaidMonths(paidMonths);
+    }
   };
 
   const handleStudentChange = (e) => {
@@ -153,7 +161,9 @@ export default function MakePayment() {
 
   const handleAmountChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
-    setAmount(formatAmount(value));
+    if (value.length <= 5) {
+      setAmount(formatAmount(value));
+    }
   };
 
   const handleMonthChange = (e) => {
@@ -164,6 +174,10 @@ export default function MakePayment() {
       setGroups([]);
       setAmount("");
     }
+  };
+
+  const isMonthDisabled = (date) => {
+    return paidMonths.includes(date.getMonth());
   };
 
   const capitalizeFirstLetter = (string) => {
@@ -218,6 +232,7 @@ export default function MakePayment() {
                 showMonthYearPicker
                 locale="es"
                 placeholderText="Seleccionar mes y año"
+                filterDate={(date) => !isMonthDisabled(date)}
               />
             </>
           )}
