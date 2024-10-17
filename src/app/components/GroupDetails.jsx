@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaTimes, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaTimes, FaCheckCircle, FaTimesCircle} from "react-icons/fa";
 import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance } from "../conf/firebaseService";
 import Loading from "./Loading";
 
@@ -11,6 +11,9 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [attendance, setAttendance] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalAttendance, setOriginalAttendance] = useState({});
+  
   const monthTranslations = {
     January: 'Enero',
     February: 'Febrero',
@@ -55,6 +58,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     try {
       const attendances = await fetchAttendancesByGroup(groupId);
       setAttendance(attendances);
+      setOriginalAttendance(attendances);
       setAttendanceLoading(false);
     } catch (error) {
       console.error("Error fetching attendances: ", error);
@@ -63,35 +67,74 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   };
 
   const handleAttendanceClick = async (studentId, date) => {
-    try {
-      const attendanceId = await findAttendance(groupId, studentId, date);
-      if (attendanceId) {
+    if (!isEditing) return;
+  
+    // Optimistic UI update
+    const attendanceId = Object.keys(attendance).find(
+      (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
+    );
+  
+    if (attendanceId) {
+      // Remove attendance optimistically
+      setAttendance((prevAttendance) => {
+        const updatedAttendance = { ...prevAttendance };
+        delete updatedAttendance[attendanceId];
+        return updatedAttendance;
+      });
+  
+      try {
         await deleteAttendance(attendanceId);
-        setAttendance((prevAttendance) => {
-          const updatedAttendance = { ...prevAttendance };
-          if (updatedAttendance[attendanceId]) {
-            delete updatedAttendance[attendanceId];
-          }
-          return updatedAttendance;
-        });
-      } else {
-        await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await findAttendance(groupId, studentId, date);
-        
-        if (!newAttendanceId) {
-          throw new Error("Attendance ID not found after adding attendance");
-        }
+      } catch (error) {
+        console.error("Error deleting attendance: ", error);
+        // Revert UI change if server operation fails
         setAttendance((prevAttendance) => ({
           ...prevAttendance,
-          [newAttendanceId]: {
+          [attendanceId]: {
             groupId,
             studentId,
             date: date,
           },
         }));
       }
-    } catch (error) {
-      console.error("Error handling attendance click: ", error);
+    } else {
+      // Add attendance optimistically
+      const tempId = `temp-${studentId}-${date.getTime()}`;
+      setAttendance((prevAttendance) => ({
+        ...prevAttendance,
+        [tempId]: {
+          groupId,
+          studentId,
+          date: date,
+        },
+      }));
+  
+      try {
+        await addAttendance(date, groupId, studentId);
+        const newAttendanceId = await findAttendance(groupId, studentId, date);
+  
+        if (!newAttendanceId) {
+          throw new Error("Attendance ID not found after adding attendance");
+        }
+  
+        setAttendance((prevAttendance) => {
+          const updatedAttendance = { ...prevAttendance };
+          delete updatedAttendance[tempId];
+          updatedAttendance[newAttendanceId] = {
+            groupId,
+            studentId,
+            date: date,
+          };
+          return updatedAttendance;
+        });
+      } catch (error) {
+        console.error("Error adding attendance: ", error);
+        // Revert UI change if server operation fails
+        setAttendance((prevAttendance) => {
+          const updatedAttendance = { ...prevAttendance };
+          delete updatedAttendance[tempId];
+          return updatedAttendance;
+        });
+      }
     }
   };
 
@@ -103,7 +146,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         }
       }
     }
-    return <AbsentIcon />;
+    return isEditing ? <AbsentIcon /> : null;
   };
 
   const getDayOfWeekIndex = (day) => {
@@ -140,6 +183,19 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     return dates;
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setAttendance({ ...originalAttendance });
+    setIsEditing(false);
+  };
+
   if (!isOpen) return null;
 
   if (loading || attendanceLoading) return <Loading />;
@@ -151,7 +207,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <CloseButton onClick={onClose}><FaTimes /></CloseButton>
+          <CloseButton onClick={() => !isEditing && onClose()}><FaTimes /></CloseButton>
         </ModalHeader>
         <ModalBody>
           <DetailsWrapper>
@@ -181,7 +237,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                           {date.getDate()}
                         </th>
                       ))}
-                      <th>Fecha Pago</th>
+                      <th>D. Pago</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -230,8 +286,18 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                 </Summary>
               </AttendanceControl>
               <ButtonContainer>
-                <ActionButton>Recordar Clase</ActionButton>
-                <ActionButton>Pasar Asistencia</ActionButton>
+                {isEditing ? (
+                  <CancelButton onClick={handleCancel}>
+                    Cancelar
+                  </CancelButton>
+                ) : (
+                  <ActionButton onClick={null}>
+                    Recordar Clase
+                  </ActionButton>
+                )}
+                <ActionButton onClick={isEditing ? handleSave : handleEdit}>
+                  {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
+                </ActionButton>
               </ButtonContainer>
           </DetailsWrapper>
         </ModalBody>
@@ -482,6 +548,15 @@ const ActionButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 16px;
     font-size: 12px;
+  }
+`;
+
+const CancelButton = styled(ActionButton)`
+  background-color: #999;
+  color: #dddddd;
+
+  &:hover {
+    background-color: #6b6b6b;
   }
 `;
 
