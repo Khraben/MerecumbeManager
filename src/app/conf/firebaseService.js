@@ -29,7 +29,7 @@ export const addGroup = async (newGroup) => {
 export const addAttendance = async (date, groupId, studentId) => {
   try {
     await addDoc(collection(db, 'attendance'), {
-      date: date,
+      date: Timestamp.fromDate(date), // Convert Date to Timestamp
       groupId: groupId,
       studentId: studentId,
     });
@@ -292,6 +292,7 @@ export const fetchAttendances = async () => {
     throw e;
   }
 };
+
 export const fetchAttendancesByGroup = async (groupId) => {
   try {
     const q = query(collection(db, 'attendance'), where('groupId', '==', groupId));
@@ -302,7 +303,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
       attendances[doc.id] = {
         groupId: data.groupId,
         studentId: data.studentId,
-        date: data.date
+        date: data.date.toDate() // Convert Timestamp to Date
       };
     });
     return attendances;
@@ -311,6 +312,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
     return {};
   }
 };
+
 //UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -388,9 +390,10 @@ export const deleteAttendance = async (attendanceId) => {
     throw e;
   }
 };
+
 export const findAttendance = async (groupId, studentId, date) => {
   try {
-    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', date));
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date))); // Convert Date to Timestamp
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
       return null;
@@ -400,4 +403,4 @@ export const findAttendance = async (groupId, studentId, date) => {
     console.error("Error finding attendance: ", error);
     return null;
   }
-}
+};

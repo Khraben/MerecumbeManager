@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { FaTimes } from "react-icons/fa";
 import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance } from "../conf/firebaseService";
 import Loading from "./Loading";
-import { Timestamp } from "firebase/firestore";
+
 const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [group, setGroup] = useState(null);
   const [students, setStudents] = useState([]);
@@ -11,6 +11,20 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [attendance, setAttendance] = useState({});
+  const monthTranslations = {
+    January: 'Enero',
+    February: 'Febrero',
+    March: 'Marzo',
+    April: 'Abril',
+    May: 'Mayo',
+    June: 'Junio',
+    July: 'Julio',
+    August: 'Agosto',
+    September: 'Septiembre',
+    October: 'Octubre',
+    November: 'Noviembre',
+    December: 'Diciembre'
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -28,7 +42,8 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
       const [day, month, year] = groupData.startDate.split("/");
       const startDate = new Date(`${year}-${month}-${day}`);
-      setSelectedMonth(startDate.toLocaleString('default', { month: 'long', year: 'numeric' }));
+      const monthName = monthTranslations[startDate.toLocaleString('default', { month: 'long' })];
+      setSelectedMonth(`${monthName} ${year}`);
       setLoading(false);
     } catch (error) {
       console.error("Error al obtener detalles del grupo:", error);
@@ -45,6 +60,50 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       console.error("Error fetching attendances: ", error);
       setAttendanceLoading(false);
     }
+  };
+
+  const handleAttendanceClick = async (studentId, date) => {
+    try {
+      const attendanceId = await findAttendance(groupId, studentId, date);
+      if (attendanceId) {
+        await deleteAttendance(attendanceId);
+        setAttendance((prevAttendance) => {
+          const updatedAttendance = { ...prevAttendance };
+          if (updatedAttendance[attendanceId]) {
+            delete updatedAttendance[attendanceId];
+          }
+          return updatedAttendance;
+        });
+      } else {
+        await addAttendance(date, groupId, studentId);
+        const newAttendanceId = await findAttendance(groupId, studentId, date);
+        
+        if (!newAttendanceId) {
+          throw new Error("Attendance ID not found after adding attendance");
+        }
+        setAttendance((prevAttendance) => ({
+          ...prevAttendance,
+          [newAttendanceId]: {
+            groupId,
+            studentId,
+            date: date,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Error handling attendance click: ", error);
+    }
+  };
+
+  const getAttendanceCellColor = (studentId, date) => {
+    for (const [docId, attendanceRecord] of Object.entries(attendance)) {
+      if (attendanceRecord.studentId === studentId) {
+        if (attendanceRecord.date.getTime() === date.getTime()) {
+          return "green";
+        }
+      }
+    }
+    return "white";
   };
 
   const getDayOfWeekIndex = (day) => {
@@ -75,58 +134,12 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
     while (date.getMonth() === month) {
       dates.push(new Date(date));
-      date.setDate(date.getDate() + 7); 
+      date.setDate(date.getDate() + 7);
     }
 
     return dates;
   };
 
-  const handleAttendanceClick = async (studentId, date) => {
-    const timestampDate = Timestamp.fromDate(date);
-    try {
-      const attendanceId = await findAttendance(groupId, studentId, date);
-      if (attendanceId) {
-        await deleteAttendance(attendanceId);
-        setAttendance((prevAttendance) => {
-          const updatedAttendance = { ...prevAttendance };
-          if (updatedAttendance[attendanceId]) {
-            delete updatedAttendance[attendanceId];
-          }
-          return updatedAttendance;
-        });
-      } else {
-        await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await findAttendance(groupId, studentId, date);
-        
-        if (!newAttendanceId) {
-          throw new Error("Attendance ID not found after adding attendance");
-        }
-        setAttendance((prevAttendance) => ({
-          ...prevAttendance,
-          [newAttendanceId]: {
-            groupId,
-            studentId,
-            date: timestampDate,
-          },
-        }));
-      }
-    } catch (error) {
-      console.error("Error handling attendance click: ", error);
-    }
-  };
-  
-
-  const getAttendanceCellColor = (studentId, date) => {
-    const timestampDate = Timestamp.fromDate(date);
-    for (const [docId, attendanceRecord] of Object.entries(attendance)) {
-      if (attendanceRecord.studentId === studentId) {
-        if (attendanceRecord.date.isEqual(timestampDate)) {
-          return "green";
-        }
-      }
-    }
-    return "white";
-  };
   if (!isOpen) return null;
 
   if (loading || attendanceLoading) return <Loading />;
@@ -157,12 +170,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
               <AttendanceControl>
                 <ControlTitle>Control de:</ControlTitle>
-                <SelectMonth
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                >
-                  <option value={selectedMonth}>{selectedMonth}</option>
-                </SelectMonth>
+                <SelectMonth>{selectedMonth}</SelectMonth>
 
                 <Table>
                   <thead>
@@ -367,23 +375,19 @@ const ControlTitle = styled.p`
   font-size: 18px;
   font-weight: bold;
   color: #0b0f8b;
-  margin-bottom: 10px;
 
   @media (max-width: 480px) {
     font-size: 16px;
   }
 `;
 
-const SelectMonth = styled.select`
-  padding: 10px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #333;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+const SelectMonth = styled.p`
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
 
   @media (max-width: 480px) {
-    font-size: 12px;
+    font-size: 14px;
   }
 `;
 
