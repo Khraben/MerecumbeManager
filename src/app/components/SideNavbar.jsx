@@ -157,7 +157,7 @@ const Tooltip = styled.span`
   border-radius: 6px;
   padding: 5px 0;
   position: absolute;
-  z-index: 1;
+  z-index: 1001;
   top: 50%; 
   left: 110%; 
   margin-top: -15px; 

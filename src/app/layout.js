@@ -32,8 +32,8 @@ export default function RootLayout({ children }) {
               <main
                 id="content"
                 style={{
-                  position: "relative", 
-                  paddingLeft: isSideNavbarOpen ? "240px" : "40px",
+                  position: "relative",
+                  paddingLeft: "40px",
                   transition: "padding-left 0.3s",
                   marginTop: "70px",
                   paddingTop: "20px",
@@ -41,28 +41,28 @@ export default function RootLayout({ children }) {
                   display: "flex",
                   justifyContent: "center",
                   minHeight: "calc(100vh - 70px)",
-                  zIndex: 1, 
+                  zIndex: 1,
                 }}
               >
                 <div
                   style={{
                     position: "absolute",
                     top: 0,
-                    left: isSideNavbarOpen ? "230px" : "30px",
-                    width: `calc(100% - ${isSideNavbarOpen ? "230px" : "30px"})`,
+                    left: "50px",
+                    width: "calc(100% - 45px)",
                     height: "100%",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    zIndex: 0, 
-                    opacity: 0.3, 
+                    zIndex: 0,
+                    opacity: 0.3,
                   }}
                 >
                   <img
                     src="/logo.svg"
                     alt="Marca de Agua"
                     style={{
-                      width: "auto", 
+                      width: "auto",
                       height: "80vh",
                     }}
                     draggable="false"
