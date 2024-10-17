@@ -2,13 +2,14 @@
 
 import styled from "styled-components";
 import { useState, useEffect } from "react";
-import { FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt } from "react-icons/fa";
-import { fetchStudents, fetchPaymentsToday } from "./conf/firebaseService";
+import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
+import { fetchStudents, fetchReceipts } from "./conf/firebaseService";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
-  const [paymentsTodayCount, setPaymentsTodayCount] = useState(0);
+  const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
+  const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,10 +18,21 @@ export default function Home() {
       const activeStudents = students.filter(student => student.groups[0] !== "INACTIVO");
       setActiveStudentsCount(activeStudents.length);
 
-      const paymentsToday = await fetchPaymentsToday();
-      setPaymentsTodayCount(paymentsToday.length);
+  
+      const receipts = await fetchReceipts();
+      const currentMonth = new Date().getMonth();
+      const paymentsThisMonth = receipts.filter(receipt => {
+        const paymentDate = new Date(receipt.paymentDate.seconds * 1000);
+        return paymentDate.getMonth() === currentMonth && 
+               activeStudents.some(student => student.id === receipt.studentId) &&
+               receipt.concept === "Mensualidad"; 
+      });
+      setPaymentsThisMonthCount(paymentsThisMonth.length);
+  
+      const pendingPayments = activeStudents.length - paymentsThisMonth.length;
+      setPendingPaymentsCount(pendingPayments);
     };
-
+  
     fetchData();
   }, []);
 
@@ -52,8 +64,12 @@ export default function Home() {
           <DashboardValue>{activeStudentsCount}</DashboardValue>
         </DashboardItem>
         <DashboardItem>
-          <DashboardLabel>Pagos Realizados Hoy:</DashboardLabel>
-          <DashboardValue>{paymentsTodayCount}</DashboardValue>
+          <DashboardLabel>Pagos Realizados Este Mes:</DashboardLabel>
+          <DashboardValue>{paymentsThisMonthCount}</DashboardValue>
+        </DashboardItem>
+        <DashboardItem>
+          <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
+          <DashboardValue>{pendingPaymentsCount}</DashboardValue>
         </DashboardItem>
       </DashboardSection>
     </Wrapper>

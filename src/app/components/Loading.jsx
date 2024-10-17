@@ -17,11 +17,6 @@ const spin = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
-const bounce = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
-`;
-
 const Overlay = styled.div`
   position: fixed;
   top: 0;
