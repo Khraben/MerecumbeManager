@@ -16,6 +16,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [pendingChanges, setPendingChanges] = useState({});
   const [refresh, setRefresh] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [clickCounts, setClickCounts] = useState({});
 
   const monthTranslations = {
     January: 'Enero',
@@ -79,14 +80,16 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
   const handleAttendanceClick = (studentId, date) => {
     if (!isEditing) return;
-  
+
     const attendanceId = Object.keys(attendance).find(
       (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
     );
-  
+
+    const cellKey = `${studentId}-${date.getTime()}`;
+
     setPendingChanges((prevChanges) => {
       const updatedChanges = { ...prevChanges };
-  
+
       if (attendanceId) {
         if (updatedChanges[attendanceId]) {
           delete updatedChanges[attendanceId];
@@ -97,13 +100,13 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         const tempId = `temp-${studentId}-${date.getTime()}`;
         updatedChanges[tempId] = { action: 'add', groupId, studentId, date };
       }
-  
+
       return updatedChanges;
     });
-  
+
     setAttendance((prevAttendance) => {
       const updatedAttendance = { ...prevAttendance };
-  
+
       if (attendanceId) {
         if (updatedAttendance[attendanceId]) {
           delete updatedAttendance[attendanceId];
@@ -114,15 +117,21 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         const tempId = `temp-${studentId}-${date.getTime()}`;
         updatedAttendance[tempId] = { studentId, date };
       }
-  
+
       return updatedAttendance;
     });
+
+    setClickCounts((prevCounts) => {
+      const updatedCounts = { ...prevCounts };
+      updatedCounts[cellKey] = (updatedCounts[cellKey] || 0) + 1;
+      return updatedCounts;
+    });
   };
-  
+
   const handleSave = async () => {
     setIsEditing(false);
     const newAttendance = { ...attendance };
-  
+
     for (const [id, change] of Object.entries(pendingChanges)) {
       if (change.action === 'delete') {
         delete newAttendance[id];
@@ -136,13 +145,13 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         }
       }
     }
-  
+
     setAttendance(newAttendance);
     setOriginalAttendance(newAttendance);
     setPendingChanges({});
     setRefresh(!refresh);
   };
-  
+
   const handleCancel = () => {
     setAttendance({ ...originalAttendance });
     setPendingChanges({});
@@ -154,6 +163,9 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
     );
 
+    const cellKey = `${studentId}-${date.getTime()}`;
+    const clickCount = clickCounts[cellKey] || 0;
+
     if (attendanceId) {
       if (pendingChanges[attendanceId]?.action === 'delete') {
         return <AbsentIcon className="pending-change" />;
@@ -161,6 +173,10 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       return <PresentIcon />;
     } else if (pendingChanges[`temp-${studentId}-${date.getTime()}`]) {
       return <PresentIcon className="pending-change" />;
+    }
+
+    if (clickCount % 2 !== 0) {
+      return <AbsentIcon className="pending-change" />;
     }
 
     return isEditing ? <AbsentIcon /> : null;
@@ -257,14 +273,20 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                   {femaleStudents.map((student) => (
                     <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
                       <StudentName>{student.name}</StudentName>
-                      {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                        <AttendanceCell
-                          key={date.toString()}
-                          onClick={() => handleAttendanceClick(student.id, date)}
-                        >
-                          {getAttendanceCellComponent(student.id, date)}
-                        </AttendanceCell>
-                      ))}
+                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
+                        const attendanceId = Object.keys(attendance).find(
+                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                        );
+                        return (
+                          <AttendanceCell
+                            key={date.toString()}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                            className={pendingChanges[attendanceId] ? "pending-change" : ""}
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
+                        );
+                      })}
                       <PaymentStatus>
                         {student.paymentDate}
                       </PaymentStatus>
@@ -278,14 +300,20 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                   {maleStudents.map((student) => (
                     <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
                       <StudentName>{student.name}</StudentName>
-                      {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                        <AttendanceCell
-                          key={date.toString()}
-                          onClick={() => handleAttendanceClick(student.id, date)}
-                        >
-                          {getAttendanceCellComponent(student.id, date)}
-                        </AttendanceCell>
-                      ))}
+                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
+                        const attendanceId = Object.keys(attendance).find(
+                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                        );
+                        return (
+                          <AttendanceCell
+                            key={date.toString()}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                            className={pendingChanges[attendanceId] ? "pending-change" : ""}
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
+                        );
+                      })}
                       <PaymentStatus >
                         {student.paymentDate}
                       </PaymentStatus>
@@ -507,9 +535,17 @@ const StudentName = styled.td`
 const AttendanceCell = styled.td`
   width: 20px;
   cursor: pointer;
+  position: relative;
 
-  &.pending-change {
-    background-color: #ffeb3b;
+  &.pending-change::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-top: 10px solid #0b0f8b;
   }
 `;
 
