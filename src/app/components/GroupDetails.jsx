@@ -13,6 +13,9 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [attendance, setAttendance] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [originalAttendance, setOriginalAttendance] = useState({});
+  const [pendingChanges, setPendingChanges] = useState({});
+  const [refresh, setRefresh] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const monthTranslations = {
     January: 'Enero',
@@ -34,10 +37,10 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       fetchAttendancesData();
       fetchGroupDetailsData();
     }
-  }, [isOpen, groupId]);
+  }, [isOpen, groupId, refresh]);
 
   const fetchGroupDetailsData = async () => {
-    setLoading(true);
+    if (initialLoad) setLoading(true);
     try {
       const { groupData, studentsData } = await fetchGroupDetails(groupId);
       setGroup(groupData);
@@ -51,100 +54,115 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       const monthName = monthTranslations[startDate.toLocaleString('default', { month: 'long' })];
       setSelectedMonth(`${monthName} ${year}`);
       setLoading(false);
+      setInitialLoad(false);
     } catch (error) {
       console.error("Error al obtener detalles del grupo:", error);
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
   const fetchAttendancesData = async () => {
-    setAttendanceLoading(true);
+    if (initialLoad) setAttendanceLoading(true);
     try {
       const attendances = await fetchAttendancesByGroup(groupId);
       setAttendance(attendances);
       setOriginalAttendance(attendances);
       setAttendanceLoading(false);
+      setInitialLoad(false);
     } catch (error) {
       console.error("Error fetching attendances: ", error);
       setAttendanceLoading(false);
+      setInitialLoad(false);
     }
   };
 
-  const handleAttendanceClick = async (studentId, date) => {
+  const handleAttendanceClick = (studentId, date) => {
     if (!isEditing) return;
+  
+    const attendanceId = Object.keys(attendance).find(
+      (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
+    );
+  
+    setPendingChanges((prevChanges) => {
+      const updatedChanges = { ...prevChanges };
+  
+      if (attendanceId) {
+        if (updatedChanges[attendanceId]) {
+          delete updatedChanges[attendanceId];
+        } else {
+          updatedChanges[attendanceId] = { action: 'delete' };
+        }
+      } else {
+        const tempId = `temp-${studentId}-${date.getTime()}`;
+        updatedChanges[tempId] = { action: 'add', groupId, studentId, date };
+      }
+  
+      return updatedChanges;
+    });
+  
+    setAttendance((prevAttendance) => {
+      const updatedAttendance = { ...prevAttendance };
+  
+      if (attendanceId) {
+        if (updatedAttendance[attendanceId]) {
+          delete updatedAttendance[attendanceId];
+        } else {
+          updatedAttendance[attendanceId] = { studentId, date };
+        }
+      } else {
+        const tempId = `temp-${studentId}-${date.getTime()}`;
+        updatedAttendance[tempId] = { studentId, date };
+      }
+  
+      return updatedAttendance;
+    });
+  };
+  
+  const handleSave = async () => {
+    setIsEditing(false);
+    const newAttendance = { ...attendance };
+  
+    for (const [id, change] of Object.entries(pendingChanges)) {
+      if (change.action === 'delete') {
+        delete newAttendance[id];
+        await deleteAttendance(id);
+      } else if (change.action === 'add') {
+        const { date, groupId, studentId } = change;
+        await addAttendance(date, groupId, studentId);
+        const newAttendanceId = await findAttendance(groupId, studentId, date);
+        if (newAttendanceId) {
+          newAttendance[newAttendanceId] = { groupId, studentId, date };
+        }
+      }
+    }
+  
+    setAttendance(newAttendance);
+    setOriginalAttendance(newAttendance);
+    setPendingChanges({});
+    setRefresh(!refresh);
+  };
+  
+  const handleCancel = () => {
+    setAttendance({ ...originalAttendance });
+    setPendingChanges({});
+    setIsEditing(false);
+  };
 
+  const getAttendanceCellComponent = (studentId, date) => {
     const attendanceId = Object.keys(attendance).find(
       (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
     );
 
     if (attendanceId) {
-      setAttendance((prevAttendance) => {
-        const updatedAttendance = { ...prevAttendance };
-        delete updatedAttendance[attendanceId];
-        return updatedAttendance;
-      });
-
-      try {
-        await deleteAttendance(attendanceId);
-      } catch (error) {
-        console.error("Error deleting attendance: ", error);
-        setAttendance((prevAttendance) => ({
-          ...prevAttendance,
-          [attendanceId]: {
-            groupId,
-            studentId,
-            date: date,
-          },
-        }));
+      if (pendingChanges[attendanceId]?.action === 'delete') {
+        return <AbsentIcon className="pending-change" />;
       }
-    } else {
-      const tempId = `temp-${studentId}-${date.getTime()}`;
-      setAttendance((prevAttendance) => ({
-        ...prevAttendance,
-        [tempId]: {
-          groupId,
-          studentId,
-          date: date,
-        },
-      }));
-
-      try {
-        await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await findAttendance(groupId, studentId, date);
-
-        if (!newAttendanceId) {
-          throw new Error("Attendance ID not found after adding attendance");
-        }
-
-        setAttendance((prevAttendance) => {
-          const updatedAttendance = { ...prevAttendance };
-          delete updatedAttendance[tempId];
-          updatedAttendance[newAttendanceId] = {
-            groupId,
-            studentId,
-            date: date,
-          };
-          return updatedAttendance;
-        });
-      } catch (error) {
-        console.error("Error adding attendance: ", error);
-        setAttendance((prevAttendance) => {
-          const updatedAttendance = { ...prevAttendance };
-          delete updatedAttendance[tempId];
-          return updatedAttendance;
-        });
-      }
+      return <PresentIcon />;
+    } else if (pendingChanges[`temp-${studentId}-${date.getTime()}`]) {
+      return <PresentIcon className="pending-change" />;
     }
-  };
 
-  const getAttendanceCellComponent = (studentId, date) => {
-    for (const [docId, attendanceRecord] of Object.entries(attendance)) {
-      if (attendanceRecord.studentId === studentId) {
-        if (attendanceRecord.date.getTime() === date.getTime()) {
-          return <PresentIcon />;
-        }
-      }
-    }
     return isEditing ? <AbsentIcon /> : null;
   };
 
@@ -184,15 +202,6 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
   const handleEdit = () => {
     setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setAttendance({ ...originalAttendance });
-    setIsEditing(false);
   };
 
   if (!isOpen) return null;
@@ -498,6 +507,10 @@ const StudentName = styled.td`
 const AttendanceCell = styled.td`
   width: 20px;
   cursor: pointer;
+
+  &.pending-change {
+    background-color: #ffeb3b;
+  }
 `;
 
 const PresentIcon = styled(FaCheckCircle)`
