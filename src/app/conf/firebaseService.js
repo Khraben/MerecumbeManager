@@ -217,7 +217,8 @@ export const fetchGroupDetails = async (groupId) => {
       ...doc.data(),
       id: doc.id,
     }))
-    .filter((student) => student.groups.includes(groupId));
+    .filter((student) => student.groups.includes(groupId))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return { groupData, studentsData };
 };
