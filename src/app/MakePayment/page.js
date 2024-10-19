@@ -85,7 +85,7 @@ export default function MakePayment() {
   };
 
   const handleGenerateImage = async () => {
-    if (!selectedStudent || !paymentMethod || !selectedMonth || !amount) {
+    if (!selectedStudent || !paymentMethod || !selectedMonth || !amount || !specifiedMonth) {
       setErrorMessage("Por favor complete todos los campos.");
       return;
     }
@@ -197,7 +197,7 @@ export default function MakePayment() {
           <LogoContainer>
             <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
           </LogoContainer>
-          <h2>Recibo de Pago #{receiptNumber}</h2>
+          <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
           <p>Fecha: {date}</p>
         </ReceiptHeader>
         <ReceiptBody>
@@ -264,7 +264,7 @@ export default function MakePayment() {
           </Select>
         </ReceiptBody>
         <Description>
-          *** Este recibo es por concepto de clases de baile en Merecumbé San Ramón ***
+          ❖ La factura electronica será enviado luego a su Email o WhatsApp
         </Description>
       </Receipt>
       {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
@@ -280,7 +280,7 @@ export default function MakePayment() {
                   <LogoContainer>
                     <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
                   </LogoContainer>
-                  <h2>Recibo de Pago #{receiptNumber}</h2>
+                  <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>
                 </ReceiptHeader>
                 <ReceiptBody>
@@ -317,7 +317,7 @@ export default function MakePayment() {
                   <p>{paymentMethod}</p>
                 </ReceiptBody>
                 <Description>
-                  *** Este recibo es por concepto de clases de baile en Merecumbé San Ramón ***
+                  ❖ La factura electronica será enviado luego a su Email o WhatsApp
                 </Description>
               </Receipt>
               <ButtonContainer>
@@ -355,7 +355,7 @@ const Title = styled.h1`
 
 const Receipt = styled.div`
   width: 100%;
-  max-width: 300px;
+  max-width: 305px;
   border: 1px solid #ccc;
   border-radius: 10px;
   padding: 20px;
@@ -500,7 +500,7 @@ const Description = styled.p`
   margin-top: 10px;
   font-size: 12px;
   color: #333;
-  text-align: center;
+  text-align: justify;
   max-width: 600px;
 `;
 
