@@ -1,4 +1,4 @@
-import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp} from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 //ADD
@@ -258,6 +258,28 @@ export const fetchReceipts = async () => {
   } catch (e) {
     console.error("Error fetching receipts: ", e);
     throw e;
+  }
+};
+
+export const fetchReceiptsByMonth = async (monthYear) => {
+  try {
+    const receiptsRef = collection(db, 'receipts');
+    const receiptsQuery = query(
+      receiptsRef,
+      where('concept', '==', 'Mensualidad'),
+      where('specification', '==', monthYear)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+
+    const receipts = [];
+    querySnapshot.forEach(doc => {
+      receipts.push({ id: doc.id, ...doc.data() });
+    });
+
+    return receipts;
+  } catch (error) {
+    console.error("Error fetching receipts by month: ", error);
+    throw error;
   }
 };
 

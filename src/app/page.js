@@ -3,8 +3,16 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchStudents, fetchReceipts } from "./conf/firebaseService";
+import { fetchStudents, fetchReceiptsByMonth } from "./conf/firebaseService";
 import { useRouter } from "next/navigation";
+
+const getSpanishMonthName = (monthNumber) => {
+  const months = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  ];
+  return months[monthNumber - 1];
+};
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
@@ -18,21 +26,22 @@ export default function Home() {
       const activeStudents = students.filter(student => student.groups[0] !== "INACTIVO");
       setActiveStudentsCount(activeStudents.length);
 
-  
-      const receipts = await fetchReceipts();
-      const currentMonth = new Date().getMonth();
-      const paymentsThisMonth = receipts.filter(receipt => {
-        const paymentDate = new Date(receipt.paymentDate.seconds * 1000);
-        return paymentDate.getMonth() === currentMonth && 
-               activeStudents.some(student => student.id === receipt.studentId) &&
-               receipt.concept === "Mensualidad"; 
-      });
+      const currentDate = new Date();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const monthName = getSpanishMonthName(month);
+      const monthYear = `${monthName} de ${year}`;
+      const receipts = await fetchReceiptsByMonth(monthYear);
+
+      const paymentsThisMonth = receipts.filter(receipt => 
+        activeStudents.some(student => student.id === receipt.studentId)
+      );
       setPaymentsThisMonthCount(paymentsThisMonth.length);
-  
+
       const pendingPayments = activeStudents.length - paymentsThisMonth.length;
       setPendingPaymentsCount(pendingPayments);
     };
-  
+
     fetchData();
   }, []);
 
