@@ -11,8 +11,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   const [additionalGroups, setAdditionalGroups] = useState([]);
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
-  const [gender, setGender] = useState(""); // Nuevo estado para género
-  const [paymentDate, setPaymentDate] = useState(""); // Nuevo estado para fecha de pago
+  const [gender, setGender] = useState(""); 
+  const [paymentDate, setPaymentDate] = useState(""); 
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
 
@@ -51,8 +51,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setAdditionalGroups(studentData.groups.slice(1));
       setEmergencyName(studentData.emergencyName);
       setEmergencyPhone(studentData.emergencyPhone);
-      setGender(studentData.gender || ""); // Inicializar género
-      setPaymentDate(studentData.paymentDate || ""); // Inicializar fecha de pago
+      setGender(studentData.gender || ""); 
+      setPaymentDate(studentData.paymentDate || ""); 
     } catch (error) {
       console.error("Error fetching student data:", error);
     }
@@ -90,10 +90,17 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       email,
       emergencyName,
       emergencyPhone,
-      gender, // Incluir género
-      paymentDate, // Incluir fecha de pago
+      gender,
+      paymentDate, 
       groups: [primaryGroup, ...additionalGroups],
     };
+
+    // Sort groups by startDate
+    studentData.groups.sort((a, b) => {
+      const groupA = groups.find(g => g.id === a);
+      const groupB = groups.find(g => g.id === b);
+      return new Date(groupA.startDate) - new Date(groupB.startDate);
+    });
   
     try {
       if (studentId) {
@@ -119,8 +126,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setAdditionalGroups([]);
     setEmergencyName("");
     setEmergencyPhone("");
-    setGender(""); // Resetear género
-    setPaymentDate(""); // Resetear fecha de pago
+    setGender(""); 
+    setPaymentDate(""); 
     setError("");
   };
 
