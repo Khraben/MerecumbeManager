@@ -21,7 +21,6 @@ const Reports = () => {
       ) : (
         <>
           <Title>Reportes</Title>
-          <Description>Generación de reportes sobre asistencias, pagos y demás.</Description>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
             <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
@@ -29,6 +28,10 @@ const Reports = () => {
           <ReportTypeSection>
             <Subtitle>Morosos</Subtitle>
             <p>Genera un reporte de los alumnos morosos.</p>
+          </ReportTypeSection>
+          <ReportTypeSection>
+            <Subtitle>Ingresos</Subtitle>
+            <p>Genera un reporte de los ingresos.</p>
           </ReportTypeSection>
           <ReportTypeSection>
             <Subtitle>Asistencia</Subtitle>
@@ -65,18 +68,6 @@ const Title = styled.h1`
   }
 `;
 
-const Description = styled.p`
-  font-size: 16px;
-  color: #333;
-  text-align: center;
-  margin-bottom: 20px;
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-    word-wrap: break-word;
-    width: 70%;
-  }
-`;
 
 const ReportTypeSection = styled.section`
   width: 100%;
