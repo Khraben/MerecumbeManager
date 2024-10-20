@@ -29,7 +29,7 @@ export const addGroup = async (newGroup) => {
 export const addAttendance = async (date, groupId, studentId) => {
   try {
     await addDoc(collection(db, 'attendance'), {
-      date: Timestamp.fromDate(date), // Convert Date to Timestamp
+      date: Timestamp.fromDate(date), 
       groupId: groupId,
       studentId: studentId,
     });
@@ -237,7 +237,6 @@ export const fetchLastReceiptNumber = async () => {
     const data = metadataSnapshot.data();
     return data.lastReceiptNumber;
   } else {
-    // Si el documento no existe, inicializamos el número de recibo en 0
     await setDoc(metadataDoc, { lastReceiptNumber: 0 });
     return 0;
   }
@@ -341,7 +340,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
       attendances[doc.id] = {
         groupId: data.groupId,
         studentId: data.studentId,
-        date: data.date.toDate() // Convert Timestamp to Date
+        date: data.date.toDate() 
       };
     });
     return attendances;
@@ -371,17 +370,23 @@ export const updateGroup = async (groupId, updatedGroup) => {
 //DELETE
 export const deleteStudent = async (studentId) => {
   try {
+    const studentRef = doc(db, "students", studentId);
+    const studentSnapshot = await getDoc(studentRef);
+    if (!studentSnapshot.exists()) {
+      throw new Error("Student not found");
+    }
+    const studentName = studentSnapshot.data().name;
+
     const attendanceQuery = query(collection(db, "attendance"), where("studentId", "==", studentId));
     const attendanceSnapshot = await getDocs(attendanceQuery);
-    const attendanceDeletions = attendanceSnapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(attendanceDeletions);
+    const attendanceUpdates = attendanceSnapshot.docs.map(doc => updateDoc(doc.ref, { studentId: studentName }));
+    await Promise.all(attendanceUpdates);
 
     const receiptsQuery = query(collection(db, "receipts"), where("studentId", "==", studentId));
     const receiptsSnapshot = await getDocs(receiptsQuery);
-    const receiptsDeletions = receiptsSnapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(receiptsDeletions);
+    const receiptsUpdates = receiptsSnapshot.docs.map(doc => updateDoc(doc.ref, { studentId: studentName }));
+    await Promise.all(receiptsUpdates);
 
-    const studentRef = doc(db, "students", studentId);
     await deleteDoc(studentRef);
 
     console.log("Estudiante eliminado con ID: ", studentId);
@@ -431,7 +436,7 @@ export const deleteAttendance = async (attendanceId) => {
 
 export const findAttendance = async (groupId, studentId, date) => {
   try {
-    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date))); // Convert Date to Timestamp
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date)));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
       return null;

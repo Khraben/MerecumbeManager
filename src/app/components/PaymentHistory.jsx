@@ -26,11 +26,19 @@ const PaymentHistory = ({ onBack }) => {
       try {
         const allPayments = await fetchReceipts();
         const paymentsWithStudentNames = await Promise.all(allPayments.map(async (payment) => {
-          const studentData = await fetchStudentById(payment.studentId);
-          return {
-            ...payment,
-            studentName: studentData.name
-          };
+          try {
+            const studentData = await fetchStudentById(payment.studentId);
+            return {
+              ...payment,
+              studentName: studentData.name
+            };
+          } catch (error) {
+            console.error(`Error al cargar el estudiante con ID ${payment.studentId}: `, error);
+            return {
+              ...payment,
+              studentName: payment.studentId 
+            };
+          }
         }));
         setPayments(paymentsWithStudentNames);
         setFilteredPayments(paymentsWithStudentNames);
@@ -40,7 +48,7 @@ const PaymentHistory = ({ onBack }) => {
         setLoading(false); 
       }
     };
-
+  
     loadPayments();
   }, []);
 

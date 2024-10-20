@@ -23,7 +23,7 @@ export default function MakePayment() {
   const [tallerGroups, setTallerGroups] = useState([]);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedConcept, setselectedConcept] = useState("");
   const [selectedTaller, setSelectedTaller] = useState("");
   const [specifiedMonth, setSpecifiedMonth] = useState(null); 
   const [errorMessage, setErrorMessage] = useState("");
@@ -57,7 +57,7 @@ export default function MakePayment() {
       setTallerGroups([]);
       setAmount("");
     }
-  }, [selectedStudent, selectedMonth]);
+  }, [selectedStudent, selectedConcept]);
 
   const loadGroups = async (groupIds) => {
     const groupData = await fetchGroupsByIds(groupIds);
@@ -76,7 +76,7 @@ export default function MakePayment() {
 
   const handleStudentChange = (e) => {
     setSelectedStudent(e.target.value);
-    setSelectedMonth("");
+    setselectedConcept("");
     setSpecifiedMonth(null);
     setSelectedTaller("");
     setAmount("");
@@ -85,11 +85,14 @@ export default function MakePayment() {
   };
 
   const handleGenerateImage = async () => {
-    if (!selectedStudent || !paymentMethod || !selectedMonth || !amount || !specifiedMonth) {
+    if (!selectedStudent || !paymentMethod || !selectedConcept || !amount) {
       setErrorMessage("Por favor complete todos los campos.");
       return;
     }
-
+    if (selectedConcept === "Mensualidad" && !specifiedMonth) {
+      setErrorMessage("Por favor complete todos los campos.");
+      return;
+    }
     setShowPreview(true);
   };
 
@@ -127,7 +130,7 @@ export default function MakePayment() {
         studentId: students.find(s => s.name === selectedStudent).id,
         paymentDate: new Date(),
         specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
-        concept: selectedMonth,
+        concept: selectedConcept,
         amount: `₡${amount}`,
         receiptNumber,
       };
@@ -137,7 +140,7 @@ export default function MakePayment() {
       setShowPreview(false);
       loadInitialData();
       setSelectedStudent("");
-      setSelectedMonth("");
+      setselectedConcept("");
       setSpecifiedMonth(null);
       setSelectedTaller("");
       setAmount("");
@@ -168,7 +171,7 @@ export default function MakePayment() {
 
   const handleMonthChange = (e) => {
     const value = e.target.value;
-    setSelectedMonth(value);
+    setselectedConcept(value);
     handleInputChange();
     if (value === "Clases Privadas" || value === "Taller" || value === "") {
       setGroups([]);
@@ -209,14 +212,14 @@ export default function MakePayment() {
             ))}
           </Select>
           <Label>Por concepto de</Label>
-          <Select value={selectedMonth} onChange={handleMonthChange} disabled={!selectedStudent}>
+          <Select value={selectedConcept} onChange={handleMonthChange} disabled={!selectedStudent}>
             <option value="">Seleccione una opción...</option>
             {groups.length > 0 && groups[0] !== "Grupo no encontrado" && <option value="Mensualidad">Mensualidad</option>}
             <option value="Clases Privadas">Clases Privadas</option>
             {tallerGroups.length > 0 && <option value="Taller">Taller</option>}
           </Select>
 
-          {selectedMonth === "Mensualidad" && (
+          {selectedConcept === "Mensualidad" && (
             <>
               <Label>Grupos</Label>
               <GroupList>
@@ -237,7 +240,7 @@ export default function MakePayment() {
             </>
           )}
 
-          {selectedMonth === "Taller" && (
+          {selectedConcept === "Taller" && (
             <>
               <Label>Detalle</Label>
               <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
@@ -288,9 +291,9 @@ export default function MakePayment() {
                   <p>{selectedStudent}</p>
 
                   <Label>Por concepto de</Label>
-                  <p>{selectedMonth}</p>
+                  <p>{selectedConcept}</p>
 
-                  {selectedMonth === "Mensualidad" && (
+                  {selectedConcept === "Mensualidad" && (
                     <>
                       <Label>Grupos</Label>
                       <GroupList>
@@ -303,7 +306,7 @@ export default function MakePayment() {
                     </>
                   )}
 
-                  {selectedMonth === "Taller" && (
+                  {selectedConcept === "Taller" && (
                     <>
                       <Label>Detalle</Label>
                       <p>{selectedTaller}</p>
