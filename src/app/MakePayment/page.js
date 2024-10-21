@@ -69,7 +69,10 @@ export default function MakePayment() {
     const student = students.find(s => s.name === selectedStudent);
     if (student) {
       const receipts = await fetchReceiptsByStudentAndConcept(student.id, "Mensualidad");
-      const paidMonths = receipts.map(receipt => new Date(receipt.specification).getMonth());
+      const paidMonths = receipts.map(receipt => {
+        const date = new Date(receipt.specification);
+        return { month: date.getMonth(), year: date.getFullYear() };
+      });
       setPaidMonths(paidMonths);
     }
   };
@@ -180,7 +183,9 @@ export default function MakePayment() {
   };
 
   const isMonthDisabled = (date) => {
-    return paidMonths.includes(date.getMonth());
+    return paidMonths.some(paidMonth => 
+      paidMonth.month === date.getMonth() && paidMonth.year === date.getFullYear()
+    );
   };
 
   const capitalizeFirstLetter = (string) => {
