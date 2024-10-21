@@ -10,7 +10,7 @@ import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt} from 'react-icons/f
 const PaymentHistory = ({ onBack }) => {
   const [payments, setPayments] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedConcept, setSelectedConcept] = useState('');
+  const [selectedDetail, setSelectedDetail] = useState(''); 
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
@@ -60,9 +60,9 @@ const PaymentHistory = ({ onBack }) => {
         payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
     }
-    if (selectedConcept) {
+    if (selectedDetail) { 
       filtered = filtered.filter(payment => 
-        payment.concept && payment.concept.toLowerCase().includes(selectedConcept.toLowerCase())
+        payment.specification && payment.specification.toLowerCase().includes(selectedDetail.toLowerCase())
       );
     }
     if (startDate) {
@@ -73,7 +73,7 @@ const PaymentHistory = ({ onBack }) => {
     }
     setFilteredPayments(filtered);
     setCurrentPage(1);
-  }, [selectedStudent, selectedConcept, startDate, endDate, payments]);
+  }, [selectedStudent, selectedDetail, startDate, endDate, payments]); 
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -117,9 +117,9 @@ const PaymentHistory = ({ onBack }) => {
         <SearchContainer>
           <SearchInput
             type="text"
-            value={selectedConcept}
-            onChange={(e) => setSelectedConcept(e.target.value)}
-            placeholder="Filtrar por concepto..."
+            value={selectedDetail} 
+            onChange={(e) => setSelectedDetail(e.target.value)} 
+            placeholder="Filtrar por detalle..."
           />
           <SearchIcon />
         </SearchContainer>
