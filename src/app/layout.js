@@ -1,9 +1,10 @@
 "use client";
 
+import "@/styles/globals.css";
 import { useState } from "react";
+import { AuthProvider } from "@/app/context/AuthContext";
 import SideNavbar from "@/app/components/SideNavBar";
 import Login from "@/app/components/Login";
-import "@/styles/globals.css";
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -24,26 +25,56 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body style={{ margin: 0, padding: 0 }}>
-        {isLoggedIn ? (
-          <>
-            <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
-            <main
-              style={{
-                paddingLeft: isSideNavbarOpen ? "250px" : "50px",
-                transition: "padding-left 0.3s",
-                marginTop: "70px", 
-                paddingTop: "20px",
-                display: "flex",
-                justifyContent: "center", 
-                minHeight: "calc(100vh - 70px)"
-              }}
-            >
-              {children}
-            </main>
-          </>
-        ) : (
-          <Login onLogin={handleLogin} />
-        )}
+        <AuthProvider>
+          {isLoggedIn ? (
+            <>
+              <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
+              <main
+                id="content"
+                style={{
+                  position: "relative",
+                  paddingLeft: "40px",
+                  transition: "padding-left 0.3s",
+                  marginTop: "70px",
+                  paddingTop: "20px",
+                  marginLeft: "20px",
+                  display: "flex",
+                  justifyContent: "center",
+                  minHeight: "calc(100vh - 70px)",
+                  zIndex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: "50px",
+                    width: "calc(100% - 45px)",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 0,
+                    opacity: 0.3,
+                  }}
+                >
+                  <img
+                    src="/logo.svg"
+                    alt="Marca de Agua"
+                    style={{
+                      width: "auto",
+                      height: "80vh",
+                    }}
+                    draggable="false"
+                  />
+                </div>
+                <div style={{ zIndex: 1 }}>{children}</div>
+              </main>
+            </>
+          ) : (
+            <Login onLogin={handleLogin} />
+          )}
+        </AuthProvider>
       </body>
     </html>
   );

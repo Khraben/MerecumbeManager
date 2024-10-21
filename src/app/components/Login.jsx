@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
+import { auth } from "../conf/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -15,8 +20,21 @@ export default function Login({ onLogin }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLogin = () => {
-    onLogin();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const email = `${username}@gmail.com`;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin();
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setError("Contraseña incorrecta. Por favor, verifica tu contraseña.");
+      } else {
+        setError("Error al iniciar sesión: " + error.message);
+      }
+    }
   };
 
   return (
@@ -28,10 +46,27 @@ export default function Login({ onLogin }) {
       ) : (
         <LoginContainer>
           <StyledLogo src="/logo.svg" alt="Logo" width={120} height={120} />
-          <Form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-            <Input type="text" placeholder="Usuario" />
-            <Input type="password" placeholder="Contraseña" />
+          <Form onSubmit={handleLogin}>
+            <Input
+              type="text"
+              placeholder="Usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              onInvalid={(e) => e.target.setCustomValidity('Por favor, ingrese su usuario.')}
+              onInput={(e) => e.target.setCustomValidity('')}
+            />
+            <Input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              onInvalid={(e) => e.target.setCustomValidity('Por favor, ingrese su contraseña.')}
+              onInput={(e) => e.target.setCustomValidity('')}
+            />
             <Button type="submit">Ingresar</Button>
+            {error && <ErrorMessage>{error}</ErrorMessage>}
           </Form>
         </LoginContainer>
       )}
@@ -46,7 +81,7 @@ const Background = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  color: white;
+  color: #dddddd;
   margin: 0;
   padding: 0;
   font-family: 'Quicksand', sans-serif;
@@ -73,8 +108,10 @@ const AnimationContainer = styled.div`
   width: 100%;
 `;
 
-const Logo = styled(Image)`
-  animation: ${spin} 1.5s linear ;
+const Logo = styled(Image).attrs({
+  draggable: false,
+})`
+  animation: ${spin} 1.5s linear;
 `;
 
 const LoginContainer = styled.div`
@@ -87,7 +124,9 @@ const LoginContainer = styled.div`
   padding: 20px;
 `;
 
-const StyledLogo = styled(Image)`
+const StyledLogo = styled(Image).attrs({
+  draggable: false,
+})`
   margin-bottom: 30px;
 `;
 
@@ -112,7 +151,7 @@ const Input = styled.input`
 
 const Button = styled.button`
   padding: 10px;
-  background-color: #fff;
+  background-color: #dddddd;
   color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -121,4 +160,10 @@ const Button = styled.button`
   max-width: 320px;
   margin-top: 10px;
   font-weight: bold;
+`;
+
+const ErrorMessage = styled.p`
+  color: red;
+  font-weight: bold;
+  text-align: center;
 `;

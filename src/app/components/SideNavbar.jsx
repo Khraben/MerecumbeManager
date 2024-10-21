@@ -3,20 +3,33 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import styled from "styled-components";
-import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
-export default function SideNavbar({ onLogout, toggleSideNavbar }) {
+export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); 
+  const { user, logout } = useAuth();
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
     toggleSideNavbar(); 
   };
 
-  const handleLogout = () => {
-    onLogout();
+  const handleLogout_Hidden = () => {
     router.push("/");
+    logout()
+    propOnLogout(); 
+  };
+
+  const handleLogout_Show = () => {
+    setIsOpen(false);
+    toggleSideNavbar(); 
+    setTimeout(() => {
+      router.push("/");
+      logout();
+      propOnLogout();
+    }, 300);
   };
 
   const handleLinkClick_Show = (path) => {
@@ -27,7 +40,6 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
 
   const handleLinkClick_Hidden = (path) => {
     router.push(path);
-    setIsOpen(false);
   };
 
   return (
@@ -38,27 +50,48 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
       {!isOpen && (
         <>
           <HiddenLinks>
-            <HiddenLink onClick={() => handleLinkClick_Hidden("/")}>
-              <FaHome />
-            </HiddenLink>
-            <HiddenLink onClick={() => handleLinkClick_Hidden("/GroupList")}>
-              <FaUsers />
-            </HiddenLink>
-            <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
-              <FaUserGraduate />
-            </HiddenLink>
-            <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
-              <FaFileInvoiceDollar />
-            </HiddenLink>
-            <HiddenLink onClick={handleLogout}>
-              <FaSignOutAlt style={{ color: "red" }} />
-            </HiddenLink>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={() => handleLinkClick_Hidden("/")}>
+                <FaHome />
+                <Tooltip>Inicio</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={() => handleLinkClick_Hidden("/GroupList")}>
+                <FaUsers />
+                <Tooltip>Grupos</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
+                <FaUserGraduate />
+                <Tooltip>Alumnos</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
+                <FaFileInvoiceDollar />
+                <Tooltip>Facturar</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={() => handleLinkClick_Hidden("/Reports")}>
+                <FaChartBar />
+                <Tooltip>Reportes</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
+            <HiddenLinkContainer>
+              <HiddenLink onClick={handleLogout_Hidden}>
+                <FaSignOutAlt style={{ color: "red" }} />
+                <Tooltip>Salir</Tooltip>
+              </HiddenLink>
+            </HiddenLinkContainer>
           </HiddenLinks>
         </>
       )}
       <SideNav isOpen={isOpen}>
         <NavList isOpen={isOpen}>
-          <NavItem>
+        <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/")}>
               <FaHome /> Inicio
             </StyledLink>
@@ -70,7 +103,7 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
           </NavItem>
           <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
-              <FaUserGraduate /> Alumnos
+              <FaUserGraduate /> Alumnos  
             </StyledLink>
           </NavItem>
           <NavItem>
@@ -79,7 +112,12 @@ export default function SideNavbar({ onLogout, toggleSideNavbar }) {
             </StyledLink>
           </NavItem>
           <NavItem>
-            <LogoutButton onClick={handleLogout}>
+            <StyledLink onClick={() => handleLinkClick_Show("/Reports")}>
+              <FaChartBar /> Reportes
+            </StyledLink>
+          </NavItem>
+          <NavItem>
+            <LogoutButton onClick={handleLogout_Show}>
               <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} /> Salir
             </LogoutButton>
           </NavItem>
@@ -94,7 +132,7 @@ const ToggleButton = styled.button`
   top: 10px;
   left: 10px;
   background-color: #0b0f8b;
-  color: white;
+  color: #dddddd;
   border: none;
   padding: 10px;
   cursor: pointer;
@@ -103,10 +141,39 @@ const ToggleButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1001; /* Ensure the button stays on top */
+  z-index: 1001;
 
   &:hover {
     background-color: #081075;
+  }
+`;
+
+const Tooltip = styled.span`
+  visibility: hidden;
+  width: 100px;
+  background-color: #081075;
+  color: #dddddd;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1001;
+  top: 50%; 
+  left: 110%; 
+  margin-top: -15px; 
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 14px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #081075;
   }
 `;
 
@@ -120,9 +187,20 @@ const HiddenLinks = styled.div`
   z-index: 1001;
 `;
 
+const HiddenLinkContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &:hover ${Tooltip} {
+    visibility: visible;
+    opacity: 1;
+  }
+`;
+
 const HiddenLink = styled.button`
   background-color: #0b0f8b;
-  color: white;
+  color: #dddddd;
   border: none;
   padding: 10px;
   cursor: pointer;
@@ -175,7 +253,7 @@ const NavItem = styled.li`
 `;
 
 const StyledLink = styled.a`
-  color: white;
+  color: #dddddd;
   text-decoration: none;
   font-weight: bold;
   display: flex;
@@ -188,7 +266,7 @@ const StyledLink = styled.a`
   z-index: 1000; 
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(221, 221, 221, 0.2);
   }
 
   @media (max-width: 480px) {
@@ -204,7 +282,7 @@ const StyledLink = styled.a`
 const LogoutButton = styled.button`
   background: none;
   border: none;
-  color: white;
+  color: #dddddd;
   cursor: pointer;
   font-weight: bold;
   width: calc(100%); 
@@ -218,7 +296,7 @@ const LogoutButton = styled.button`
   transition: background-color 0.3s ease-in-out;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(221, 221, 221, 0.2);
     color: red;
   }
 

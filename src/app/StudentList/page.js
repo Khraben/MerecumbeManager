@@ -1,83 +1,102 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState } from "react";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import StudentModal from "../components/StudentModal";
+import StudentDetails from "../components/StudentDetails"; 
+import Loading from "../components/Loading"; 
+import ConfirmationModal from "../components/ConfirmationModal";
+import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../conf/firebaseService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [editingStudentId, setEditingStudentId] = useState(null);
+  const [loading, setLoading] = useState(true); 
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); 
+  const [studentToDelete, setStudentToDelete] = useState(null);
+
+  useEffect(() => {
+    fetchStudentsData();
+  }, []);
+
+  const fetchStudentsData = async () => {
+    setLoading(true);
+    try {
+      const studentsData = await fetchStudents(); 
+      const studentsWithLevels = await Promise.all(studentsData.map(async student => {
+        const groups = await fetchGroupsByIds(student.groups);
+        const highestLevel = getHighestLevel(groups);
+        return { ...student, highestLevel };
+      }));
+      setStudents(studentsWithLevels);
+    } catch (error) {
+      console.error("Error fetching students: ", error);
+    }
+    setLoading(false); 
+  };
+
+  const handleOpenModal = (studentId = null) => {
+    setEditingStudentId(studentId);
+    setIsModalOpen(true);
+  };
   
-  const students = [
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Kevin Jiménez",
-      phone: "1234-5678",
-    },
-    {
-      name: "Leiner Alvarado",
-      phone: "1234-5678",
-    },
-    {
-      name: "Walter Lazo",
-      phone: "1234-5678",
-    },
-    {
-      name: "Justin Martinez",
-      phone: "1234-5678",
-    },
-    
-  ];
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    fetchStudentsData();
+  };
+
+  const handleViewStudentDetails = (studentId) => {
+    setSelectedStudentId(studentId);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setSelectedStudentId(null);
+  };
+
+  const handleDeleteStudent = async () => {
+    try {
+      await deleteStudent(studentToDelete.id);
+      fetchStudentsData();
+      setIsConfirmationOpen(false); 
+    } catch (error) {
+      console.error("Error deleting student: ", error);
+    }
+  };
+
+  const handleOpenConfirmation = (student) => {
+    setStudentToDelete(student);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setIsConfirmationOpen(false);
+    setStudentToDelete(null);
+  };
 
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const levelsOrder = ["Nivel I", "Nivel II", "Nivel III", "Nivel IV"];
+
+  const getHighestLevel = (groups) => {
+    let highestLevelIndex = -1;
+    groups.forEach(group => {
+      const levelIndex = levelsOrder.indexOf(group.level);
+      if (levelIndex > highestLevelIndex) {
+        highestLevelIndex = levelIndex;
+      }
+    });
+    return highestLevelIndex !== -1 ? levelsOrder[highestLevelIndex] : "N/A";
+  };
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Wrapper>
@@ -97,8 +116,8 @@ export default function StudentList() {
             <tr>
               <th>Nombre</th>
               <th>Celular</th>
-              <th>Grupo Principal</th>
-              <th>+</th>
+              <th>Nivel</th>
+              <th> </th>
             </tr>
           </thead>
           <tbody>
@@ -106,14 +125,30 @@ export default function StudentList() {
               <tr key={index}>
                 <td>{student.name}</td>
                 <td>{student.phone}</td>
-                <td> </td>
-                <td> </td>
+                <td>{student.highestLevel}</td>
+                <td>
+                  <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
+                  <EditIcon onClick={() => handleOpenModal(student.id)} />
+                  <DeleteIcon onClick={() => handleOpenConfirmation(student)} />
+                </td>
               </tr>
             ))}
           </tbody>
         </Table>
       </TableContainer>
-      <AddButton>Agregar Alumno</AddButton>
+      <AddButton onClick={() => handleOpenModal()}>Agregar Alumno</AddButton>
+      <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} studentId={editingStudentId} />
+      <StudentDetails
+        isOpen={!!selectedStudentId}
+        onClose={handleCloseDetailsModal}
+        studentId={selectedStudentId}
+      />
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={handleCloseConfirmation}
+        onConfirm={handleDeleteStudent}
+        message={`¿Estás seguro de que deseas eliminar al alumno "${studentToDelete?.name}"?`}
+      />
     </Wrapper>
   );
 }
@@ -123,7 +158,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 20px;
 `;
 
 const Title = styled.h1`
@@ -133,6 +167,10 @@ const Title = styled.h1`
   text-transform: uppercase;
   font-weight: 700;
   text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const AddButton = styled.button`
@@ -140,7 +178,7 @@ const AddButton = styled.button`
   margin-top: 20px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: #dddddd;
   background-color: #0b0f8b;
   border: none;
   border-radius: 5px;
@@ -154,6 +192,11 @@ const AddButton = styled.button`
   &:focus {
     outline: none;
   }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
 `;
 
 const TableContainer = styled.div`
@@ -165,6 +208,11 @@ const TableContainer = styled.div`
   overflow-x: auto;
   overflow-y: auto;
   max-height: 500px;
+  background-color: rgba(221, 221, 221, 1);
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
 `;
 
 const Table = styled.table`
@@ -178,7 +226,7 @@ const Table = styled.table`
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
-    color: white;
+    color: #dddddd;
     z-index: 1;
   }
 
@@ -236,6 +284,11 @@ const SearchInput = styled.input`
   border-radius: 5px;
   outline: none;
   background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
 `;
 
 const SearchIcon = styled(FaSearch)`
@@ -243,4 +296,52 @@ const SearchIcon = styled(FaSearch)`
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const InfoIcon = styled(FaInfoCircle)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 20px;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const EditIcon = styled(FaEdit)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 20px;
+  margin-right: 10px;
+  margin-left: 10px;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const DeleteIcon = styled(FaTrash)`
+  color: #0b0f8b;
+  cursor: pointer;
+  font-size: 18px;
+
+  &:hover {
+    color: #ff0000;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
