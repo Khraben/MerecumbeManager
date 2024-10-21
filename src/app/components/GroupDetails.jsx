@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaTimes, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo } from "react-icons/fa";
 import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance, fetchGroupsByIds } from "../conf/firebaseService";
 import Loading from "./Loading";
 
@@ -273,18 +273,19 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                         <StudentName isPrimaryGroup={student.isPrimaryGroup}>
                           {student.name}
                           {student.groups.length > 1 && (
-                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup}>
-                              <Tooltip>
-                                <strong>OTROS GRUPOS:</strong>
-                                <ul>
-                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                    <li key={index}>
-                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Tooltip>
-                            </BulletPoint>
+                            <>
+                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                            <Tooltip>
+                              <strong>OTROS GRUPOS:</strong>
+                              <ul>
+                                {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                  <li key={index}>
+                                    {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                  </li>
+                                ))}
+                              </ul>
+                            </Tooltip>
+                          </>
                           )}
                         </StudentName>
                         {getAttendanceDates(selectedMonth, group.day).map((date) => {
@@ -318,18 +319,19 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                         <StudentName isPrimaryGroup={student.isPrimaryGroup}>
                           {student.name}
                           {student.groups.length > 1 && (
-                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup}>
-                              <Tooltip>
-                                <strong>OTROS GRUPOS:</strong>
-                                <ul>
-                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                    <li key={index}>
-                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Tooltip>
-                            </BulletPoint>
+                           <>
+                           <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                           <Tooltip>
+                             <strong>OTROS GRUPOS:</strong>
+                             <ul>
+                               {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                 <li key={index}>
+                                   {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                 </li>
+                               ))}
+                             </ul>
+                           </Tooltip>
+                         </>
                           )}
                         </StudentName>
                         {getAttendanceDates(selectedMonth, group.day).map((date) => {
@@ -568,17 +570,19 @@ const StudentName = styled.td`
   color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#0b0f8b" : "#323232")};
 `;
 
-const BulletPoint = styled.span`
-  content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-top: 10px solid ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#0b0f8b" : "#323232")};
+const BulletPoint = styled(FaInfo)`
+  font-size: 12px;
+  color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#0b0f8b" : "#323232")};
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
 
-  &:hover > div {
+  @media (max-width: 480px) {
+    font-size: 10px;
+  }
+
+  &:hover + div {
     display: block;
   }
 `;
@@ -586,8 +590,8 @@ const BulletPoint = styled.span`
 const Tooltip = styled.div`
   display: none;
   position: absolute;
-  top: -5px;
-  right: 15px;
+  top: 20px;
+  right: 0;
   background-color: #dddddd; 
   color: #000;
   padding: 10px; 

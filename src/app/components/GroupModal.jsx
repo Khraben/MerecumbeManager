@@ -249,7 +249,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
                 <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
               ))}
             </Select>
-            <TextInput type="text" value={endTime} placeholder="Hora de finalización" readOnly />
+            <TextInput type="text" value={endTime || " "} placeholder="Hora de finalización" readOnly />
             <Select value={level} onChange={handleInputChange(setLevel)} placeholder="Seleccione un nivel">
               <option value="Nivel I">Nivel I</option>
               <option value="Nivel II">Nivel II</option>
@@ -318,6 +318,7 @@ const ModalContainer = styled.div`
 `;
 
 const ModalHeader = styled.div`
+  margin-bottom: 30px;
   h2 {
     font-size: 20px;
     font-weight: bold;

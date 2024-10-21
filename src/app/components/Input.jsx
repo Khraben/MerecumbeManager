@@ -54,7 +54,7 @@ const StyledSelect = styled.select`
 
   &:focus + label,
   &:not([value=""]) + label {
-    transform: translateY(-1.5rem);
+    transform: translateY(-2rem);
     font-size: 0.75rem;
     color: #0b0f8b;
   }
