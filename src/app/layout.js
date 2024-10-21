@@ -2,9 +2,11 @@
 
 import "@/styles/globals.css";
 import { useState } from "react";
-import { AuthProvider } from "../app/context/AuthContext";
-import SideNavbar from "../app/components/SideNavbar";
-import Login from "../app/components/Login";
+import { AuthProvider } from "./context/AuthContext";
+import SideNavbar from "./components/SideNavbar";
+import Login from "./components/Login";
+import Image from 'next/image';
+import styled from 'styled-components';
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,47 +31,19 @@ export default function RootLayout({ children }) {
           {isLoggedIn ? (
             <>
               <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
-              <main
-                id="content"
-                style={{
-                  position: "relative",
-                  paddingLeft: "40px",
-                  transition: "padding-left 0.3s",
-                  marginTop: "70px",
-                  paddingTop: "20px",
-                  marginLeft: "20px",
-                  display: "flex",
-                  justifyContent: "center",
-                  minHeight: "calc(100vh - 70px)",
-                  zIndex: 1,
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: "50px",
-                    width: "calc(100% - 45px)",
-                    height: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 0,
-                    opacity: 0.3,
-                  }}
-                >
-                  <img
+              <MainContent>
+                <Watermark>
+                  <Image
                     src="/logo.svg"
                     alt="Marca de Agua"
-                    style={{
-                      width: "auto",
-                      height: "80vh",
-                    }}
+                    layout="fill"
+                    objectFit="contain"
+                    style={{ opacity: 0.3 }}
                     draggable="false"
                   />
-                </div>
-                <div style={{ zIndex: 1 }}>{children}</div>
-              </main>
+                </Watermark>
+                <Content>{children}</Content>
+              </MainContent>
             </>
           ) : (
             <Login onLogin={handleLogin} />
@@ -79,3 +53,32 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+const MainContent = styled.main`
+  position: relative;
+  padding-left: 40px;
+  transition: padding-left 0.3s;
+  margin-top: 70px;
+  padding-top: 20px;
+  margin-left: 20px;
+  display: flex;
+  justify-content: center;
+  min-height: calc(100vh - 70px);
+  z-index: 1;
+`;
+
+const Watermark = styled.div`
+  position: absolute;
+  top: 0;
+  left: 50px;
+  width: calc(100% - 45px);
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 0;
+`;
+
+const Content = styled.div`
+  z-index: 1;
+`;
