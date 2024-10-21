@@ -1,6 +1,6 @@
 "use client";
 
-import "../styles/global.css";
+import "@/styles/globals.css";
 import { useState } from "react";
 import { AuthProvider } from "../app/context/AuthContext";
 import SideNavbar from "../app/components/SideNavbar";
