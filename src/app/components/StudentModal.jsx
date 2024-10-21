@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaPlus, FaTimes } from "react-icons/fa";
 import { fetchGroups, addStudent, fetchStudentById, updateStudent } from "../conf/firebaseService";
+import { TextInput, ComboBox, NumberInput } from './Input';
 
 export default function StudentModal({ isOpen, onClose, onStudentAdded, studentId }) {
   const [name, setName] = useState("");
@@ -136,9 +137,18 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setError("");
   };
 
+  const handleGroupChange = (e) => {
+    const value = e.target.value;
+    setGroup(value);
+    setError("");
+    if (value === "INACTIVO") {
+      setAdditionalGroups([]);
+    }
+  };
+
   const handleAddGroup = (e) => {
     e.preventDefault();
-    if (group && !additionalGroups.includes("")) {
+    if (group && group !== "INACTIVO" && !additionalGroups.includes("")) {
       setAdditionalGroups([...additionalGroups, ""]);
     } else {
       setError("Debe seleccionar un grupo en todos los campos antes de agregar uno nuevo.");
@@ -187,14 +197,14 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
         <ModalBody>
           <Form>
             <label>Información de Alumno</label>
-            <Input
-              type="text"
+            <TextInput
+              id="name"
               placeholder="Nombre y Apellido"
               value={name}
               onChange={handleInputChange(setName)}
             />
-            <Input
-              type="text"
+            <TextInput
+              id="phone"
               placeholder="Celular"
               value={phone}
               onChange={handlePhoneChange(setPhone)}
@@ -205,26 +215,33 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
               }}
               maxLength="9"
             />
-            <Input
-              type="email"
+            <TextInput
+              id="email"
               placeholder="Correo Electrónico"
               value={email}
               onChange={handleInputChange(setEmail)}
             />
-            <Select value={gender} onChange={handleInputChange(setGender)}>
-              <option value="">Seleccione un género</option>
+            <ComboBox id="gender" placeholder="Género" value={gender} onChange={handleInputChange(setGender)}>
               <option value="Hombre">Hombre</option>
               <option value="Mujer">Mujer</option>
-            </Select>
+            </ComboBox>
+            <NumberInput
+              id="paymentDate"
+              placeholder="Fecha de Pago"
+              value={paymentDate}
+              onChange={handleInputChange(setPaymentDate)}
+              min="1"
+              max="30"
+            />
             <label>Contacto de Emergencia</label>
-            <Input
-              type="text"
+            <TextInput
+              id="emergencyName"
               placeholder="Nombre y Apellido"
               value={emergencyName}
               onChange={handleInputChange(setEmergencyName)}
             />
-            <Input
-              type="text"
+            <TextInput
+              id="emergencyPhone"
               placeholder="Celular"
               value={emergencyPhone}
               onChange={handlePhoneChange(setEmergencyPhone)}
@@ -235,37 +252,28 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
               }}
               maxLength="9"
             />            
-            <label>Fecha de Pago</label>
-            <Input
-              type="number"
-              placeholder="(1-30)"
-              value={paymentDate}
-              onChange={handleInputChange(setPaymentDate)}
-              min="1"
-              max="30"
-            />
             <label>Grupos</label>
             <GroupContainer>
-              <Select value={group} onChange={handleInputChange(setGroup)}>
-                <option value="">INACTIVO</option>
+              <ComboBox id="group" value={group} onChange={handleGroupChange}>
+                <option value="INACTIVO">INACTIVO</option>
                 {groups.map((group) => (
                   <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                    {group.level + ' - '+ group.name}
+                    {group.level + ' - ' + group.name}
                   </option>
                 ))}
-              </Select>
-              <AddGroupButton onClick={handleAddGroup} disabled={!group || additionalGroups.includes("")}><FaPlus /></AddGroupButton>
+              </ComboBox>
+              <AddGroupButton onClick={handleAddGroup} disabled={!group || group === "INACTIVO" || additionalGroups.includes("")}><FaPlus /></AddGroupButton>
             </GroupContainer>
             {additionalGroups.map((additionalGroup, index) => (
               <GroupContainer key={index}>
-                <Select value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
+                <ComboBox id={`additionalGroup-${index}`} value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
                   <option value="">Seleccione un grupo</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
                       {group.level + ' - '+ group.name}
                     </option>
                   ))}
-                </Select>
+                </ComboBox>
                 <RemoveGroupButton onClick={() => handleRemoveGroup(index)} disabled={index !== additionalGroups.length - 1}><FaTimes /></RemoveGroupButton>
               </GroupContainer>
             ))}
@@ -346,47 +354,12 @@ const Form = styled.form`
   gap: 15px;
 `;
 
-const Input = styled.input`
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  box-sizing: border-box;
-  outline: none;
-
-  &:focus {
-    border-color: #0b0f8b;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 12px;
-  }
-`;
-
-const Select = styled.select`
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  outline: none;
-
-  &:focus {
-    border-color: #0b0f8b;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 12px;
-  }
-`;
-
 const GroupContainer = styled.div`
   display: flex;
   align-items: center;
+  width: 100%;
   gap: 10px;
+  min-height: 40px; 
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -402,6 +375,12 @@ const AddGroupButton = styled.button`
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
+  margin-left: 10px; 
+  margin-top: -11px;
+  height: 38px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background-color: #073e8a;
@@ -420,6 +399,7 @@ const AddGroupButton = styled.button`
     padding: 8px;
     font-size: 12px;
     width: 100%;
+    margin-left: 0; 
   }
 `;
 
@@ -431,6 +411,11 @@ const RemoveGroupButton = styled.button`
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
+  margin-top: -11px;
+  height: 38px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background-color: #c0392b;

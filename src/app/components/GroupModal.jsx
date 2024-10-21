@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../conf/firebaseService";
+import { TextInput, Select, DateInput } from './Input';
 
 const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const [instructor, setInstructor] = useState("");
@@ -225,16 +226,12 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
         </ModalHeader>
         <ModalBody>
           <Form>
-            <label>Instructor</label>
-            <Select value={instructor} onChange={handleInputChange(setInstructor)}>
-              <option value="">Seleccione un instructor</option>
+            <Select value={instructor} onChange={handleInputChange(setInstructor)} placeholder="Seleccione un instructor">
               {instructors.map((inst, index) => (
                 <option key={index} value={inst.id}>{inst.name}</option>
               ))}
             </Select>
-            <label>Día y Horario</label>
-            <Select value={day} onChange={handleDayChange}>
-              <option value="">Seleccione un día</option>
+            <Select value={day} onChange={handleDayChange} placeholder="Seleccione un día">
               <option value="Lunes">Lunes</option>
               <option value="Martes">Martes</option>
               <option value="Miércoles">Miércoles</option>
@@ -242,21 +239,18 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
               <option value="Viernes">Viernes</option>
               <option value="Sábado">Sábado</option>
             </Select>
-            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled}>
-              <option value="">Fecha de inicio</option>
+            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled} placeholder="Fecha de inicio">
               {generateDateOptions().map((date, index) => (
                 <option key={index} value={date}>{date}</option>
               ))}
             </Select>
-            <Select value={startTime} onChange={handleStartTimeChange} disabled={!day}>
-              <option value="">Hora de inicio</option>
+            <Select value={startTime} onChange={handleStartTimeChange} disabled={!day} placeholder="Hora de inicio">
               {generateTimeOptions().map((time, index) => (
                 <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
               ))}
             </Select>
-            <Input type="text" value={endTime} placeholder="Hora de finalización" readOnly />
-            <label>Nivel</label>
-            <Select value={level} onChange={handleInputChange(setLevel)}>
+            <TextInput type="text" value={endTime} placeholder="Hora de finalización" readOnly />
+            <Select value={level} onChange={handleInputChange(setLevel)} placeholder="Seleccione un nivel">
               <option value="Nivel I">Nivel I</option>
               <option value="Nivel II">Nivel II</option>
               <option value="Nivel III">Nivel III</option>
@@ -264,7 +258,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
               <option value="Taller">Taller</option>
             </Select>
             {level === "Taller" && (
-              <Input
+              <TextInput
                 type="text"
                 placeholder="Nombre del Taller"
                 value={workshopName}
@@ -346,43 +340,6 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 15px;
-`;
-
-const Input = styled.input`
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  box-sizing: border-box;
-  outline: none;
-
-  &:focus {
-    border-color: #0b0f8b;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 12px;
-  }
-`;
-
-const Select = styled.select`
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  outline: none;
-
-  &:focus {
-    border-color: #0b0f8b;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px;
-    font-size: 12px;
-  }
 `;
 
 const ModalFooter = styled.div`
