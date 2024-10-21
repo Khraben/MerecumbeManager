@@ -1,10 +1,10 @@
 "use client";
 
-import "@/styles/globals.css";
+import "../styles/global.css";
 import { useState } from "react";
-import { AuthProvider } from "@/app/context/AuthContext";
-import SideNavbar from "@/app/components/SideNavBar";
-import Login from "@/app/components/Login";
+import { AuthProvider } from "../app/context/AuthContext";
+import SideNavbar from "../app/components/SideNavbar";
+import Login from "../app/components/Login";
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
