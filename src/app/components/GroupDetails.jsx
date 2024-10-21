@@ -35,6 +35,10 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
   useEffect(() => {
     if (isOpen) {
+      setStudents([]);
+      setAttendance({});
+      setLoading(true);
+      setAttendanceLoading(true);
       fetchAttendancesData();
       fetchGroupDetailsData();
     }
