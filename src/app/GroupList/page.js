@@ -142,10 +142,10 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
 
   @media (max-width: 480px) {
     padding: 10px;
+    margin-left: 50px;
   }
 `;
 
@@ -185,6 +185,7 @@ const AddButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 16px;
     font-size: 12px;
+    margin-left: -80px;
   }
 `;
 
