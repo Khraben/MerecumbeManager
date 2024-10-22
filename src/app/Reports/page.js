@@ -25,18 +25,6 @@ const Reports = () => {
             <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
-          <ReportTypeSection>
-            <Subtitle>Morosos</Subtitle>
-            <p>Genera un reporte de los alumnos morosos.</p>
-          </ReportTypeSection>
-          <ReportTypeSection>
-            <Subtitle>Ingresos</Subtitle>
-            <p>Genera un reporte de los ingresos.</p>
-          </ReportTypeSection>
-          <ReportTypeSection>
-            <Subtitle>Asistencia</Subtitle>
-            <p>Genera un reporte de la asistencia de los alumnos.</p>
-          </ReportTypeSection>
         </>
       )}
     </Wrapper>

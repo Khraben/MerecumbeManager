@@ -391,7 +391,7 @@ const Overlay = styled.div`
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
+  justify-content: center;  
   align-items: center;
   z-index: 1002;
 `;
@@ -426,7 +426,7 @@ const ModalContainer = styled.div`
 
 const ModalHeader = styled.div`
   display: flex;
-  justify-content: right;
+  justify-content: flex-end;
   align-items: center;
 `;
 
@@ -554,7 +554,6 @@ const Table = styled.table`
 
   td {
     background-color: #b8b8b8;
-
     text-align: left;
   }
 
@@ -590,8 +589,9 @@ const BulletPoint = styled(FaInfo)`
 const Tooltip = styled.div`
   display: none;
   position: absolute;
-  top: 20px;
-  right: 0;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
   background-color: #dddddd; 
   color: #000;
   padding: 10px; 
@@ -600,6 +600,14 @@ const Tooltip = styled.div`
   white-space: nowrap;
   z-index: 1004;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  max-width: 200px; 
+  overflow-wrap: break-word; 
+
+  @media (max-width: 768px) {
+    font-size: 12px; 
+    padding: 8px; 
+    max-width: 150px; 
+  }
 
   ul {
     list-style-type: none;

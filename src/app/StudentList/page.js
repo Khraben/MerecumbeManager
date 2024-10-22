@@ -158,6 +158,11 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 20px;
+  
+  @media (max-width: 480px) {
+    padding: 30px;
+  }
 `;
 
 const Title = styled.h1`

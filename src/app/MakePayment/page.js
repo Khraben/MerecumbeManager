@@ -346,6 +346,10 @@ const Wrapper = styled.div`
   flex-direction: column;
   align-items: center;
   height: 100%;
+
+  @media (max-width: 480px) {
+    padding: 30px;
+  }
 `;
 
 const Title = styled.h1`
@@ -369,7 +373,7 @@ const Receipt = styled.div`
   padding: 20px;
   background-color: #dddddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: 0 auto; 
+  margin: 0 20px; 
 `;
 
 const ReceiptHeader = styled.div`

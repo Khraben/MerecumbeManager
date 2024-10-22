@@ -205,7 +205,7 @@ const Wrapper = styled.div`
   padding: 10px;
 
   @media (max-width: 480px) {
-    padding: 5px;
+    padding: 1px;
   }
 `;
 const Title = styled.h1`
