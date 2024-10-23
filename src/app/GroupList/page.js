@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
-import GroupDetails from "../components/GroupDetails"; 
+import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { fetchGroups, deleteGroup } from "../conf/firebaseService";
@@ -82,57 +82,62 @@ export default function GroupList() {
 
   return (
     <Wrapper>
-      <Title>Lista de Grupos</Title>
-      <SearchContainer>
-        <SearchInput
-          type="text"
-          placeholder="Filtrar por nombre del grupo..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {selectedGroupId ? (
+        <GroupDetails
+          isOpen={!!selectedGroupId}
+          onClose={handleCloseGroupDetails}
+          groupId={selectedGroupId}
         />
-        <SearchIcon />
-      </SearchContainer>
-      <TableContainer>
-        <Table>
-          <thead>
-            <tr>
-              <th>Grupo</th>
-              <th>Instructor</th>
-              <th>Nivel</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredGroups.map((group, index) => (
-              <tr key={index}>
-                <td>{group.name}</td>
-                <td>{group.instructor}</td>
-                <td>{group.level}</td>
-                <td>
-                  <IconContainer>
-                    <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                    <EditIcon onClick={() => handleOpenModal(group.id)} />
-                    <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
-                  </IconContainer>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </TableContainer>
-      <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
-      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
-      <GroupDetails
-        isOpen={!!selectedGroupId}
-        onClose={handleCloseGroupDetails}
-        groupId={selectedGroupId}
-      />
-      <ConfirmationModal
-        isOpen={isConfirmationOpen}
-        onClose={handleCloseConfirmation}
-        onConfirm={handleDeleteGroup}
-        message={`¿Estás seguro de que deseas eliminar el grupo "${groupToDelete?.name}"?`}
-      />
+      ) : (
+        <>
+          <Title>Lista de Grupos</Title>
+          <SearchContainer>
+            <SearchInput
+              type="text"
+              placeholder="Filtrar por nombre del grupo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <SearchIcon />
+          </SearchContainer>
+          <TableContainer>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Grupo</th>
+                  <th>Instructor</th>
+                  <th>Nivel</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredGroups.map((group, index) => (
+                  <tr key={index}>
+                    <td>{group.name}</td>
+                    <td>{group.instructor}</td>
+                    <td>{group.level}</td>
+                    <td>
+                      <IconContainer>
+                        <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
+                        <EditIcon onClick={() => handleOpenModal(group.id)} />
+                        <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
+                      </IconContainer>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableContainer>
+          <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+          <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
+          <ConfirmationModal
+            isOpen={isConfirmationOpen}
+            onClose={handleCloseConfirmation}
+            onConfirm={handleDeleteGroup}
+            message={`¿Estás seguro de que deseas eliminar el grupo "${groupToDelete?.name}"?`}
+          />
+        </>
+      )}
     </Wrapper>
   );
 }
