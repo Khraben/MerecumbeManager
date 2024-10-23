@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo } from "react-icons/fa";
-import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance, fetchGroupsByIds } from "../conf/firebaseService";
+import { fetchGroupDetails, fetchAttendancesByGroup, batchUpdateAttendance } from "../conf/firebaseService";
 import Loading from "./Loading";
 
 const GroupDetails = ({ isOpen, onClose, groupId }) => {
@@ -131,21 +131,29 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
 
   const handleSave = async () => {
     setIsEditing(false);
-    const newAttendance = { ...attendance };
 
-    for (const [id, change] of Object.entries(pendingChanges)) {
-      if (change.action === 'delete') {
-        delete newAttendance[id];
-        await deleteAttendance(id);
-      } else if (change.action === 'add') {
-        const { date, groupId, studentId } = change;
-        await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await findAttendance(groupId, studentId, date);
-        if (newAttendanceId) {
-          newAttendance[newAttendanceId] = { groupId, studentId, date };
-        }
+    // Filter out changes that cancel each other out
+    const finalChanges = Object.entries(pendingChanges).filter(([id, change]) => {
+      if (change.action === 'delete' && pendingChanges[`temp-${change.studentId}-${change.date.getTime()}`]?.action === 'add') {
+        return false;
       }
-    }
+      if (change.action === 'add' && pendingChanges[id]?.action === 'delete') {
+        return false;
+      }
+      return true;
+    }).map(([id, change]) => change);
+
+    await batchUpdateAttendance(finalChanges);
+
+    const newAttendance = { ...attendance };
+    finalChanges.forEach(change => {
+      if (change.action === 'delete') {
+        delete newAttendance[change.id];
+      } else if (change.action === 'add') {
+        const newAttendanceId = `temp-${change.studentId}-${change.date.getTime()}`;
+        newAttendance[newAttendanceId] = { groupId: change.groupId, studentId: change.studentId, date: change.date };
+      }
+    });
 
     setAttendance(newAttendance);
     setOriginalAttendance(newAttendance);
