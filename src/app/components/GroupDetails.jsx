@@ -41,8 +41,16 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       setAttendanceLoading(true);
       fetchAttendancesData();
       fetchGroupDetailsData();
+      setCurrentMonth();
     }
   }, [isOpen, groupId, refresh]);
+
+  const setCurrentMonth = () => {
+    const currentDate = new Date();
+    const monthName = monthTranslations[currentDate.toLocaleString('default', { month: 'long' })];
+    const year = currentDate.getFullYear();
+    setSelectedMonth(`${monthName} ${year}`);
+  };
 
   const fetchGroupDetailsData = async () => {
     if (initialLoad) setLoading(true);
@@ -54,10 +62,6 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
         isPrimaryGroup: student.groups[0] === groupId
       })));
 
-      const [day, month, year] = groupData.startDate.split("/");
-      const startDate = new Date(`${year}-${month}-${day}`);
-      const monthName = monthTranslations[startDate.toLocaleString('default', { month: 'long' })];
-      setSelectedMonth(`${monthName} ${year}`);
       setLoading(false);
       setInitialLoad(false);
 
