@@ -233,174 +233,209 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     .sort((a, b) => b.isPrimaryGroup - a.isPrimaryGroup);
 
   return (
-    <Container>
-      <Header>
-        <BackButton onClick={() => !isEditing && onClose()}>Volver</BackButton>
-      </Header>
-      <Body>
-        <DetailsWrapper>
-          <Title>CONTROL ASISTENCIA</Title>
-          <GroupName>{group.name.toUpperCase()}</GroupName>
-          <GroupInfo>
-            <Column>
-              <p><strong>Instructor:</strong> {group.instructor}</p>
-              <p><strong>Nivel:</strong> {group.level}</p>
-            </Column>
-            <Column>
-              <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
-              <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
-            </Column>
-          </GroupInfo>
+    <Overlay>
+      <ModalContainer>
+        <ModalHeader>
+          <CloseButton onClick={() => !isEditing && onClose()}><FaTimes /></CloseButton>
+        </ModalHeader>
+        <ModalBody>
+          <DetailsWrapper>
+            <Title>CONTROL ASISTENCIA</Title>
+            <GroupName>{group.name.toUpperCase()}</GroupName>
+            <GroupInfo>
+              <Column>
+                <p><strong>Instructor:</strong> {group.instructor}</p>
+                <p><strong>Nivel:</strong> {group.level}</p>
+              </Column>
+              <Column>
+                <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
+                <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
+              </Column>
+            </GroupInfo>
 
-          <AttendanceControl>
-            <ControlTitle>Control de:</ControlTitle>
-            <SelectMonth>{selectedMonth}</SelectMonth>
+            <AttendanceControl>
+              <ControlTitle>Control de:</ControlTitle>
+              <SelectMonth>{selectedMonth}</SelectMonth>
 
-            <Table>
-              <thead>
-                <tr>
-                  <th>Nombre Alumno</th>
-                  {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                    <th key={date.toString()} style={{ width: "20px" }}>
-                      {date.getDate()}
-                    </th>
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Nombre Alumno</th>
+                    {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                      <th key={date.toString()} style={{ width: "20px" }}>
+                        {date.getDate()}
+                      </th>
+                    ))}
+                    <th>D. Pago</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {femaleStudents.map((student) => (
+                    <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
+                      <StudentName isPrimaryGroup={student.isPrimaryGroup}>
+                        {student.name}
+                        {student.groups.length > 1 && (
+                          <>
+                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                            <Tooltip>
+                              <strong>OTROS GRUPOS:</strong>
+                              <ul>
+                                {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                  <li key={index}>
+                                    {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                  </li>
+                                ))}
+                              </ul>
+                            </Tooltip>
+                          </>
+                        )}
+                      </StudentName>
+                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
+                        const attendanceId = Object.keys(attendance).find(
+                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                        );
+                        const tempId = `temp-${student.id}-${date.getTime()}`;
+                        return (
+                          <AttendanceCell
+                            key={date.toString()}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                            className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
+                            isPrimaryGroup={student.isPrimaryGroup}
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
+                        );
+                      })}
+                      <PaymentStatus>
+                        {student.paymentDate}
+                      </PaymentStatus>
+                    </tr>
                   ))}
-                  <th>D. Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {femaleStudents.map((student) => (
-                  <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                    <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                      {student.name}
-                      {student.groups.length > 1 && (
-                        <>
-                          <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                          <Tooltip>
-                            <strong>OTROS GRUPOS:</strong>
-                            <ul>
-                              {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                <li key={index}>
-                                  {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                </li>
-                              ))}
-                            </ul>
-                          </Tooltip>
-                        </>
-                      )}
-                    </StudentName>
-                    {getAttendanceDates(selectedMonth, group.day).map((date) => {
-                      const attendanceId = Object.keys(attendance).find(
-                        (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                      );
-                      const tempId = `temp-${student.id}-${date.getTime()}`;
-                      return (
-                        <AttendanceCell
-                          key={date.toString()}
-                          onClick={() => handleAttendanceClick(student.id, date)}
-                          className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
-                          isPrimaryGroup={student.isPrimaryGroup}
-                        >
-                          {getAttendanceCellComponent(student.id, date)}
-                        </AttendanceCell>
-                      );
-                    })}
-                    <PaymentStatus>
-                      {student.paymentDate}
-                    </PaymentStatus>
-                  </tr>
-                ))}
-                {femaleStudents.length > 0 && maleStudents.length > 0 && (
-                  <tr className="divider-row">
-                    <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
-                  </tr>
-                )}
-                {maleStudents.map((student) => (
-                  <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                    <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                      {student.name}
-                      {student.groups.length > 1 && (
-                        <>
-                          <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                          <Tooltip>
-                            <strong>OTROS GRUPOS:</strong>
-                            <ul>
-                              {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                <li key={index}>
-                                  {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                </li>
-                              ))}
-                            </ul>
-                          </Tooltip>
-                        </>
-                      )}
-                    </StudentName>
-                    {getAttendanceDates(selectedMonth, group.day).map((date) => {
-                      const attendanceId = Object.keys(attendance).find(
-                        (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                      );
-                      const tempId = `temp-${student.id}-${date.getTime()}`;
-                      return (
-                        <AttendanceCell
-                          key={date.toString()}
-                          onClick={() => handleAttendanceClick(student.id, date)}
-                          className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
-                          isPrimaryGroup={student.isPrimaryGroup}
-                        >
-                          {getAttendanceCellComponent(student.id, date)}
-                        </AttendanceCell>
-                      );
-                    })}
-                    <PaymentStatus >
-                      {student.paymentDate}
-                    </PaymentStatus>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-            <Summary>
-              <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
-              <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
-            </Summary>
-          </AttendanceControl>
-          <ButtonContainer>
-            {isEditing ? (
-              <CancelButton onClick={handleCancel}>
-                Cancelar
-              </CancelButton>
-            ) : (
-              <ActionButton onClick={null}>
-                Recordar Clase
+                  {femaleStudents.length > 0 && maleStudents.length > 0 && (
+                    <tr className="divider-row">
+                      <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
+                    </tr>
+                  )}
+                  {maleStudents.map((student) => (
+                    <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
+                      <StudentName isPrimaryGroup={student.isPrimaryGroup}>
+                        {student.name}
+                        {student.groups.length > 1 && (
+                          <>
+                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                            <Tooltip>
+                              <strong>OTROS GRUPOS:</strong>
+                              <ul>
+                                {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                  <li key={index}>
+                                    {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                  </li>
+                                ))}
+                              </ul>
+                            </Tooltip>
+                          </>
+                        )}
+                      </StudentName>
+                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
+                        const attendanceId = Object.keys(attendance).find(
+                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                        );
+                        const tempId = `temp-${student.id}-${date.getTime()}`;
+                        return (
+                          <AttendanceCell
+                            key={date.toString()}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                            className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
+                            isPrimaryGroup={student.isPrimaryGroup}
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
+                        );
+                      })}
+                      <PaymentStatus >
+                        {student.paymentDate}
+                      </PaymentStatus>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <Summary>
+                <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
+                <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
+              </Summary>
+            </AttendanceControl>
+            <ButtonContainer>
+              {isEditing ? (
+                <CancelButton onClick={handleCancel}>
+                  Cancelar
+                </CancelButton>
+              ) : (
+                <ActionButton onClick={null}>
+                  Recordar Clase
+                </ActionButton>
+              )}
+              <ActionButton onClick={isEditing ? handleSave : handleEdit}>
+                {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
               </ActionButton>
-            )}
-            <ActionButton onClick={isEditing ? handleSave : handleEdit}>
-              {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
-            </ActionButton>
-          </ButtonContainer>
-        </DetailsWrapper>
-      </Body>
-    </Container>
+            </ButtonContainer>
+          </DetailsWrapper>
+        </ModalBody>
+      </ModalContainer>
+    </Overlay>
   );
 };
 
-const Container = styled.div`
-  padding: 20px;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Header = styled.div`
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;  
   align-items: center;
-  margin-bottom: 20px;
+  z-index: 1002;
 `;
 
-const BackButton = styled.button`
+const ModalContainer = styled.div`
+  margin-left: 80px;
+  margin-right: 20px;
+  background-color: #dddddd;
+  padding: 20px;
+  width: 600px;
+  height: 730px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1003;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 15px;
+  }
+
+  @media (max-width: 480px) {
+    width: 95%;
+    padding: 10px;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+`;
+
+const CloseButton = styled.button`
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 20px;
   cursor: pointer;
   color: #0b0f8b;
 
@@ -413,7 +448,7 @@ const BackButton = styled.button`
   }
 `;
 
-const Body = styled.div`
+const ModalBody = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
