@@ -1,9 +1,7 @@
 import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
-const cache = {};
-
-// ADD
+//ADD
 export const addStudent = async (student) => {
   try {
     const docRef = await addDoc(collection(db, "students"), student);
@@ -17,9 +15,9 @@ export const addStudent = async (student) => {
 
 export const addGroup = async (newGroup) => {
   await addDoc(collection(db, "groups"), newGroup);
-};
+ };
 
-export const addReceipt = async (receiptData) => {
+ export const addReceipt = async (receiptData) => {
   const receiptsCollection = collection(db, 'receipts');
   await addDoc(receiptsCollection, receiptData);
 
@@ -28,17 +26,25 @@ export const addReceipt = async (receiptData) => {
   await setDoc(metadataDoc, { lastReceiptNumber });
 };
 
-// FETCH
-export const fetchInstructors = async () => {
-  if (cache.instructors) return cache.instructors;
+export const addAttendance = async (date, groupId, studentId) => {
+  try {
+    await addDoc(collection(db, 'attendance'), {
+      date: Timestamp.fromDate(date), 
+      groupId: groupId,
+      studentId: studentId,
+    });
+  } catch (error) {
+    console.error("Error adding attendance: ", error);
+  }
+};
 
+ //FETCH
+export const fetchInstructors = async () => {
   const querySnapshot = await getDocs(collection(db, "instructors"));
   const instructorsData = querySnapshot.docs.map(doc => ({
     id: doc.id,
     name: doc.data().name
   }));
-
-  cache.instructors = instructorsData;
   return instructorsData;
 };
 
@@ -90,11 +96,11 @@ export const fetchStudentById = async (studentId) => {
 };
 
 export const fetchStudentEmail = async (studentId) => {
-  const studentRef = doc(db, 'students', studentId);
+  const studentRef = doc(db, 'students', studentId); 
   const studentSnap = await getDoc(studentRef);
 
   if (studentSnap.exists()) {
-    return studentSnap.data().email;
+    return studentSnap.data().email; 
   } else {
     console.log("No se encontró el alumno con el ID proporcionado");
     return null;
@@ -102,8 +108,6 @@ export const fetchStudentEmail = async (studentId) => {
 };
 
 export const fetchGroups = async () => {
-  if (cache.groups) return cache.groups;
-
   const instructorsSnapshot = await getDocs(collection(db, "instructors"));
   const instructorsMap = {};
   instructorsSnapshot.docs.forEach(doc => {
@@ -143,7 +147,6 @@ export const fetchGroups = async () => {
     return timeComparison;
   });
 
-  cache.groups = groupsData;
   return groupsData;
 };
 
@@ -199,42 +202,31 @@ export const fetchGroupsByDay = async (day) => {
 };
 
 export const fetchGroupDetails = async (groupId) => {
-  try {
-    const groupDoc = await getDoc(doc(db, "groups", groupId));
-    if (!groupDoc.exists()) {
-      throw new Error("Grupo no encontrado.");
-    }
+  const groupDoc = await getDoc(doc(db, "groups", groupId));
+  if (!groupDoc.exists()) {
+    throw new Error("Grupo no encontrado.");
+  }
 
-    const groupData = groupDoc.data();
+  const groupData = groupDoc.data();
+  const instructorDoc = await getDoc(doc(db, "instructors", groupData.instructor));
+  groupData.instructor = instructorDoc.exists() ? instructorDoc.data().name : "Instructor no encontrado";
 
-    if (!cache.instructors) {
-      const instructorsSnapshot = await getDocs(collection(db, "instructors"));
-      cache.instructors = instructorsSnapshot.docs.reduce((acc, doc) => {
-        acc[doc.id] = doc.data().name;
-        return acc;
-      }, {});
-    }
-
-    groupData.instructor = cache.instructors[groupData.instructor] || "Instructor no encontrado";
-
-    const studentsQuery = query(collection(db, "students"), where("groups", "array-contains", groupId));
-    const studentsSnapshot = await getDocs(studentsQuery);
-    const studentsData = studentsSnapshot.docs.map(doc => ({
+  const studentsSnapshot = await getDocs(collection(db, "students"));
+  const studentsData = studentsSnapshot.docs
+    .map((doc) => ({
       ...doc.data(),
       id: doc.id,
-    })).sort((a, b) => a.name.localeCompare(b.name));
+    }))
+    .filter((student) => student.groups.includes(groupId))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-    return { groupData, studentsData };
-  } catch (error) {
-    console.error("Error fetching group details: ", error);
-    throw error;
-  }
+  return { groupData, studentsData };
 };
 
 export const fetchExistingGroups = async () => {
-  const querySnapshot = await getDocs(collection(db, "groups"));
-  const groupsData = querySnapshot.docs.map(doc => doc.data());
-  return groupsData;
+ const querySnapshot = await getDocs(collection(db, "groups"));
+ const groupsData = querySnapshot.docs.map(doc => doc.data());
+ return groupsData;
 };
 
 export const fetchLastReceiptNumber = async () => {
@@ -255,12 +247,12 @@ export const fetchReceipts = async () => {
     const receiptsCollection = collection(db, "receipts");
     const receiptsQuery = query(receiptsCollection, orderBy("paymentDate"));
     const querySnapshot = await getDocs(receiptsQuery);
-
+    
     const receiptsData = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-
+    
     return receiptsData;
   } catch (e) {
     console.error("Error fetching receipts: ", e);
@@ -321,6 +313,23 @@ export const fetchPaymentsToday = async () => {
   return querySnapshot.docs.map(doc => doc.data());
 };
 
+export const fetchAttendances = async () => {
+  try {
+    const attendancesCollection = collection(db, "attendance");
+    const querySnapshot = await getDocs(attendancesCollection);
+    
+    const attendancesData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    return attendancesData;
+  } catch (e) {
+    console.error("Error fetching attendances: ", e);
+    throw e;
+  }
+};
+
 export const fetchAttendancesByGroup = async (groupId) => {
   try {
     const q = query(collection(db, 'attendance'), where('groupId', '==', groupId));
@@ -331,7 +340,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
       attendances[doc.id] = {
         groupId: data.groupId,
         studentId: data.studentId,
-        date: data.date.toDate()
+        date: data.date.toDate() 
       };
     });
     return attendances;
@@ -341,26 +350,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
   }
 };
 
-// BATCH UPDATE
-export const batchUpdateAttendance = async (changes) => {
-  const batch = writeBatch(db);
-  changes.forEach(change => {
-    if (change.action === 'delete') {
-      const attendanceDoc = doc(db, "attendance", change.id);
-      batch.delete(attendanceDoc);
-    } else if (change.action === 'add') {
-      const attendanceRef = doc(collection(db, 'attendance'));
-      batch.set(attendanceRef, {
-        date: Timestamp.fromDate(change.date),
-        groupId: change.groupId,
-        studentId: change.studentId,
-      });
-    }
-  });
-  await batch.commit();
-};
-
-// UPDATE
+//UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
     const studentRef = doc(db, "students", studentId);
@@ -377,7 +367,7 @@ export const updateGroup = async (groupId, updatedGroup) => {
   await updateDoc(groupRef, updatedGroup);
 };
 
-// DELETE
+//DELETE
 export const deleteStudent = async (studentId) => {
   try {
     const studentRef = doc(db, "students", studentId);
@@ -431,5 +421,29 @@ export const deleteGroup = async (groupId) => {
   } catch (e) {
     console.error("Error al eliminar grupo: ", e);
     throw e;
+  }
+};
+
+export const deleteAttendance = async (attendanceId) => {
+  try {
+    const attendanceDoc = doc(db, "attendance", attendanceId);
+    await deleteDoc(attendanceDoc);
+  } catch (e) {
+    console.error("Error deleting attendance: ", e);
+    throw e;
+  }
+};
+
+export const findAttendance = async (groupId, studentId, date) => {
+  try {
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date)));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    return querySnapshot.docs[0].id;
+  } catch (error) {
+    console.error("Error finding attendance: ", error);
+    return null;
   }
 };
