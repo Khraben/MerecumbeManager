@@ -2,6 +2,7 @@
 
 import "@/styles/globals.css";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { AuthProvider } from "./context/AuthContext";
 import SideNavbar from "./components/SideNavbar";
 import Login from "./components/Login";
@@ -11,6 +12,7 @@ import styled from 'styled-components';
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSideNavbarOpen, setIsSideNavbarOpen] = useState(false);
+  const pathname = usePathname();
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -24,29 +26,37 @@ export default function RootLayout({ children }) {
     setIsSideNavbarOpen(!isSideNavbarOpen);
   };
 
+  const noLayoutRoutes = ['/SetPassword'];
+
+  const shouldShowLayout = !noLayoutRoutes.includes(pathname);
+
   return (
     <html lang="es">
       <body style={{ margin: 0, padding: 0 }}>
         <AuthProvider>
-          {isLoggedIn ? (
-            <>
-              <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
-              <MainContent>
-                <Watermark>
-                  <Image
-                    src="/logo.svg"
-                    alt="Marca de Agua"
-                    layout="fill"
-                    objectFit="contain"
-                    style={{ opacity: 0.3 }}
-                    draggable="false"
-                  />
-                </Watermark>
-                <Content>{children}</Content>
-              </MainContent>
-            </>
+          {shouldShowLayout ? (
+            isLoggedIn ? (
+              <>
+                <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
+                <MainContent>
+                  <Watermark>
+                    <Image
+                      src="/logo.svg"
+                      alt="Marca de Agua"
+                      layout="fill"
+                      objectFit="contain"
+                      style={{ opacity: 0.3 }}
+                      draggable="false"
+                    />
+                  </Watermark>
+                  <Content>{children}</Content>
+                </MainContent>
+              </>
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
           ) : (
-            <Login onLogin={handleLogin} />
+            <Content>{children}</Content>
           )}
         </AuthProvider>
       </body>
