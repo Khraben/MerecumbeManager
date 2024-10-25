@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const InputContainer = styled.div`
   position: relative;
@@ -25,7 +26,7 @@ const StyledInput = styled.input`
 
   &:focus + label,
   &:not(:placeholder-shown) + label {
-    transform: translateY(-1.5rem);
+    transform: translateY(-1.8rem);
     font-size: 0.75rem;
     color: #0b0f8b;
   }
@@ -54,7 +55,7 @@ const StyledSelect = styled.select`
 
   &:focus + label,
   &:not([value=""]) + label {
-    transform: translateY(-2rem);
+    transform: translateY(-1.8rem);
     font-size: 0.75rem;
     color: #0b0f8b;
   }
@@ -84,7 +85,7 @@ const StyledLabel = styled.label`
   pointer-events: none;
 
   ${({ hasValue }) => hasValue && `
-    transform: translateY(-1.5rem);
+    transform: translateY(-1.8rem);
     font-size: 0.75rem;
     color: #0b0f8b;
   `}
@@ -96,16 +97,66 @@ const ComboBoxComponent = ({ placeholder, value, ...props }) => (
       <option value="" disabled hidden></option>
       {props.children}
     </StyledSelect>
-    <StyledLabel htmlFor={props.id} hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={props.id} $hasValue={value}>{placeholder}</StyledLabel>
   </InputContainer>
 );
 
-const Input = ({ type, id, className, placeholder, ...props }) => (
+const Input = ({ type, id, className, placeholder, style, labelStyle, ...props }) => (
   <InputContainer className={className}>
-    <StyledInput type={type} id={id} placeholder=" " {...props} />
-    <StyledLabel htmlFor={id}>{placeholder}</StyledLabel>
+    <StyledInput type={type} id={id} placeholder=" " style={style} autoComplete="off" {...props} />
+    <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>{placeholder}</StyledLabel>
   </InputContainer>
 );
+
+const PasswordInputComponent = ({ id, className, placeholder, style, labelStyle, loginButtonRef, ...props }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const toggleShowPassword = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowPassword(!showPassword);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (loginButtonRef && loginButtonRef.current) {
+        loginButtonRef.current.click();
+      } else {
+        console.error('Login button not found');
+      }
+    }
+  };
+
+  return (
+    <InputContainer className={className}>
+      <StyledInput
+        type={showPassword ? "text" : "password"}
+        id={id}
+        placeholder=" "
+        style={style}
+        onKeyDown={handleKeyDown}
+        autoComplete="off"
+        {...props}
+      />
+      <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>{placeholder}</StyledLabel>
+      <TogglePasswordButton onClick={(e) => toggleShowPassword(e)}>
+        {showPassword ? <FaEyeSlash /> : <FaEye />}
+      </TogglePasswordButton>
+    </InputContainer>
+  );
+};
+
+const TogglePasswordButton = styled.button`
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #dddddd;
+`;
 
 const SelectInput = ({ id, className, children, placeholder, value, ...props }) => (
   <InputContainer className={className}>
@@ -113,7 +164,7 @@ const SelectInput = ({ id, className, children, placeholder, value, ...props }) 
       <option value="" disabled hidden></option>
       {children}
     </StyledSelect>
-    <StyledLabel htmlFor={id} hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={id} $hasValue={value}>{placeholder}</StyledLabel>
   </InputContainer>
 );
 
@@ -141,12 +192,14 @@ const TimeRangeInputComponent = ({ startHour, endHour, interval, value, onChange
         <option key={index} value={time}>{time}</option>
       ))}
     </StyledSelect>
-    <StyledLabel htmlFor={placeholder} hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={placeholder} $hasValue={value}>{placeholder}</StyledLabel>
   </InputContainer>
 );
 
 export const TextInput = (props) => <Input type="text" {...props} />;
 export const NumberInput = (props) => <Input type="number" {...props} />;
+export const PasswordInput = (props) => <PasswordInputComponent {...props} />;
+export const UserInput = (props) => <Input type="text" {...props} />;
 export const ComboBox = ComboBoxComponent;
 export const Select = SelectInput;
 export const DateInput = DateInputComponent;
