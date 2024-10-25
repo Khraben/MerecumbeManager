@@ -3,14 +3,20 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
-import { fetchInstructors, fetchCountGroupsByInstructor, deleteInstructor } from "../conf/firebaseService";
+import SecretaryModal from "../components/SecretaryModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 import Loading from "../components/Loading";
+import { fetchSecretaries, fetchInstructors, fetchCountGroupsByInstructor, deleteSecretary, deleteInstructor } from "../conf/firebaseService";
 
 export default function AdminConf() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [instructors, setInstructors] = useState([]);
   const [secretaries, setSecretaries] = useState([]);
+  const [isSecretaryModalOpen, setIsSecretaryModalOpen] = useState(false);
+  const [editingSecretaryId, setEditingSecretaryId] = useState(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [secretaryToDelete, setSecretaryToDelete] = useState(null);
 
   useEffect(() => {
     const loadInstructors = async () => {
@@ -25,13 +31,65 @@ export default function AdminConf() {
         setInstructors(instructorsWithGroupsCount);
       } catch (error) {
         console.error("Error fetching instructors:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadInstructors();
+    const loadSecretaries = async () => {
+      try {
+        const secretariesData = await fetchSecretaries();
+        setSecretaries(secretariesData);
+      } catch (error) {
+        console.error("Error fetching secretaries:", error);
+      }
+    };
+
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([loadInstructors(), loadSecretaries()]);
+      setLoading(false);
+    };
+
+    loadData();
   }, []);
+
+  const handleOpenSecretaryModal = (secretaryId = null) => {
+    setEditingSecretaryId(secretaryId);
+    setIsSecretaryModalOpen(true);
+  };
+
+  const handleCloseSecretaryModal = () => {
+    setIsSecretaryModalOpen(false);
+    fetchSecretariesData();
+  };
+
+  const handleOpenConfirmation = (secretary) => {
+    setSecretaryToDelete(secretary);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setIsConfirmationOpen(false);
+    setSecretaryToDelete(null);
+  };
+
+  const handleDeleteSecretary = async () => {
+    try {
+      await deleteSecretary(secretaryToDelete.id);
+      fetchSecretariesData();
+      setIsConfirmationOpen(false);
+    } catch (error) {
+      console.error("Error deleting secretary: ", error);
+    }
+  };
+
+  const fetchSecretariesData = async () => {
+    try {
+      const secretariesData = await fetchSecretaries();
+      setSecretaries(secretariesData);
+    } catch (error) {
+      console.error("Error fetching secretaries: ", error);
+    }
+  };
 
   const filteredInstructors = instructors.filter(instructor =>
     instructor.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -103,8 +161,8 @@ export default function AdminConf() {
                 <td>{secretary.username}</td>
                 <td>
                   <InfoIcon />
-                  <EditIcon />
-                  <DeleteIcon />
+                  <EditIcon onClick={() => handleOpenSecretaryModal(secretary.id)} />
+                  <DeleteIcon onClick={() => handleOpenConfirmation(secretary)} />
                 </td>
               </tr>
             ))}
@@ -112,9 +170,20 @@ export default function AdminConf() {
         </Table>
       </TableContainer>
       <ButtonContainer>
-        <ActionButton>Agregar Instructor</ActionButton>
-        <ActionButton>Agregar Secretaria</ActionButton>
+        <ActionButton >Agregar Instructor</ActionButton>
+        <ActionButton onClick={() => handleOpenSecretaryModal()}>Agregar Secretaria</ActionButton>
       </ButtonContainer>
+      <SecretaryModal
+        isOpen={isSecretaryModalOpen}
+        onClose={handleCloseSecretaryModal}
+        secretaryId={editingSecretaryId}
+      />
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={handleCloseConfirmation}
+        onConfirm={handleDeleteSecretary}
+        message={`¿Estás seguro de que deseas eliminar a la secretaria "${secretaryToDelete?.name}"?`}
+      />
     </Wrapper>
   );
 }
