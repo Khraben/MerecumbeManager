@@ -13,6 +13,17 @@ export const addStudent = async (student) => {
   }
 };
 
+export const addInstructor = async (instructor) => {
+  try {
+    const docRef = await addDoc(collection(db, "instructors"), instructor);
+    console.log("Instructor agregado con ID: ", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error al agregar instructor: ", e);
+    throw e;
+  }
+};
+
 export const addGroup = async (newGroup) => {
   await addDoc(collection(db, "groups"), newGroup);
  };
@@ -39,16 +50,7 @@ export const addAttendance = async (date, groupId, studentId) => {
 };
 
  //FETCH
-export const fetchInstructors = async () => {
-  const querySnapshot = await getDocs(collection(db, "instructors"));
-  const instructorsData = querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    name: doc.data().name
-  }));
-  return instructorsData;
-};
-
-export const fetchStudents = async () => {
+ export const fetchStudents = async () => {
   const querySnapshot = await getDocs(collection(db, "students"));
   const studentsData = querySnapshot.docs.map(doc => {
     const data = doc.data();
@@ -104,6 +106,27 @@ export const fetchStudentEmail = async (studentId) => {
   } else {
     console.log("No se encontró el alumno con el ID proporcionado");
     return null;
+  }
+};
+
+ export const fetchInstructors = async () => {
+  const querySnapshot = await getDocs(collection(db, "instructors"));
+  const instructorsData = querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    name: doc.data().name,
+    phone: doc.data().phone
+  }));
+  return instructorsData;
+};
+
+export const fetchCountGroupsByInstructor = async (instructorId) => {
+  try {
+    const groupsQuery = query(collection(db, "groups"), where("instructor", "==", instructorId));
+    const querySnapshot = await getDocs(groupsQuery);
+    return querySnapshot.size;
+  } catch (e) {
+    console.error("Error counting groups by instructor: ", e);
+    throw e;
   }
 };
 
@@ -362,6 +385,17 @@ export const updateStudent = async (studentId, studentData) => {
   }
 };
 
+export const updateInstructor = async (instructorId, instructorData) => {
+  try {
+    const instructorRef = doc(db, "instructors", instructorId);
+    await updateDoc(instructorRef, instructorData);
+    console.log("Instructor actualizado con ID: ", instructorId);
+  } catch (e) {
+    console.error("Error al actualizar instructor: ", e);
+    throw e;
+  }
+};
+
 export const updateGroup = async (groupId, updatedGroup) => {
   const groupRef = doc(db, "groups", groupId);
   await updateDoc(groupRef, updatedGroup);
@@ -392,6 +426,17 @@ export const deleteStudent = async (studentId) => {
     console.log("Estudiante eliminado con ID: ", studentId);
   } catch (e) {
     console.error("Error al eliminar estudiante: ", e);
+    throw e;
+  }
+};
+
+export const deleteInstructor = async (instructorId) => {
+  try {
+    const instructorRef = doc(db, "instructors", instructorId);
+    await deleteDoc(instructorRef);
+    console.log("Instructor eliminado con ID: ", instructorId);
+  } catch (e) {
+    console.error("Error al eliminar instructor: ", e);
     throw e;
   }
 };
