@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,3 +18,16 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 export { db, auth };
+
+export const createSecretaryUser = async (email) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, "tempPass1_");
+    const user = userCredential.user;
+    console.log("User created:", user);
+    await sendPasswordResetEmail(auth, email);
+    console.log("Password reset email sent");
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};

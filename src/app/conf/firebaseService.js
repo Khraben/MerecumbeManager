@@ -24,6 +24,17 @@ export const addInstructor = async (instructor) => {
   }
 };
 
+export const addSecretary = async (secretary) => {
+  try {
+    const docRef = await addDoc(collection(db, "secretaries"), secretary);
+    console.log("Secretaria agregada con ID: ", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error al agregar secretaria: ", e);
+    throw e;
+  }
+};
+
 export const addGroup = async (newGroup) => {
   await addDoc(collection(db, "groups"), newGroup);
  };
@@ -117,6 +128,32 @@ export const fetchStudentEmail = async (studentId) => {
     phone: doc.data().phone
   }));
   return instructorsData;
+};
+
+export const fetchSecretaries = async () => {
+  const querySnapshot = await getDocs(collection(db, "secretaries"));
+  const secretariesData = querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    name: doc.data().name,
+    phone: doc.data().phone,
+    username: doc.data().username
+  }));
+  return secretariesData;
+};
+
+export const fetchSecretaryById = async (secretaryId) => {
+  try {
+    const secretaryRef = doc(db, "secretaries", secretaryId);
+    const secretarySnap = await getDoc(secretaryRef);
+    if (secretarySnap.exists()) {
+      return secretarySnap.data();
+    } else {
+      throw new Error("No such secretary!");
+    }
+  } catch (e) {
+    console.error("Error fetching secretary by ID: ", e);
+    throw e;
+  }
 };
 
 export const fetchCountGroupsByInstructor = async (instructorId) => {
@@ -373,6 +410,23 @@ export const fetchAttendancesByGroup = async (groupId) => {
   }
 };
 
+export const fetchEmailByUsername = async (username) => {
+  const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));
+  const secretariesSnapshot = await getDocs(secretariesQuery);
+
+  const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
+  const ownersSnapshot = await getDocs(ownersQuery);
+
+  if (!secretariesSnapshot.empty) {
+    return secretariesSnapshot.docs[0].data().email;
+  }
+
+  if (!ownersSnapshot.empty) {
+    return ownersSnapshot.docs[0].data().email;
+  }
+  return null;
+};
+
 //UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -392,6 +446,17 @@ export const updateInstructor = async (instructorId, instructorData) => {
     console.log("Instructor actualizado con ID: ", instructorId);
   } catch (e) {
     console.error("Error al actualizar instructor: ", e);
+    throw e;
+  }
+};
+
+export const updateSecretary = async (secretaryId, secretaryData) => {
+  try {
+    const secretaryRef = doc(db, "secretaries", secretaryId);
+    await updateDoc(secretaryRef, secretaryData);
+    console.log("Secretaria actualizada con ID: ", secretaryId);
+  } catch (e) {
+    console.error("Error al actualizar secretaria: ", e);
     throw e;
   }
 };
@@ -437,6 +502,17 @@ export const deleteInstructor = async (instructorId) => {
     console.log("Instructor eliminado con ID: ", instructorId);
   } catch (e) {
     console.error("Error al eliminar instructor: ", e);
+    throw e;
+  }
+};
+
+export const deleteSecretary = async (secretaryId) => {
+  try {
+    const secretaryRef = doc(db, "secretaries", secretaryId);
+    await deleteDoc(secretaryRef);
+    console.log("Secretaria eliminada con ID: ", secretaryId);
+  } catch (e) {
+    console.error("Error al eliminar secretaria: ", e);
     throw e;
   }
 };
@@ -491,4 +567,26 @@ export const findAttendance = async (groupId, studentId, date) => {
     console.error("Error finding attendance: ", error);
     return null;
   }
+};
+
+//CHECK
+export const isEmailRegistered = async (email) => {
+  const secretariesQuery = query(collection(db, "secretaries"), where("email", "==", email));
+  const secretariesSnapshot = await getDocs(secretariesQuery);
+
+  const ownersQuery = query(collection(db, "owners"), where("email", "==", email));
+  const ownersSnapshot = await getDocs(ownersQuery);
+
+  // Check if email exists in either collection
+  return !secretariesSnapshot.empty || !ownersSnapshot.empty;
+};
+
+export const isUsernameRegistered = async (username) => {
+  const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));
+  const secretariesSnapshot = await getDocs(secretariesQuery);
+  
+  const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
+  const ownersSnapshot = await getDocs(ownersQuery);
+
+  return !secretariesSnapshot.empty || !ownersSnapshot.empty;
 };

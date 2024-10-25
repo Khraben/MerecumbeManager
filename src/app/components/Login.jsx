@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
 import { auth } from "../conf/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { fetchEmailByUsername } from "../conf/firebaseService";
+import { UserInput, PasswordInput } from './Input';
 
 export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-
+  const loginButtonRef = useRef(null); 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -22,21 +24,27 @@ export default function Login({ onLogin }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const email = `${username}@gmail.com`;
+    if (!username || !password) {
+      setError("Por favor, ingrese usuario y contraseña.");
+      return;
+    }
     try {
+      const email = await fetchEmailByUsername(username);
+      if (!email) {
+        setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
+        return;
+      }
       await signInWithEmailAndPassword(auth, email, password);
       onLogin();
     } catch (error) {
-      if (error.code === 'auth/user-not-found') {
-        setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
-      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setError("Contraseña incorrecta. Por favor, verifica tu contraseña.");
       } else {
         setError("Error al iniciar sesión: " + error.message);
       }
     }
   };
-
+  
   return (
     <Background>
       {isLoading ? (
@@ -47,25 +55,30 @@ export default function Login({ onLogin }) {
         <LoginContainer>
           <StyledLogo src="/logo.svg" alt="Logo" width={120} height={120} />
           <Form onSubmit={handleLogin}>
-            <Input
-              type="text"
+            <UserInput
+              id="username"
               placeholder="Usuario"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              onInvalid={(e) => e.target.setCustomValidity('Por favor, ingrese su usuario.')}
-              onInput={(e) => e.target.setCustomValidity('')}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError(null);
+              }}
+              style={{ marginBottom: '10px', color: "#dddddd" }}
+              labelStyle={{ color: "#dddddd" }}
             />
-            <Input
-              type="password"
+            <PasswordInput
+              id="password"
               placeholder="Contraseña"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              onInvalid={(e) => e.target.setCustomValidity('Por favor, ingrese su contraseña.')}
-              onInput={(e) => e.target.setCustomValidity('')}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null); 
+              }}
+              style={{ color: "#dddddd" }}
+              labelStyle={{ color: "#dddddd" }}
+              loginButtonRef={loginButtonRef}
             />
-            <Button type="submit">Ingresar</Button>
+            <Button ref={loginButtonRef} type="submit">Ingresar</Button> {/* Attach the ref to the button */}
             {error && <ErrorMessage>{error}</ErrorMessage>}
           </Form>
         </LoginContainer>
@@ -138,15 +151,6 @@ const Form = styled.form`
   max-width: 320px;
   padding: 20px;
   border-radius: 10px;
-`;
-
-const Input = styled.input`
-  padding: 10px;
-  margin: 10px 0;
-  width: 100%;
-  border: none;
-  border-radius: 5px;
-  box-sizing: border-box;
 `;
 
 const Button = styled.button`
