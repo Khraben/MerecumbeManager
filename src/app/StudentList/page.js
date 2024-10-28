@@ -7,7 +7,7 @@ import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails"; 
 import Loading from "../components/Loading"; 
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../conf/firebaseService"; 
+import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../firebase/firebaseFirestoreService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");

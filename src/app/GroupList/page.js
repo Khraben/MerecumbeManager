@@ -7,7 +7,7 @@ import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails"; 
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchGroups, deleteGroup } from "../conf/firebaseService";
+import { fetchGroups, deleteGroup } from "../firebase/firebaseFirestoreService";
 
 export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");

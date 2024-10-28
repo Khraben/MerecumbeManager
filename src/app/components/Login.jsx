@@ -3,9 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
-import { auth } from "../conf/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { fetchEmailByUsername } from "../conf/firebaseService";
+import { signInUser } from "../firebase/firebaseAuthService";
+import { fetchEmailByUsername } from "../firebase/firebaseFirestoreService";
 import { UserInput, PasswordInput } from './Input';
 
 export default function Login({ onLogin }) {
@@ -14,6 +13,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const loginButtonRef = useRef(null); 
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -34,7 +34,7 @@ export default function Login({ onLogin }) {
         setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
         return;
       }
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInUser(email, password);
       onLogin();
     } catch (error) {
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {

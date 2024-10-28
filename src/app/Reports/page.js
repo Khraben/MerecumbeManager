@@ -2,25 +2,25 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
-import StudentMoroso from "../components/StudentMorosos";
+import PendingPayments from "../components/PendingPayments";
 import FinancialIncome from "../components/FinancialIncome";
 
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
-  const [showStudentMorosos, setShowStudentMorosos] = useState(false);
+  const [showPendingPayments, setShowPendingPayments] = useState(false);
   const [showIngresosFinancieros, setShowIngresosFinancieros] = useState(false);
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
-  const handleShowStudentMorosos = () => {
-    setShowStudentMorosos(true);
+  const handleShowPendingPayments = () => {
+    setShowPendingPayments(true);
   };
   const handleShowIngresosFinancieros= ()=> {
     setShowIngresosFinancieros(true);
   }
   const handleBackToReports = () => {
     setShowPaymentHistory(false);
-    setShowStudentMorosos(false);
+    setShowPendingPayments(false);
     setShowIngresosFinancieros(false);
   };
 
@@ -28,8 +28,8 @@ const Reports = () => {
     <Wrapper>
       {showPaymentHistory ? (
         <PaymentHistory onBack={handleBackToReports} />
-      ): showStudentMorosos?(
-        <StudentMoroso onBack={handleBackToReports} />
+      ): showPendingPayments?(
+        <PendingPayments onBack={handleBackToReports} />
       ): showIngresosFinancieros?(
         <FinancialIncome onBack={handleBackToReports} />
         )  :(
@@ -40,13 +40,13 @@ const Reports = () => {
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
 
-          <ReportTypeSection onClick={handleShowStudentMorosos}>
-            <Subtitle>Alumnos Pendientes</Subtitle>
+          <ReportTypeSection onClick={handleShowPendingPayments}>
+            <Subtitle>Pagos Pendientes</Subtitle>
             <p>Genera un reporte detallado de los alumnos con pagos pendientes.</p>
           </ReportTypeSection>
 
           <ReportTypeSection onClick={handleShowIngresosFinancieros}>
-            <Subtitle>Informe de ingresos </Subtitle>
+            <Subtitle>Informe de Ingresos </Subtitle>
             <p>Genera un reporte de los ingresos.</p>
           </ReportTypeSection>
 

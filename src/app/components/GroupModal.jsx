@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../conf/firebaseService";
+import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../firebase/firebaseFirestoreService";
 import { TextInput, Select, DateInput } from './Input';
 
 const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {

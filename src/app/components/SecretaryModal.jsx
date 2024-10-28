@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { addSecretary, fetchSecretaryById, updateSecretary, isEmailRegistered, isUsernameRegistered } from "../conf/firebaseService";
+import { addSecretary, fetchSecretaryById, updateSecretary, isEmailRegistered, isUsernameRegistered } from "../firebase/firebaseFirestoreService";
 import { TextInput } from './Input';
-import { createSecretaryUser } from "../conf/firebase";
+import { createSecretaryUser } from "../firebase/firebaseAuthService";
 
 export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secretaryId }) {
   const [name, setName] = useState("");

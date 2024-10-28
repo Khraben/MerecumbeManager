@@ -4,7 +4,8 @@ import DatePicker from "react-datepicker";
 import React, { useState, useEffect } from 'react';
 import { FaSearch,FaCalendarAlt} from 'react-icons/fa';
 import { es } from "date-fns/locale/es"; 
-import { fetchReceipts} from "../conf/firebaseService";
+import { fetchReceipts} from "../firebase/firebaseFirestoreService";
+
 const FinancialIncome= ({onBack}) => {
     const [loading, setLoading] = useState(true); 
     const [startDate, setStartDate] = useState(null);
@@ -12,6 +13,9 @@ const FinancialIncome= ({onBack}) => {
     const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
     const [payments, setPayments] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
+    const [mensualidadTotal, setMensualidadTotal] = useState(0);
+    const [tallerTotal, setTallerTotal] = useState(0);
+    const [clasePrivadaTotal, setClasePrivadaTotal] = useState(0);
     const [monthFilter, setMonthFilter] = useState("");
     const monthNameToNumber = (monthName) => {
         const months = {
@@ -54,16 +58,40 @@ const FinancialIncome= ({onBack}) => {
           });
         }
       }
-      const total = filtered.reduce((sum, payment) => {
+      const mensualidadTotal = filtered
+      .filter(payment => payment.concept === "Mensualidad")
+      .reduce((sum, payment) => {
         const amountString = payment.amount.replace(/[₡,.]/g, '');
         const amount = parseFloat(amountString);
         return sum + amount;
       }, 0);
-      setTotalAmount(total);
+
+    const tallerTotal = filtered
+      .filter(payment => payment.concept === "Taller")
+      .reduce((sum, payment) => {
+        const amountString = payment.amount.replace(/[₡,.]/g, '');
+        const amount = parseFloat(amountString);
+        return sum + amount;
+      }, 0);
+
+    const clasePrivadaTotal = filtered
+      .filter(payment => payment.concept === "Clases Privadas")
+      .reduce((sum, payment) => {
+        const amountString = payment.amount.replace(/[₡,.]/g, '');
+        const amount = parseFloat(amountString);
+        return sum + amount;
+      }, 0);
+
+    const total = mensualidadTotal + tallerTotal + clasePrivadaTotal;
+    setMensualidadTotal(mensualidadTotal);
+    setTallerTotal(tallerTotal);
+    setClasePrivadaTotal(clasePrivadaTotal);
+    setTotalAmount(total);
+
     }, [startDate, endDate,monthFilter, payments]);
   
     const formatAmount = (value) => {
-        return value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return `₡${value.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
       };
     const handleStartDateChange = (date) => {
       setStartDate(date);
@@ -120,22 +148,34 @@ const FinancialIncome= ({onBack}) => {
             </FilterSection>
             <TableContainer>
                 <PaymentTable>
-                    <thead>
-                        <tr>
-                        <th>Monto Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th>Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Mensualidad</td>
+                    <td>{formatAmount(Number(mensualidadTotal).toFixed(0))}</td>
+                  </tr>
                     <tr>
-                    <td>{formatAmount(Number(totalAmount).toFixed(2))}</td>
+                      <td>Taller</td>
+                      <td>{formatAmount(Number(tallerTotal).toFixed(0))}</td>
                     </tr>
+                    <tr>
+                      <td>Clase Privada</td>
+                      <td>{formatAmount(Number(clasePrivadaTotal).toFixed(0))}</td>
+                    </tr>
+                  <tr>
+                    <td><strong>Total</strong></td>
+                    <td><strong>{formatAmount(Number(totalAmount).toFixed(0))}</strong></td>
+                  </tr>
                     </tbody>
                  </PaymentTable>
             </TableContainer>
         <BackButton onClick={onBack}>Volver</BackButton>   
     </Wrapper>
-
-
     );
   };
 export default FinancialIncome;

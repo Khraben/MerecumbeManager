@@ -1,5 +1,5 @@
 import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "./firebaseConfig";
 
 //ADD
 export const addStudent = async (student) => {
@@ -342,6 +342,21 @@ export const fetchReceiptsByMonth = async (monthYear) => {
   }
 };
 
+export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
+  try {
+    const receiptsQuery = query(
+      collection(db, "receipts"),
+      where("studentId", "==", studentId),
+      where("concept", "==", concept)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+    return querySnapshot.docs.map(doc => doc.data());
+  } catch (e) {
+    console.error("Error fetching receipts by student and concept: ", e);
+    throw e;
+  }
+};
+
 export const fetchReceiptsByStudentAndMonth = async (studentId,monthYear) => {
   try {
     const receiptsRef = collection(db, 'receipts');
@@ -363,52 +378,6 @@ export const fetchReceiptsByStudentAndMonth = async (studentId,monthYear) => {
   }
 };
 
-export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
-  try {
-    const receiptsQuery = query(
-      collection(db, "receipts"),
-      where("studentId", "==", studentId),
-      where("concept", "==", concept)
-    );
-    const querySnapshot = await getDocs(receiptsQuery);
-    return querySnapshot.docs.map(doc => doc.data());
-  } catch (e) {
-    console.error("Error fetching receipts by student and concept: ", e);
-    throw e;
-  }
-};
-
-export const fetchReceiptsByStudent = async (studentId) => {
-  try {
-    const receiptsQuery = query(
-      collection(db, "receipts"),
-      where("studentId", "==", studentId),
-      where("concept", "==", "Mensualidad")
-    );
-    const querySnapshot = await getDocs(receiptsQuery);
-    return querySnapshot.docs.map(doc => doc.data());
-  } catch (e) {
-    console.error("Error fetching receipts by student and concept: ", e);
-    throw e;
-  }
-};
-
-export const fetchPaymentsToday = async () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-
-  const paymentsQuery = query(
-    collection(db, "receipts"),
-    where("paymentDate", ">=", Timestamp.fromDate(today)),
-    where("paymentDate", "<", Timestamp.fromDate(tomorrow))
-  );
-
-  const querySnapshot = await getDocs(paymentsQuery);
-  return querySnapshot.docs.map(doc => doc.data());
-};
-
 export const fetchAttendances = async () => {
   try {
     const attendancesCollection = collection(db, "attendance");
@@ -423,6 +392,20 @@ export const fetchAttendances = async () => {
   } catch (e) {
     console.error("Error fetching attendances: ", e);
     throw e;
+  }
+};
+
+export const fetchSpecificAttendance = async (groupId, studentId, date) => {
+  try {
+    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date)));
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      return null;
+    }
+    return querySnapshot.docs[0].id;
+  } catch (error) {
+    console.error("Error finding attendance: ", error);
+    return null;
   }
 };
 
@@ -446,7 +429,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
   }
 };
 
-export const fetchAttendancesByStudent = async (StudentId, mesConsulta) => {
+export const fetchAttendancesByStudentAndMonth = async (StudentId, monthYear) => {
   try {
     const q = query(collection(db, 'attendance'), where('studentId', '==', StudentId));
     const querySnapshot = await getDocs(q);
@@ -455,7 +438,7 @@ export const fetchAttendancesByStudent = async (StudentId, mesConsulta) => {
       const data = doc.data();
       const attendanceDate = data.date.toDate();
       const attendanceMonthYear = `${attendanceDate.toLocaleString("es-CR", { month: 'long' })} de ${attendanceDate.getFullYear()}`;
-      if (attendanceMonthYear === mesConsulta) {
+      if (attendanceMonthYear === monthYear) {
         attendances[doc.id] = {
           groupId: data.groupId,
           studentId: data.studentId,
@@ -470,8 +453,6 @@ export const fetchAttendancesByStudent = async (StudentId, mesConsulta) => {
     return {};
   }
 };
-
-
 
 export const fetchEmailByUsername = async (username) => {
   const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));
@@ -615,20 +596,6 @@ export const deleteAttendance = async (attendanceId) => {
   } catch (e) {
     console.error("Error deleting attendance: ", e);
     throw e;
-  }
-};
-
-export const findAttendance = async (groupId, studentId, date) => {
-  try {
-    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date)));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      return null;
-    }
-    return querySnapshot.docs[0].id;
-  } catch (error) {
-    console.error("Error finding attendance: ", error);
-    return null;
   }
 };
 

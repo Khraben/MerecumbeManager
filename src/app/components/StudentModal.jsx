@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaPlus, FaTimes } from "react-icons/fa";
-import { fetchGroups, addStudent, fetchStudentById, updateStudent } from "../conf/firebaseService";
+import { fetchGroups, addStudent, fetchStudentById, updateStudent } from "../firebase/firebaseFirestoreService";
 import { TextInput, ComboBox, NumberInput } from './Input';
 
 export default function StudentModal({ isOpen, onClose, onStudentAdded, studentId }) {

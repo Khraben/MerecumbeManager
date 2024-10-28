@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo } from "react-icons/fa";
-import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, findAttendance, deleteAttendance, fetchGroupsByIds } from "../conf/firebaseService";
+import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, fetchSpecificAttendance, deleteAttendance, fetchGroupsByIds } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
 const GroupDetails = ({ isOpen, onClose, groupId }) => {
@@ -140,7 +140,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       } else if (change.action === 'add') {
         const { date, groupId, studentId } = change;
         await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await findAttendance(groupId, studentId, date);
+        const newAttendanceId = await fetchSpecificAttendance(groupId, studentId, date);
         if (newAttendanceId) {
           newAttendance[newAttendanceId] = { groupId, studentId, date };
         }

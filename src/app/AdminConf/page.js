@@ -6,7 +6,7 @@ import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import SecretaryModal from "../components/SecretaryModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Loading from "../components/Loading";
-import { fetchSecretaries, fetchInstructors, fetchCountGroupsByInstructor, deleteSecretary, deleteInstructor } from "../conf/firebaseService";
+import { fetchSecretaries, fetchInstructors, fetchCountGroupsByInstructor, deleteSecretary, deleteInstructor } from "../firebase/firebaseFirestoreService";
 
 export default function AdminConf() {
   const [searchTerm, setSearchTerm] = useState("");

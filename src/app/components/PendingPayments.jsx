@@ -2,10 +2,10 @@ import styled from 'styled-components';
 import Loading from "./Loading"; 
 import { FaSearch } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import { fetchStudents, fetchAttendancesByStudent,fetchReceiptsByStudentAndMonth } from "../conf/firebaseService";
+import { fetchStudents, fetchAttendancesByStudentAndMonth,fetchReceiptsByStudentAndMonth } from "../firebase/firebaseFirestoreService";
 
-const StudentMoroso = ({onBack}) => {
-    const [StudentMorosos, setStudentMorosos] = useState([]);
+const PendingPayments = ({onBack}) => {
+    const [pendingStudents, setpendingStudents] = useState([]);
     const [loading, setLoading] = useState(true); 
     const [MonthMorosos, setMonth] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +33,7 @@ const StudentMoroso = ({onBack}) => {
             const mesConsulta = getCurrentMonthYear();
             const allStudents = await fetchStudents();
             const studentsWithVerification = await Promise.all(allStudents.map(async (student) => {
-              const studentAsistencia = await fetchAttendancesByStudent(student.id, mesConsulta);
+              const studentAsistencia = await fetchAttendancesByStudentAndMonth(student.id, mesConsulta);
               const hasAssis = Object.keys(studentAsistencia).length > 0;
               return {
                 ...student,
@@ -50,7 +50,7 @@ const StudentMoroso = ({onBack}) => {
             };
             }));
           const StudentPendientePago = CheckPaidStudents.filter(student => !student.hasPaid);
-          setStudentMorosos(StudentPendientePago);
+          setpendingStudents(StudentPendientePago);
           } catch (error) {
             console.error("Error al cargar: ", error);
           } finally {
@@ -63,7 +63,7 @@ const StudentMoroso = ({onBack}) => {
     if (loading) {
         return <Loading />;
       }
-      const filteredStudents = StudentMorosos.filter(student =>
+      const filteredStudents = pendingStudents.filter(student =>
         student.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       return (
@@ -102,7 +102,7 @@ const StudentMoroso = ({onBack}) => {
         </Wrapper>
       );
 }
-export default StudentMoroso;
+export default PendingPayments;
 const Wrapper = styled.div`
   width: 100%;
   display: flex;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes, FaUser, FaPhone, FaEnvelope, FaVenusMars, FaUsers, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
-import { fetchStudentDetails } from "../conf/firebaseService";
+import { fetchStudentDetails } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
 const StudentDetails = ({ isOpen, onClose, studentId }) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { fetchReceipts, fetchStudentById } from "../conf/firebaseService";
+import { fetchReceipts, fetchStudentById } from "../firebase/firebaseFirestoreService";
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";

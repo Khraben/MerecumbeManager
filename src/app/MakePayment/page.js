@@ -9,7 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept } from "../conf/firebaseService";
+import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept } from "../firebase/firebaseFirestoreService";
 import axios from 'axios'; 
 
 registerLocale("es", es);
@@ -102,6 +102,8 @@ export default function MakePayment() {
   const handleConfirmReceipt = async () => {
     try {
       if (receiptRef.current) {
+        receiptRef.current.style.height = "auto";
+        receiptRef.current.style.width = "auto";
         const dataUrl = await toPng(receiptRef.current);
         
         const student = students.find(s => s.name === selectedStudent);
@@ -602,7 +604,7 @@ const ModalContent = styled.div`
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 350px;
+  max-width: 390px;
   width: 100%;
   max-height: 85vh;
   overflow-y: auto; 
