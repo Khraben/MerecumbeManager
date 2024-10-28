@@ -102,9 +102,18 @@ export default function MakePayment() {
   const handleConfirmReceipt = async () => {
     try {
       if (receiptRef.current) {
+        receiptRef.current.style.margin = "0";
+        receiptRef.current.style.padding = "0";
+        receiptRef.current.style.width = "100%";
         receiptRef.current.style.height = "auto";
-        receiptRef.current.style.width = "auto";
+
         const dataUrl = await toPng(receiptRef.current);
+
+        // Restaura el estilo original del contenedor
+        receiptRef.current.style.margin = "";
+        receiptRef.current.style.padding = "";
+        receiptRef.current.style.width = "";
+        receiptRef.current.style.height = "";
         
         const student = students.find(s => s.name === selectedStudent);
         if (!student) {
