@@ -342,12 +342,48 @@ export const fetchReceiptsByMonth = async (monthYear) => {
   }
 };
 
+export const fetchReceiptsByStudentAndMonth = async (studentId,monthYear) => {
+  try {
+    const receiptsRef = collection(db, 'receipts');
+    const receiptsQuery = query(
+      receiptsRef,
+      where('concept', '==', 'Mensualidad'),
+      where("studentId", "==", studentId),
+      where('specification', '==', monthYear)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+    const receipts = [];
+    querySnapshot.forEach(doc => {
+      receipts.push({ id: doc.id, ...doc.data() });
+    });
+    return receipts;
+  } catch (error) {
+    console.error("Error fetching receipts by Student And month: ", error);
+    throw error;
+  }
+};
+
 export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
   try {
     const receiptsQuery = query(
       collection(db, "receipts"),
       where("studentId", "==", studentId),
       where("concept", "==", concept)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+    return querySnapshot.docs.map(doc => doc.data());
+  } catch (e) {
+    console.error("Error fetching receipts by student and concept: ", e);
+    throw e;
+  }
+};
+
+export const fetchReceiptsByStudent = async (studentId) => {
+  try {
+    const receiptsQuery = query(
+      collection(db, "receipts"),
+      where("studentId", "==", studentId),
+      where("concept", "==", "Mensualidad")
     );
     const querySnapshot = await getDocs(receiptsQuery);
     return querySnapshot.docs.map(doc => doc.data());
@@ -409,6 +445,33 @@ export const fetchAttendancesByGroup = async (groupId) => {
     return {};
   }
 };
+
+export const fetchAttendancesByStudent = async (StudentId, mesConsulta) => {
+  try {
+    const q = query(collection(db, 'attendance'), where('studentId', '==', StudentId));
+    const querySnapshot = await getDocs(q);
+    const attendances = {};
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const attendanceDate = data.date.toDate();
+      const attendanceMonthYear = `${attendanceDate.toLocaleString("es-CR", { month: 'long' })} de ${attendanceDate.getFullYear()}`;
+      if (attendanceMonthYear === mesConsulta) {
+        attendances[doc.id] = {
+          groupId: data.groupId,
+          studentId: data.studentId,
+          date: attendanceDate
+        };
+      }
+    });
+
+    return attendances;
+  } catch (error) {
+    console.error("Error fetching attendances: ", error);
+    return {};
+  }
+};
+
+
 
 export const fetchEmailByUsername = async (username) => {
   const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));

@@ -1,36 +1,49 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
+import StudentMoroso from "../components/StudentMorosos";
 
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [showStudentMorosos, setShowStudentMorosos] = useState(false);
 
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
 
+  const handleShowStudentMorosos = () => {
+    setShowStudentMorosos(true);
+  };
   const handleBackToReports = () => {
     setShowPaymentHistory(false);
+    setShowStudentMorosos(false);
   };
 
   return (
     <Wrapper>
       {showPaymentHistory ? (
         <PaymentHistory onBack={handleBackToReports} />
-      ) : (
+      ): showStudentMorosos?(
+        <StudentMoroso onBack={handleBackToReports} />
+      ) :(
         <>
           <Title>Reportes</Title>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
             <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
+
+          <ReportTypeSection onClick={handleShowStudentMorosos}>
+            <Subtitle>Alumnos Pendientes</Subtitle>
+            <p>Genera un reporte detallado de los alumnos con pagos pendientes.</p>
+          </ReportTypeSection>
+
         </>
       )}
     </Wrapper>
   );
 };
-
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
@@ -42,7 +55,6 @@ const Wrapper = styled.div`
     padding: 10px;
   }
 `;
-
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -55,8 +67,6 @@ const Title = styled.h1`
     font-size: 20px;
   }
 `;
-
-
 const ReportTypeSection = styled.section`
   width: 100%;
   max-width: 1200px;
@@ -89,7 +99,6 @@ const ReportTypeSection = styled.section`
     max-width: 75%;
   }
 `;
-
 const Subtitle = styled.h2`
   font-size: 20px;
   color: #0b0f8b;
@@ -102,5 +111,4 @@ const Subtitle = styled.h2`
     font-size: 18px;
   }
 `;
-
 export default Reports;
