@@ -56,9 +56,7 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           </Card>
           <Card>
             <FaExclamationTriangle />
-            <DetailItem><strong>Contacto de Emergencia:</strong></DetailItem>
-            <DetailItem>{student.emergencyName}</DetailItem>
-            <DetailItem>{student.emergencyPhone}</DetailItem>
+            <DetailItem><strong>Contacto de Emergencia:</strong> {student.emergencyName}, {student.emergencyPhone}</DetailItem>
           </Card>
           <Card>
             <FaUsers />
@@ -117,6 +115,7 @@ const ModalContainer = styled.div`
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
+    height: auto;
   }
 `;
 
@@ -167,10 +166,21 @@ const Card = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 
   svg {
     font-size: 24px;
     color: #0b0f8b;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+
+    svg {
+      font-size: 20px;
+    }
   }
 `;
 
@@ -178,6 +188,10 @@ const DetailItem = styled.p`
   margin: 0;
   font-size: 16px;
   color: #333;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const GroupList = styled.ul`
@@ -189,6 +203,10 @@ const GroupList = styled.ul`
     margin-bottom: 5px;
     font-size: 16px;
     color: #333;
+
+    @media (max-width: 480px) {
+      font-size: 14px;
+    }
   }
 `;
 
