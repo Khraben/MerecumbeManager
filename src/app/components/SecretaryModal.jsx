@@ -10,90 +10,89 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [originalUsername, setOriginalUsername] = useState("");
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add("no-scroll");
-      if (secretaryId) {
-        fetchSecretaryData(secretaryId);
-      }
+    if (isOpen && secretaryId) {
+      const fetchSecretary = async () => {
+        try {
+          const secretaryData = await fetchSecretaryById(secretaryId);
+          setName(secretaryData.name);
+          setPhone(secretaryData.phone);
+          setUsername(secretaryData.username);
+          setEmail(secretaryData.email);
+          setOriginalUsername(secretaryData.username);
+        } catch (error) {
+          setError("Error al cargar datos de la secretaria.");
+        }
+      };
+      fetchSecretary();
     } else {
-      document.body.classList.remove("no-scroll");
       resetFields();
     }
-    return () => {
-      document.body.classList.remove("no-scroll");
-    };
   }, [isOpen, secretaryId]);
 
-  const fetchSecretaryData = async (id) => {
+  const handleSave = async () => {
+    if (!name || !phone || !username || (!secretaryId && !email)) {
+      setError("Todos los campos son requeridos.");
+      return;
+    }
+    if (phone.length !== 9) {
+      setError("Formato del teléfono inválido");
+      return;
+    }
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!secretaryId && email.includes(' ')) {
+      setError("El correo electrónico no debe contener espacios.");
+      return;
+    }
+    if (!secretaryId && !emailRegex.test(email)) {
+      setError("Por favor ingresa un correo electrónico válido.");
+      return;
+    }
+  
+    if (!secretaryId) {
+      const emailExists = await isEmailRegistered(email);
+      if (emailExists) {
+        setError("El correo electrónico ya está registrado.");
+        return;
+      }
+    }
+  
+    let usernameExists = false;
+    if (!secretaryId || (secretaryId && username !== originalUsername)) {
+      usernameExists = await isUsernameRegistered(username);
+      if (usernameExists) {
+        setError("El nombre de usuario ya está registrado.");
+        return;
+      }
+    }
+  
+    setError("");
+  
+    const secretaryData = {
+      name,
+      phone,
+      username,
+      ...(secretaryId ? {} : { email }),
+    };
+  
     try {
-      const secretaryData = await fetchSecretaryById(id);
-      setName(secretaryData.name);
-      setPhone(secretaryData.phone);
-      setUsername(secretaryData.username);
-      setEmail(secretaryData.email);
+      if (secretaryId) {
+        await updateSecretary(secretaryId, secretaryData);
+      } else {
+        await addSecretary(secretaryData);
+        await createSecretaryUser(email);
+      }
+      resetFields();
+      onClose();
+      if (onSecretaryAdded) {
+        onSecretaryAdded(secretaryData);
+      }
     } catch (error) {
-      console.error("Error fetching secretary data:", error);
+      setError("Error al guardar secretaria.");
     }
   };
-
-  const handleSave = async () => {
-   if (!name || !phone || !username || !email) {
-     setError("Todos los campos son requeridos.");
-     return;
-   }
-   if (phone.length !== 9) {
-     setError("Formato del teléfono inválido");
-     return;
-   }
-   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-   if (email.includes(' ')) {
-     setError("El correo electrónico no debe contener espacios.");
-     return;
-   }
-   if (!emailRegex.test(email)) {
-     setError("Por favor ingresa un correo electrónico válido.");
-     return;
-   }
- 
-   const emailExists = await isEmailRegistered(email);
-   if (emailExists) {
-     setError("El correo electrónico ya está registrado.");
-     return;
-   }
- 
-   const usernameExists = await isUsernameRegistered(username);
-   if (usernameExists) {
-     setError("El nombre de usuario ya está registrado.");
-     return;
-   }
- 
-   setError("");
- 
-   const secretaryData = {
-     name,
-     phone,
-     username,
-     email,
-   };
- 
-   try {
-     if (secretaryId) {
-       await updateSecretary(secretaryId, secretaryData);
-     } else {
-       await addSecretary(secretaryData);
-       await createSecretaryUser(email);
-     }
-     resetFields();
-     onClose();
-     if (onSecretaryAdded) {
-       onSecretaryAdded(secretaryData);
-     }
-   } catch (error) {
-     setError("Error al guardar secretaria.");
-   }
- };
 
   const resetFields = () => {
     setName("");
@@ -163,6 +162,7 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
               placeholder="Correo Electrónico"
               value={email}
               onChange={handleInputChange(setEmail)}
+              disabled={!!secretaryId}
             />
           </Form>
           {error && <ErrorMessage>{error}</ErrorMessage>}
