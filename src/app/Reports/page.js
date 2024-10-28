@@ -3,21 +3,25 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
 import StudentMoroso from "../components/StudentMorosos";
+import FinancialIncome from "../components/FinancialIncome";
 
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [showStudentMorosos, setShowStudentMorosos] = useState(false);
-
+  const [showIngresosFinancieros, setShowIngresosFinancieros] = useState(false);
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
-
   const handleShowStudentMorosos = () => {
     setShowStudentMorosos(true);
   };
+  const handleShowIngresosFinancieros= ()=> {
+    setShowIngresosFinancieros(true);
+  }
   const handleBackToReports = () => {
     setShowPaymentHistory(false);
     setShowStudentMorosos(false);
+    setShowIngresosFinancieros(false);
   };
 
   return (
@@ -26,7 +30,9 @@ const Reports = () => {
         <PaymentHistory onBack={handleBackToReports} />
       ): showStudentMorosos?(
         <StudentMoroso onBack={handleBackToReports} />
-      ) :(
+      ): showIngresosFinancieros?(
+        <FinancialIncome onBack={handleBackToReports} />
+        )  :(
         <>
           <Title>Reportes</Title>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
@@ -37,6 +43,11 @@ const Reports = () => {
           <ReportTypeSection onClick={handleShowStudentMorosos}>
             <Subtitle>Alumnos Pendientes</Subtitle>
             <p>Genera un reporte detallado de los alumnos con pagos pendientes.</p>
+          </ReportTypeSection>
+
+          <ReportTypeSection onClick={handleShowIngresosFinancieros}>
+            <Subtitle>Informe de ingresos </Subtitle>
+            <p>Genera un reporte de los ingresos.</p>
           </ReportTypeSection>
 
         </>
