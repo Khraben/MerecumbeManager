@@ -1,19 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useSearchParams } from "next/navigation";
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from "next/navigation";
 import { getAuth, confirmPasswordReset } from "firebase/auth";
 import styled from "styled-components";
 import { PasswordInput } from '../components/Input';
 import Image from 'next/image';
+import Loading from '../components/Loading';
 
 const SetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
-  const oobCode = searchParams.get('oobCode'); // Get the oobCode from the URL
+  const oobCode = searchParams.get('oobCode');
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [success, router]);
 
   const validatePassword = (password) => {
     const minLength = 8;
@@ -66,6 +87,10 @@ const SetPassword = () => {
     setter(e.target.value);
     setError(null); 
   };
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Background>
