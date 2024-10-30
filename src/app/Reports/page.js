@@ -4,13 +4,11 @@ import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
 import PendingPayments from "../components/PendingPayments";
 import FinancialIncome from "../components/FinancialIncome";
-import Attendance from "../components/AttendanceReport";
 
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [showPendingPayments, setShowPendingPayments] = useState(false);
   const [showIngresosFinancieros, setShowIngresosFinancieros] = useState(false);
-  const [showAttendanceReport, setShowAttendanceReport] = useState(false);
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
@@ -20,14 +18,10 @@ const Reports = () => {
   const handleShowIngresosFinancieros= ()=> {
     setShowIngresosFinancieros(true);
   }
-  const handleShowAttendanceReport = () => {
-    setShowAttendanceReport(true);
-  };
   const handleBackToReports = () => {
     setShowPaymentHistory(false);
     setShowPendingPayments(false);
     setShowIngresosFinancieros(false);
-    setShowAttendanceReport(false);
   };
 
   return (
@@ -38,8 +32,6 @@ const Reports = () => {
         <PendingPayments onBack={handleBackToReports} />
       ): showIngresosFinancieros?(
         <FinancialIncome onBack={handleBackToReports} />
-        ): showAttendanceReport?(
-          <Attendance onBack={handleBackToReports} />
         )  :(
         <>
           <Title>Reportes</Title>
@@ -56,11 +48,6 @@ const Reports = () => {
           <ReportTypeSection onClick={handleShowIngresosFinancieros}>
             <Subtitle>Informe de Ingresos </Subtitle>
             <p>Genera un reporte de los ingresos.</p>
-          </ReportTypeSection>
-
-          <ReportTypeSection onClick={handleShowAttendanceReport}>
-            <Subtitle>Informe de asistencias </Subtitle>
-            <p>Genera un reporte de las asistencias.</p>
           </ReportTypeSection>
 
         </>
