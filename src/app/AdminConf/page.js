@@ -4,36 +4,41 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import SecretaryModal from "../components/SecretaryModal";
+import InstructorModal from "../components/InstructorModal";
+import InstructorDetails from "../components/InstructorDetails"; // Importar InstructorDetails
 import ConfirmationModal from "../components/ConfirmationModal";
 import Loading from "../components/Loading";
-import { fetchSecretaries, fetchInstructors, fetchCountGroupsByInstructor, deleteSecretary, deleteInstructor } from "../firebase/firebaseFirestoreService";
+import {
+  fetchSecretaries,
+  fetchInstructors,
+  deleteSecretary,
+  deleteInstructor,
+} from "../firebase/firebaseFirestoreService";
+import SecretaryDetails from "../components/SecretaryDetails";
+
 
 export default function AdminConf() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [instructors, setInstructors] = useState([]);
   const [secretaries, setSecretaries] = useState([]);
+  
   const [isSecretaryModalOpen, setIsSecretaryModalOpen] = useState(false);
+  const [isInstructorModalOpen, setIsInstructorModalOpen] = useState(false);
+  const [isInstructorDetailsOpen, setIsInstructorDetailsOpen] = useState(false); // Estado para InstructorDetails
+  
   const [editingSecretaryId, setEditingSecretaryId] = useState(null);
+  const [editingInstructorId, setEditingInstructorId] = useState(null);
+  const [viewingInstructorId, setViewingInstructorId] = useState(null); // Estado para ID del instructor a ver
+
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [secretaryToDelete, setSecretaryToDelete] = useState(null);
+  const [instructorToDelete, setInstructorToDelete] = useState(null);
+
+  const [isSecretaryDetailsOpen, setIsSecretaryDetailsOpen] = useState(false);
+  const [viewingSecretaryId, setViewingSecretaryId] = useState(null);
 
   useEffect(() => {
-    const loadInstructors = async () => {
-      try {
-        const instructorsData = await fetchInstructors();
-        const instructorsWithGroupsCount = await Promise.all(
-          instructorsData.map(async (instructor) => {
-            const groupsCount = await fetchCountGroupsByInstructor(instructor.id);
-            return { ...instructor, groupsCount };
-          })
-        );
-        setInstructors(instructorsWithGroupsCount);
-      } catch (error) {
-        console.error("Error fetching instructors:", error);
-      }
-    };
-
     const loadSecretaries = async () => {
       try {
         const secretariesData = await fetchSecretaries();
@@ -43,9 +48,18 @@ export default function AdminConf() {
       }
     };
 
+    const loadInstructors = async () => {
+      try {
+        const instructorsData = await fetchInstructors();
+        setInstructors(instructorsData);
+      } catch (error) {
+        console.error("Error fetching instructors:", error);
+      }
+    };
+
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([loadInstructors(), loadSecretaries()]);
+      await Promise.all([loadSecretaries(), loadInstructors()]);
       setLoading(false);
     };
 
@@ -62,14 +76,58 @@ export default function AdminConf() {
     fetchSecretariesData();
   };
 
-  const handleOpenConfirmation = (secretary) => {
-    setSecretaryToDelete(secretary);
+  const handleOpenInstructorModal = (instructorId = null) => {
+    setEditingInstructorId(instructorId);
+    setIsInstructorModalOpen(true);
+  };
+
+  const handleCloseInstructorModal = () => {
+    setIsInstructorModalOpen(false);
+    fetchInstructorsData();
+  };
+
+  const handleOpenInstructorDetails = (instructorId) => {
+    if (instructorId) {
+      setViewingInstructorId(instructorId);
+      setIsInstructorDetailsOpen(true);
+    } else {
+      console.error("Instructor ID no válido");
+    }
+  };
+  
+  // Función para abrir el modal de detalles de secretaria
+  const handleOpenSecretaryDetails = (secretaryId) => {
+    if (secretaryId) {
+      setViewingSecretaryId(secretaryId);
+      setIsSecretaryDetailsOpen(true);
+    } else {
+      console.error("Secretary ID no válido");
+    }
+  };
+
+  // Función para cerrar el modal de detalles de secretaria
+  const handleCloseSecretaryDetails = () => {
+    setIsSecretaryDetailsOpen(false);
+    setViewingSecretaryId(null);
+  };
+  const handleCloseInstructorDetails = () => {
+    setIsInstructorDetailsOpen(false);
+    setViewingInstructorId(null);
+  };
+
+  const handleOpenConfirmation = (type, item) => {
+    if (type === "secretary") {
+      setSecretaryToDelete(item);
+    } else if (type === "instructor") {
+      setInstructorToDelete(item);
+    }
     setIsConfirmationOpen(true);
   };
 
   const handleCloseConfirmation = () => {
     setIsConfirmationOpen(false);
     setSecretaryToDelete(null);
+    setInstructorToDelete(null);
   };
 
   const handleDeleteSecretary = async () => {
@@ -82,6 +140,16 @@ export default function AdminConf() {
     }
   };
 
+  const handleDeleteInstructor = async () => {
+    try {
+      await deleteInstructor(instructorToDelete.id);
+      fetchInstructorsData();
+      setIsConfirmationOpen(false);
+    } catch (error) {
+      console.error("Error deleting instructor: ", error);
+    }
+  };
+
   const fetchSecretariesData = async () => {
     try {
       const secretariesData = await fetchSecretaries();
@@ -91,12 +159,21 @@ export default function AdminConf() {
     }
   };
 
-  const filteredInstructors = instructors.filter(instructor =>
-    instructor.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchInstructorsData = async () => {
+    try {
+      const instructorsData = await fetchInstructors();
+      setInstructors(instructorsData);
+    } catch (error) {
+      console.error("Error fetching instructors: ", error);
+    }
+  };
 
   const filteredSecretaries = secretaries.filter(secretary =>
     secretary.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredInstructors = instructors.filter(instructor =>
+    instructor.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -115,6 +192,8 @@ export default function AdminConf() {
         />
         <SearchIcon />
       </SearchContainer>
+
+      {/* Tabla de Instructores */}
       <SectionTitle>Instructores</SectionTitle>
       <TableContainer>
         <Table>
@@ -133,15 +212,17 @@ export default function AdminConf() {
                 <td>{instructor.phone}</td>
                 <td>{instructor.groupsCount}</td>
                 <td>
-                  <InfoIcon />
-                  <EditIcon />
-                  <DeleteIcon />
+                  <InfoIcon onClick={() => handleOpenInstructorDetails(instructor.id)} /> {/* Ver detalles */}
+                  <EditIcon onClick={() => handleOpenInstructorModal(instructor.id)} />
+                  <DeleteIcon onClick={() => handleOpenConfirmation("instructor", instructor)} />
                 </td>
               </tr>
             ))}
           </tbody>
         </Table>
       </TableContainer>
+
+      {/* Tabla de Secretarias */}
       <SectionTitle>Secretarias</SectionTitle>
       <TableContainer>
         <Table>
@@ -160,33 +241,56 @@ export default function AdminConf() {
                 <td>{secretary.phone}</td>
                 <td>{secretary.username}</td>
                 <td>
-                  <InfoIcon />
+                  <InfoIcon onClick={() => handleOpenSecretaryDetails(secretary.id)} />
                   <EditIcon onClick={() => handleOpenSecretaryModal(secretary.id)} />
-                  <DeleteIcon onClick={() => handleOpenConfirmation(secretary)} />
+                  <DeleteIcon onClick={() => handleOpenConfirmation("secretary", secretary)} />
                 </td>
               </tr>
             ))}
           </tbody>
         </Table>
       </TableContainer>
+
       <ButtonContainer>
-        <ActionButton >Agregar Instructor</ActionButton>
+        <ActionButton onClick={() => handleOpenInstructorModal()}>Agregar Instructor</ActionButton>
         <ActionButton onClick={() => handleOpenSecretaryModal()}>Agregar Secretaria</ActionButton>
       </ButtonContainer>
+
+      <InstructorModal
+        isOpen={isInstructorModalOpen}
+        onClose={handleCloseInstructorModal}
+        instructorId={editingInstructorId}
+      />
+
+      <SecretaryDetails
+        isOpen={isSecretaryDetailsOpen}
+        onClose={handleCloseSecretaryDetails}
+        secretaryId={viewingSecretaryId}
+      />
+
       <SecretaryModal
         isOpen={isSecretaryModalOpen}
         onClose={handleCloseSecretaryModal}
         secretaryId={editingSecretaryId}
       />
+
+      <InstructorDetails
+        isOpen={isInstructorDetailsOpen}
+        onClose={handleCloseInstructorDetails}
+        instructorId={viewingInstructorId}
+      />
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={handleCloseConfirmation}
-        onConfirm={handleDeleteSecretary}
-        message={`¿Estás seguro de que deseas eliminar a la secretaria "${secretaryToDelete?.name}"?`}
+        onConfirm={instructorToDelete ? handleDeleteInstructor : handleDeleteSecretary}
+        message={`¿Estás seguro de que deseas eliminar a ${
+          instructorToDelete ? "el instructor" : "la secretaria"
+        } "${instructorToDelete ? instructorToDelete.name : secretaryToDelete?.name}"?`}
       />
     </Wrapper>
   );
 }
+
 
 const Wrapper = styled.div`
   width: 100%;

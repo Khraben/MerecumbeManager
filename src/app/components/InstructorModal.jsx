@@ -20,40 +20,35 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
         }
       };
       fetchInstructor();
-    } else {
-      resetFields();
+    } else if (!isOpen) {
+      resetFields(); // Limpia los campos si el modal está cerrado
     }
   }, [isOpen, instructorId]);
 
   const handleSave = async () => {
-    // Validate required fields
     if (!name || !phone) {
       setError("Todos los campos son requeridos.");
       return;
     }
-    
-    // Validate phone format (assuming 9-digit phone number)
     if (phone.length !== 9) {
       setError("Formato del teléfono inválido");
       return;
     }
 
-    setError(""); // Clear any previous errors
+    setError("");
 
     const instructorData = { name, phone };
 
     try {
       if (instructorId) {
-        // Update existing instructor
         await updateInstructor(instructorId, instructorData);
       } else {
-        // Add new instructor
         await addInstructor(instructorData);
       }
       resetFields();
-      onClose();
+      onClose(); // Llama a onClose después de guardar
       if (onInstructorAdded) {
-        onInstructorAdded(instructorData); // Callback to refresh instructor list in parent component
+        onInstructorAdded(instructorData);
       }
     } catch (error) {
       setError("Error al guardar instructor.");
@@ -64,6 +59,14 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
     setName("");
     setPhone("");
     setError("");
+  };
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, ""); // Remueve caracteres no numéricos
+    if (value.length > 4) {
+      value = `${value.slice(0, 4)}-${value.slice(4, 8)}`; // Agrega un guion después de 4 dígitos
+    }
+    setPhone(value.slice(0, 9)); // Limita el formato
   };
 
   if (!isOpen) return null;
@@ -85,9 +88,9 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
             />
             <TextInput
               id="phone"
-              placeholder="Celular"
+              placeholder="0000-0000"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={handlePhoneChange}
               onKeyPress={(e) => {
                 if (!/[0-9]/.test(e.key)) {
                   e.preventDefault();
@@ -107,7 +110,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   );
 }
 
-// Styled components
+// Estilos
 const Overlay = styled.div`
   position: fixed;
   top: 0;
@@ -134,6 +137,16 @@ const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 15px;
+  }
+
+  @media (max-width: 480px) {
+    width: 95%;
+    padding: 10px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -142,6 +155,10 @@ const ModalHeader = styled.div`
     font-weight: bold;
     color: #0b0f8b;
     text-align: center;
+
+    @media (max-width: 480px) {
+      font-size: 18px;
+    }
   }
 `;
 
@@ -161,6 +178,11 @@ const ModalFooter = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 10px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 5px;
+  }
 `;
 
 const CancelButton = styled.button`
@@ -172,6 +194,19 @@ const CancelButton = styled.button`
   cursor: pointer;
   font-weight: bold;
   width: 100%;
+
+  &:hover {
+    background-color: #6b6b6b;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    font-size: 12px;
+  }
 `;
 
 const SaveButton = styled.button`
@@ -183,10 +218,27 @@ const SaveButton = styled.button`
   cursor: pointer;
   font-weight: bold;
   width: 100%;
+
+  &:hover {
+    background-color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    font-size: 12px;
+  }
 `;
 
 const ErrorMessage = styled.p`
   color: red;
   font-weight: bold;
   text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;

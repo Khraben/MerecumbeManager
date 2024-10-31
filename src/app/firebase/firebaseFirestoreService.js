@@ -144,6 +144,24 @@ export const fetchStudentsByGroup = async (groupId) => {
   return instructorsData;
 };
 
+export const fetchInstructorById = async (instructorId) => {
+  try {
+    const instructorRef = doc(db, "instructors", instructorId); // Referencia al documento del instructor
+    const instructorSnap = await getDoc(instructorRef); // Obtiene el documento
+    if (instructorSnap.exists()) {
+      return instructorSnap.data(); // Retorna los datos si existen
+    } else {
+      throw new Error("No se encontró el instructor!");
+    }
+  } catch (e) {
+    console.error("Error al obtener los datos del instructor por ID: ", e);
+    throw e;
+  }
+};
+
+
+
+
 export const fetchSecretaries = async () => {
   const querySnapshot = await getDocs(collection(db, "secretaries"));
   const secretariesData = querySnapshot.docs.map(doc => ({
