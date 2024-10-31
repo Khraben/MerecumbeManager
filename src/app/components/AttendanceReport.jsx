@@ -197,6 +197,7 @@ const AttendanceReport = ({ onBack }) => {
               locale={es}
               placeholderText="Fecha de fin"
               disabled={isEndDateDisabled}
+              minDate={startDate}
             />
             <CalendarIcon />
           </SearchContainer>
