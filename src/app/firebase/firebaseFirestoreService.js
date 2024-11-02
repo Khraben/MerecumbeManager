@@ -119,7 +119,21 @@ export const fetchStudentEmail = async (studentId) => {
     return null;
   }
 };
-
+export const fetchStudentsByGroup = async (groupId) => {
+  try {
+    const studentsRef = collection(db, "students");
+    const q = query(studentsRef, where("groupId", "==", groupId));
+    const querySnapshot = await getDocs(q);
+    const students = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    return students;
+  } catch (error) {
+    console.error("Error fetching students by group: ", error);
+    throw error;
+  }
+};
  export const fetchInstructors = async () => {
   const querySnapshot = await getDocs(collection(db, "instructors"));
   const instructorsData = querySnapshot.docs.map(doc => ({
@@ -129,6 +143,24 @@ export const fetchStudentEmail = async (studentId) => {
   }));
   return instructorsData;
 };
+
+export const fetchInstructorById = async (instructorId) => {
+  try {
+    const instructorRef = doc(db, "instructors", instructorId); // Referencia al documento del instructor
+    const instructorSnap = await getDoc(instructorRef); // Obtiene el documento
+    if (instructorSnap.exists()) {
+      return instructorSnap.data(); // Retorna los datos si existen
+    } else {
+      throw new Error("No se encontró el instructor!");
+    }
+  } catch (e) {
+    console.error("Error al obtener los datos del instructor por ID: ", e);
+    throw e;
+  }
+};
+
+
+
 
 export const fetchSecretaries = async () => {
   const querySnapshot = await getDocs(collection(db, "secretaries"));

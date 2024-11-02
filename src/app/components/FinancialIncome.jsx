@@ -141,6 +141,7 @@ const FinancialIncome= ({onBack}) => {
                     locale={es}
                     placeholderText="Fecha de fin"
                     disabled={isEndDateDisabled}
+                    minDate={startDate}
                     />
                     <CalendarIcon />
                 </SearchContainer>
