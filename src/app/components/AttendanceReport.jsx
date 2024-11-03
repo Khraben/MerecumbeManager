@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { fetchAttendances, fetchAttendancesByGroup, fetchStudentById, fetchGroups } from "../firebase/firebaseFirestoreService";
+import { fetchAttendances, fetchAttendancesByGroup, fetchStudentById, fetchGroups, fetchGroupById } from "../firebase/firebaseFirestoreService";
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
@@ -35,25 +35,28 @@ const AttendanceReport = ({ onBack }) => {
       setLoading(true); 
       try {
         const allAttendances = await fetchAttendances();
-        const attendancesWithStudentNames = await Promise.all(allAttendances.map(async (attendance) => {
+        const attendancesWithDetails = await Promise.all(allAttendances.map(async (attendance) => {
           try {
             const studentData = await fetchStudentById(attendance.studentId);
+            const groupData = await fetchGroupById(attendance.groupId);
             return {
               ...attendance,
               studentName: studentData.name,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
+              groupName: groupData ? groupData.name : 'Unknown',
+              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
             };
           } catch (error) {
-            console.error(`Error al cargar el estudiante con ID ${attendance.studentId}: `, error);
+            console.error(`Error al cargar los detalles de la asistencia: `, error);
             return {
               ...attendance,
               studentName: attendance.studentId,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
+              groupName: 'Unknown',
+              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
             };
           }
         }));
-        setAttendances(attendancesWithStudentNames);
-        setFilteredAttendances(attendancesWithStudentNames);
+        setAttendances(attendancesWithDetails);
+        setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
         console.error("Error al cargar las asistencias: ", error);
       } finally {
@@ -75,24 +78,27 @@ const AttendanceReport = ({ onBack }) => {
       setLoading(true); 
       try {
         const allAttendances = await fetchAttendancesByGroup(selectedGroup);
-        const attendancesWithStudentNames = await Promise.all(Object.values(allAttendances).map(async (attendance) => {
+        const attendancesWithDetails = await Promise.all(Object.values(allAttendances).map(async (attendance) => {
           try {
             const studentData = await fetchStudentById(attendance.studentId);
+            const groupData = await fetchGroupById(attendance.groupId);
             return {
               ...attendance,
               studentName: studentData.name,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
+              groupName: groupData ? groupData.name : 'Unknown',
+              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
             };
           } catch (error) {
-            console.error(`Error al cargar el estudiante con ID ${attendance.studentId}: `, error);
+            console.error(`Error al cargar los detalles de la asistencia: `, error);
             return {
               ...attendance,
               studentName: attendance.studentId,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
+              groupName: 'Unknown',
+              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
             };
           }
         }));
-        setFilteredAttendances(attendancesWithStudentNames);
+        setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
         console.error("Error al cargar las asistencias: ", error);
       } finally {
@@ -216,7 +222,7 @@ const AttendanceReport = ({ onBack }) => {
             {currentAttendances.map((attendance, index) => (
               <tr key={index}>
                 <td>{attendance.studentName}</td>
-                <td>{attendance.groupId}</td>
+                <td>{attendance.groupName}</td>
                 <td>{attendance.date.toLocaleDateString("es-CR")}</td>
                 <td>{attendance.status}</td>
               </tr>
