@@ -21,7 +21,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
       };
       fetchInstructor();
     } else if (!isOpen) {
-      resetFields(); // Limpia los campos si el modal está cerrado
+      resetFields(); 
     }
   }, [isOpen, instructorId]);
 
@@ -46,7 +46,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
         await addInstructor(instructorData);
       }
       resetFields();
-      onClose(); // Llama a onClose después de guardar
+      onClose(); 
       if (onInstructorAdded) {
         onInstructorAdded(instructorData);
       }
@@ -62,11 +62,11 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   };
 
   const handlePhoneChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remueve caracteres no numéricos
+    let value = e.target.value.replace(/\D/g, ""); 
     if (value.length > 4) {
-      value = `${value.slice(0, 4)}-${value.slice(4, 8)}`; // Agrega un guion después de 4 dígitos
+      value = `${value.slice(0, 4)}-${value.slice(4, 8)}`; 
     }
-    setPhone(value.slice(0, 9)); // Limita el formato
+    setPhone(value.slice(0, 9)); 
   };
 
   if (!isOpen) return null;
@@ -88,7 +88,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
             />
             <TextInput
               id="phone"
-              placeholder="0000-0000"
+              placeholder="Celular"
               value={phone}
               onChange={handlePhoneChange}
               onKeyPress={(e) => {
@@ -110,7 +110,6 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   );
 }
 
-// Estilos
 const Overlay = styled.div`
   position: fixed;
   top: 0;
@@ -125,6 +124,8 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
+  margin-left: 80px;
+  margin-right: 20px;
   background-color: #dddddd;
   padding: 20px;
   width: 400px;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../firebase/firebaseFirestoreService";
-import { TextInput, Select, DateInput } from './Input';
+import { TextInput, Select } from './Input';
+import Loading from "./Loading";
 
 const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const [instructor, setInstructor] = useState("");
@@ -15,6 +16,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const [workshopName, setWorkshopName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [isStartDateDisabled, setIsStartDateDisabled] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -98,11 +100,12 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
       setError("Todos los campos son obligatorios");
       return;
     }
-
+  
     setError("");
-
+    setLoading(true);
+  
     const name = level === "Taller" ? `${workshopName}` : `${day} ${startTime}`;
-
+  
     const newGroup = {
       instructor,
       day,
@@ -112,7 +115,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
       name,
       startDate,
     };
-
+  
     try {
       if (groupId) {
         await updateGroup(groupId, newGroup);
@@ -126,6 +129,8 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
       }
     } catch (error) {
       setError("Error al agregar el grupo");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -221,57 +226,66 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   return (
     <Overlay>
       <ModalContainer>
-        <ModalHeader>
-          <h2>{groupId ? "Editar Grupo" : "Agregar Nuevo Grupo"}</h2>
-        </ModalHeader>
-        <ModalBody>
-          <Form>
-            <Select value={instructor} onChange={handleInputChange(setInstructor)} placeholder="Seleccione un instructor">
-              {instructors.map((inst, index) => (
-                <option key={index} value={inst.id}>{inst.name}</option>
-              ))}
-            </Select>
-            <Select value={day} onChange={handleDayChange} placeholder="Seleccione un día">
-              <option value="Lunes">Lunes</option>
-              <option value="Martes">Martes</option>
-              <option value="Miércoles">Miércoles</option>
-              <option value="Jueves">Jueves</option>
-              <option value="Viernes">Viernes</option>
-              <option value="Sábado">Sábado</option>
-            </Select>
-            <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled} placeholder="Fecha de inicio">
-              {generateDateOptions().map((date, index) => (
-                <option key={index} value={date}>{date}</option>
-              ))}
-            </Select>
-            <Select value={startTime} onChange={handleStartTimeChange} disabled={!day} placeholder="Hora de inicio">
-              {generateTimeOptions().map((time, index) => (
-                <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
-              ))}
-            </Select>
-            <TextInput type="text" value={endTime || " "} placeholder="Hora de finalización" readOnly />
-            <Select value={level} onChange={handleInputChange(setLevel)} placeholder="Seleccione un nivel">
-              <option value="Nivel I">Nivel I</option>
-              <option value="Nivel II">Nivel II</option>
-              <option value="Nivel III">Nivel III</option>
-              <option value="Nivel IV">Nivel IV</option>
-              <option value="Taller">Taller</option>
-            </Select>
-            {level === "Taller" && (
-              <TextInput
-                type="text"
-                placeholder="Nombre del Taller"
-                value={workshopName}
-                onChange={handleInputChange(setWorkshopName)}
-              />
-            )}
-          </Form>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-        </ModalBody>
-        <ModalFooter>
-          <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
-          <SaveButton onClick={handleSave}>Guardar</SaveButton>
-        </ModalFooter>
+        {loading ? (
+          <Loading />
+        ) : (
+          <>
+            <ModalHeader>
+              <h2>{groupId ? "Editar Grupo" : "Agregar Nuevo Grupo"}</h2>
+            </ModalHeader>
+            <ModalBody>
+              <Form>
+                <Select value={instructor} onChange={handleInputChange(setInstructor)} placeholder="Seleccione un instructor">
+                  {instructors.map((inst, index) => (
+                    <option key={index} value={inst.id}>{inst.name}</option>
+                  ))}
+                </Select>
+                <Select value={day} onChange={handleDayChange} placeholder="Seleccione un día">
+                  <option value="Lunes">Lunes</option>
+                  <option value="Martes">Martes</option>
+                  <option value="Miércoles">Miércoles</option>
+                  <option value="Jueves">Jueves</option>
+                  <option value="Viernes">Viernes</option>
+                  <option value="Sábado">Sábado</option>
+                </Select>
+                <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled} placeholder="Fecha de inicio">
+                  {generateDateOptions().map((date, index) => (
+                    <option key={index} value={date}>{date}</option>
+                  ))}
+                </Select>
+                <Select value={startTime} onChange={handleStartTimeChange} disabled={!day} placeholder="Hora de inicio">
+                  {generateTimeOptions().map((time, index) => (
+                    <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
+                  ))}
+                </Select>
+                <TextInput type="text" value={endTime || " "} placeholder="Hora de finalización" readOnly />
+                <Select value={level} onChange={handleInputChange(setLevel)} placeholder="Seleccione un nivel">
+                  <option value="Nivel I">Nivel I</option>
+                  <option value="Nivel II-A">Nivel II-A</option>
+                  <option value="Nivel II-B">Nivel II-B</option>
+                  <option value="Nivel III-1">Nivel III-1</option>
+                  <option value="Nivel III-2">Nivel III-2</option>
+                  <option value="Nivel III-3">Nivel III-3</option>
+                  <option value="Nivel IV">Nivel IV</option>
+                  <option value="Taller">Taller</option>
+                </Select>
+                {level === "Taller" && (
+                  <TextInput
+                    type="text"
+                    placeholder="Nombre del Taller"
+                    value={workshopName}
+                    onChange={handleInputChange(setWorkshopName)}
+                  />
+                )}
+              </Form>
+              {error && <ErrorMessage>{error}</ErrorMessage>}
+            </ModalBody>
+            <ModalFooter>
+              <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
+              <SaveButton onClick={handleSave}>Guardar</SaveButton>
+            </ModalFooter>
+          </>
+        )}
       </ModalContainer>
     </Overlay>
   );

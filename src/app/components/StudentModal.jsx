@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaPlus, FaTimes } from "react-icons/fa";
-import { fetchGroups, addStudent, fetchStudentById, updateStudent } from "../firebase/firebaseFirestoreService";
+import { fetchGroups, addStudent, fetchStudentById, updateStudent, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService";
 import { TextInput, ComboBox, NumberInput } from './Input';
+import Loading from "./Loading";
 
 export default function StudentModal({ isOpen, onClose, onStudentAdded, studentId }) {
   const [name, setName] = useState("");
@@ -16,6 +17,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   const [paymentDate, setPaymentDate] = useState(""); 
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -45,11 +47,12 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   const fetchStudentData = async (id) => {
     try {
       const studentData = await fetchStudentById(id);
+      const studentGroups = await fetchStudentGroupsByStudentId(id);
       setName(studentData.name);
       setPhone(studentData.phone);
       setEmail(studentData.email);
-      setGroup(studentData.groups[0]);
-      setAdditionalGroups(studentData.groups.slice(1));
+      setGroup(studentGroups[0] || "");
+      setAdditionalGroups(studentGroups.slice(1));
       setEmergencyName(studentData.emergencyName);
       setEmergencyPhone(studentData.emergencyPhone);
       setGender(studentData.gender || ""); 
@@ -95,14 +98,16 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       paymentDate, 
       groups: [primaryGroup, ...additionalGroups],
     };
-
-    // Sort groups by startDate
+  
+    studentData.groups = studentData.groups.filter(g => g !== "INACTIVO");
+  
     studentData.groups.sort((a, b) => {
       const groupA = groups.find(g => g.id === a);
       const groupB = groups.find(g => g.id === b);
       return new Date(groupA.startDate) - new Date(groupB.startDate);
     });
   
+    setLoading(true);
     try {
       if (studentId) {
         await updateStudent(studentId, studentData);
@@ -116,6 +121,8 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       }
     } catch (error) {
       setError("Error al guardar estudiante.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,99 +198,105 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   return (
     <Overlay>
       <ModalContainer>
-        <ModalHeader>
-          <h2>{studentId ? "Editar Alumno" : "Agregar Nuevo Alumno"}</h2>
-        </ModalHeader>
-        <ModalBody>
-          <Form>
-            <label>Información de Alumno</label>
-            <TextInput
-              id="name"
-              placeholder="Nombre y Apellido"
-              value={name}
-              onChange={handleInputChange(setName)}
-            />
-            <TextInput
-              id="phone"
-              placeholder="Celular"
-              value={phone}
-              onChange={handlePhoneChange(setPhone)}
-              onKeyPress={(e) => {
-                if (!/[0-9]/.test(e.key)) {
-                  e.preventDefault();
-                }
-              }}
-              maxLength="9"
-            />
-            <TextInput
-              id="email"
-              placeholder="Correo Electrónico"
-              value={email}
-              onChange={handleInputChange(setEmail)}
-            />
-            <ComboBox id="gender" placeholder="Género" value={gender} onChange={handleInputChange(setGender)}>
-              <option value="Hombre">Hombre</option>
-              <option value="Mujer">Mujer</option>
-            </ComboBox>
-            <NumberInput
-              id="paymentDate"
-              placeholder="Fecha de Pago"
-              value={paymentDate}
-              onChange={handleInputChange(setPaymentDate)}
-              min="1"
-              max="30"
-            />
-            <label>Contacto de Emergencia</label>
-            <TextInput
-              id="emergencyName"
-              placeholder="Nombre y Apellido"
-              value={emergencyName}
-              onChange={handleInputChange(setEmergencyName)}
-            />
-            <TextInput
-              id="emergencyPhone"
-              placeholder="Celular"
-              value={emergencyPhone}
-              onChange={handlePhoneChange(setEmergencyPhone)}
-              onKeyPress={(e) => {
-                if (!/[0-9]/.test(e.key)) {
-                  e.preventDefault();
-                }
-              }}
-              maxLength="9"
-            />            
-            <label>Grupos</label>
-            <GroupContainer>
-              <ComboBox id="group" value={group} onChange={handleGroupChange}>
-                <option value="INACTIVO">INACTIVO</option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                    {group.level + ' - ' + group.name}
-                  </option>
-                ))}
-              </ComboBox>
-              <AddGroupButton onClick={handleAddGroup} disabled={!group || group === "INACTIVO" || additionalGroups.includes("")}><FaPlus /></AddGroupButton>
-            </GroupContainer>
-            {additionalGroups.map((additionalGroup, index) => (
-              <GroupContainer key={index}>
-                <ComboBox id={`additionalGroup-${index}`} value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
-                  <option value="">Seleccione un grupo</option>
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                      {group.level + ' - '+ group.name}
-                    </option>
-                  ))}
+        {loading ? (
+          <Loading />
+        ) : (
+          <>
+            <ModalHeader>
+              <h2>{studentId ? "Editar Alumno" : "Agregar Nuevo Alumno"}</h2>
+            </ModalHeader>
+            <ModalBody>
+              <Form>
+                <label>Información de Alumno</label>
+                <TextInput
+                  id="name"
+                  placeholder="Nombre y Apellido"
+                  value={name}
+                  onChange={handleInputChange(setName)}
+                />
+                <TextInput
+                  id="phone"
+                  placeholder="Celular"
+                  value={phone}
+                  onChange={handlePhoneChange(setPhone)}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  maxLength="9"
+                />
+                <TextInput
+                  id="email"
+                  placeholder="Correo Electrónico"
+                  value={email}
+                  onChange={handleInputChange(setEmail)}
+                />
+                <ComboBox id="gender" placeholder="Género" value={gender} onChange={handleInputChange(setGender)}>
+                  <option value="Hombre">Hombre</option>
+                  <option value="Mujer">Mujer</option>
                 </ComboBox>
-                <RemoveGroupButton onClick={() => handleRemoveGroup(index)} disabled={index !== additionalGroups.length - 1}><FaTimes /></RemoveGroupButton>
-              </GroupContainer>
-            ))}
-          </Form>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-        </ModalBody>
-        <ModalFooter>
-          <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
-          <SaveButton onClick={handleSave}>Guardar</SaveButton>
-        </ModalFooter>
+                <NumberInput
+                  id="paymentDate"
+                  placeholder="Fecha de Pago"
+                  value={paymentDate}
+                  onChange={handleInputChange(setPaymentDate)}
+                  min="1"
+                  max="30"
+                />
+                <label>Contacto de Emergencia</label>
+                <TextInput
+                  id="emergencyName"
+                  placeholder="Nombre y Apellido"
+                  value={emergencyName}
+                  onChange={handleInputChange(setEmergencyName)}
+                />
+                <TextInput
+                  id="emergencyPhone"
+                  placeholder="Celular"
+                  value={emergencyPhone}
+                  onChange={handlePhoneChange(setEmergencyPhone)}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  maxLength="9"
+                />            
+                <label>Grupos</label>
+                <GroupContainer>
+                  <ComboBox id="group" value={group} onChange={handleGroupChange}>
+                    <option value="INACTIVO">INACTIVO</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
+                        {group.level + ' - ' + group.name}
+                      </option>
+                    ))}
+                  </ComboBox>
+                  <AddGroupButton onClick={handleAddGroup} disabled={!group || group === "INACTIVO" || additionalGroups.includes("")}><FaPlus /></AddGroupButton>
+                </GroupContainer>
+                {additionalGroups.map((additionalGroup, index) => (
+                  <GroupContainer key={index}>
+                    <ComboBox id={`additionalGroup-${index}`} value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
+                      <option value="">Seleccione un grupo</option>
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
+                          {group.level + ' - '+ group.name}
+                        </option>
+                      ))}
+                    </ComboBox>
+                    <RemoveGroupButton onClick={() => handleRemoveGroup(index)} disabled={index !== additionalGroups.length - 1}><FaTimes /></RemoveGroupButton>
+                  </GroupContainer>
+                ))}
+              </Form>
+              {error && <ErrorMessage>{error}</ErrorMessage>}
+            </ModalBody>
+            <ModalFooter>
+              <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
+              <SaveButton onClick={handleSave}>Guardar</SaveButton>
+            </ModalFooter>
+          </>
+        )}
       </ModalContainer>
     </Overlay>
   );

@@ -62,9 +62,15 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
             <FaUsers />
             <DetailItem><strong>Grupos:</strong></DetailItem>
             <GroupList>
-              {groupDetails.map((group, index) => (
-                <li key={index}>{group.name} ({group.level})</li>
-              ))}
+              {groupDetails.length === 0 ? (
+                <li>INACTIVO</li>
+              ) : (
+                groupDetails.map((group, index) => (
+                  <li key={index} style={{ fontWeight: group.isPrimary ? 'bold' : 'normal' }}>
+                    {group.name} ({group.level})
+                  </li>
+                ))
+              )}
             </GroupList>
           </Card>
           <Card>

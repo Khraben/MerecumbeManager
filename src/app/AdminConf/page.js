@@ -5,15 +5,10 @@ import styled from "styled-components";
 import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
 import SecretaryModal from "../components/SecretaryModal";
 import InstructorModal from "../components/InstructorModal";
-import InstructorDetails from "../components/InstructorDetails"; // Importar InstructorDetails
+import InstructorDetails from "../components/InstructorDetails"; 
 import ConfirmationModal from "../components/ConfirmationModal";
 import Loading from "../components/Loading";
-import {
-  fetchSecretaries,
-  fetchInstructors,
-  deleteSecretary,
-  deleteInstructor,
-} from "../firebase/firebaseFirestoreService";
+import {fetchSecretaries, fetchInstructors, deleteSecretary, deleteInstructor, fetchCountGroupsByInstructor } from "../firebase/firebaseFirestoreService";
 import SecretaryDetails from "../components/SecretaryDetails";
 
 
@@ -25,11 +20,11 @@ export default function AdminConf() {
   
   const [isSecretaryModalOpen, setIsSecretaryModalOpen] = useState(false);
   const [isInstructorModalOpen, setIsInstructorModalOpen] = useState(false);
-  const [isInstructorDetailsOpen, setIsInstructorDetailsOpen] = useState(false); // Estado para InstructorDetails
+  const [isInstructorDetailsOpen, setIsInstructorDetailsOpen] = useState(false); 
   
   const [editingSecretaryId, setEditingSecretaryId] = useState(null);
   const [editingInstructorId, setEditingInstructorId] = useState(null);
-  const [viewingInstructorId, setViewingInstructorId] = useState(null); // Estado para ID del instructor a ver
+  const [viewingInstructorId, setViewingInstructorId] = useState(null); 
 
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [secretaryToDelete, setSecretaryToDelete] = useState(null);
@@ -51,7 +46,11 @@ export default function AdminConf() {
     const loadInstructors = async () => {
       try {
         const instructorsData = await fetchInstructors();
-        setInstructors(instructorsData);
+        const instructorsWithGroupCount = await Promise.all(instructorsData.map(async (instructor) => {
+          const groupCount = await fetchCountGroupsByInstructor(instructor.id) || 0;
+          return { ...instructor, groupCount };
+        }));
+        setInstructors(instructorsWithGroupCount);
       } catch (error) {
         console.error("Error fetching instructors:", error);
       }
@@ -95,7 +94,6 @@ export default function AdminConf() {
     }
   };
   
-  // Función para abrir el modal de detalles de secretaria
   const handleOpenSecretaryDetails = (secretaryId) => {
     if (secretaryId) {
       setViewingSecretaryId(secretaryId);
@@ -105,7 +103,6 @@ export default function AdminConf() {
     }
   };
 
-  // Función para cerrar el modal de detalles de secretaria
   const handleCloseSecretaryDetails = () => {
     setIsSecretaryDetailsOpen(false);
     setViewingSecretaryId(null);
@@ -162,7 +159,11 @@ export default function AdminConf() {
   const fetchInstructorsData = async () => {
     try {
       const instructorsData = await fetchInstructors();
-      setInstructors(instructorsData);
+      const instructorsWithGroupCount = await Promise.all(instructorsData.map(async (instructor) => {
+        const groupCount = await fetchCountGroupsByInstructor(instructor.id) || 0;
+        return { ...instructor, groupCount };
+      }));
+      setInstructors(instructorsWithGroupCount);
     } catch (error) {
       console.error("Error fetching instructors: ", error);
     }
@@ -192,10 +193,11 @@ export default function AdminConf() {
         />
         <SearchIcon />
       </SearchContainer>
-
-      {/* Tabla de Instructores */}
       <SectionTitle>Instructores</SectionTitle>
       <TableContainer>
+      {filteredInstructors.length === 0 ? (
+            <NoDataMessage>No hay instructores registrados en el sistema</NoDataMessage>
+          ) : (
         <Table>
           <thead>
             <tr>
@@ -210,7 +212,7 @@ export default function AdminConf() {
               <tr key={index}>
                 <td>{instructor.name}</td>
                 <td>{instructor.phone}</td>
-                <td>{instructor.groupsCount}</td>
+                <td>{instructor.groupCount}</td>
                 <td>
                   <InfoIcon onClick={() => handleOpenInstructorDetails(instructor.id)} /> {/* Ver detalles */}
                   <EditIcon onClick={() => handleOpenInstructorModal(instructor.id)} />
@@ -220,11 +222,14 @@ export default function AdminConf() {
             ))}
           </tbody>
         </Table>
+        )}
       </TableContainer>
 
-      {/* Tabla de Secretarias */}
       <SectionTitle>Secretarias</SectionTitle>
       <TableContainer>
+      {filteredSecretaries.length === 0 ? (
+        <NoDataMessage>No hay secretarias registradas en el sistema</NoDataMessage>
+      ) : (
         <Table>
           <thead>
             <tr>
@@ -249,6 +254,7 @@ export default function AdminConf() {
             ))}
           </tbody>
         </Table>
+        )}
       </TableContainer>
 
       <ButtonContainer>
@@ -291,6 +297,13 @@ export default function AdminConf() {
   );
 }
 
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

@@ -61,7 +61,6 @@ const SecretaryDetails = ({ isOpen, onClose, secretaryId }) => {
   );
 };
 
-// Estilos
 const Overlay = styled.div`
   position: fixed;
   top: 0;
