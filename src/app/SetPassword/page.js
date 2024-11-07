@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from "next/navigation";
 import { getAuth, confirmPasswordReset } from "firebase/auth";
 import styled from "styled-components";
@@ -31,7 +31,6 @@ const SetPassword = () => {
       const timer = setTimeout(() => {
         router.push('/');
       }, 2000);
-
       return () => clearTimeout(timer);
     }
   }, [success, router]);
@@ -139,6 +138,12 @@ const SetPassword = () => {
   );
 };
 
+const SetPasswordPage = () => (
+  <Suspense fallback={<Loading />}>
+    <SetPassword />
+  </Suspense>
+);
+
 const Background = styled.div`
   background-color: #0b0f8b;
   display: flex;
@@ -235,4 +240,4 @@ const SuccessMessage = styled.p`
   text-align: center;
 `;
 
-export default SetPassword;
+export default SetPasswordPage;
