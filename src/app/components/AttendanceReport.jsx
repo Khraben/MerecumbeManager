@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { fetchAttendances, fetchAttendancesByGroup, fetchStudentById, fetchGroups } from "../firebase/firebaseFirestoreService";
+import { fetchAttendances, fetchStudentById, fetchGroupById, fetchGroups } from "../firebase/firebaseFirestoreService";
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
@@ -35,25 +35,34 @@ const AttendanceReport = ({ onBack }) => {
       setLoading(true); 
       try {
         const allAttendances = await fetchAttendances();
-        const attendancesWithStudentNames = await Promise.all(allAttendances.map(async (attendance) => {
+        const attendancesWithDetails = await Promise.all(allAttendances.map(async (attendance) => {
+          let studentName = attendance.studentId;
+          let groupName = attendance.groupId;
+
           try {
             const studentData = await fetchStudentById(attendance.studentId);
-            return {
-              ...attendance,
-              studentName: studentData.name,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
-            };
+            studentName = studentData.name;
           } catch (error) {
-            console.error(`Error al cargar el estudiante con ID ${attendance.studentId}: `, error);
-            return {
-              ...attendance,
-              studentName: attendance.studentId,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
-            };
+            console.error(`Error al cargar los detalles del estudiante: `, error);
           }
+
+          try {
+            const groupData = await fetchGroupById(attendance.groupId);
+            groupName = groupData.name;
+          } catch (error) {
+            console.error(`Error al cargar los detalles del grupo: `, error);
+          }
+
+          return {
+            ...attendance,
+            studentName,
+            groupName,
+            date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
+          };
         }));
-        setAttendances(attendancesWithStudentNames);
-        setFilteredAttendances(attendancesWithStudentNames);
+        attendancesWithDetails.sort((a, b) => a.date - b.date);
+        setAttendances(attendancesWithDetails);
+        setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
         console.error("Error al cargar las asistencias: ", error);
       } finally {
@@ -66,54 +75,19 @@ const AttendanceReport = ({ onBack }) => {
   }, []);
 
   useEffect(() => {
-    const loadAttendancesByGroup = async () => {
-      if (!selectedGroup) {
-        setFilteredAttendances(attendances);
-        return;
-      }
+    applyFilters();
+  }, [selectedStudent, selectedGroup, startDate, endDate]);
 
-      setLoading(true); 
-      try {
-        const allAttendances = await fetchAttendancesByGroup(selectedGroup);
-        const attendancesWithStudentNames = await Promise.all(Object.values(allAttendances).map(async (attendance) => {
-          try {
-            const studentData = await fetchStudentById(attendance.studentId);
-            return {
-              ...attendance,
-              studentName: studentData.name,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
-            };
-          } catch (error) {
-            console.error(`Error al cargar el estudiante con ID ${attendance.studentId}: `, error);
-            return {
-              ...attendance,
-              studentName: attendance.studentId,
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() // Convertir a objeto Date si es necesario
-            };
-          }
-        }));
-        setFilteredAttendances(attendancesWithStudentNames);
-      } catch (error) {
-        console.error("Error al cargar las asistencias: ", error);
-      } finally {
-        setLoading(false); 
-      }
-    };
-
-    if (selectedGroup) {
-      loadAttendancesByGroup();
-    } else {
-      setFilteredAttendances(attendances);
-    }
-  }, [selectedGroup, attendances]);
-
-  useEffect(() => {
-    let filtered = filteredAttendances;
+  const applyFilters = () => {
+    let filtered = attendances;
 
     if (selectedStudent) {
       filtered = filtered.filter(attendance => 
         attendance.studentName && attendance.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
+    }
+    if (selectedGroup) {
+      filtered = filtered.filter(attendance => attendance.groupId === selectedGroup);
     }
     if (startDate) {
       filtered = filtered.filter(attendance => {
@@ -123,7 +97,7 @@ const AttendanceReport = ({ onBack }) => {
     }
     setFilteredAttendances(filtered);
     setCurrentPage(1);
-  }, [selectedStudent, startDate, endDate, attendances, selectedGroup]); 
+  };
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -132,6 +106,7 @@ const AttendanceReport = ({ onBack }) => {
       setEndDate(null);
     }
   };
+
   const indexOfLastAttendance = currentPage * attendancesPerPage;
   const indexOfFirstAttendance = indexOfLastAttendance - attendancesPerPage;
   const currentAttendances = filteredAttendances.slice(indexOfFirstAttendance, indexOfLastAttendance);
@@ -176,7 +151,6 @@ const AttendanceReport = ({ onBack }) => {
               <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </SearchSelect>
-          <SearchIcon />
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
@@ -204,26 +178,28 @@ const AttendanceReport = ({ onBack }) => {
         )}
       </FilterSection>
       <TableContainer>
+      {currentAttendances.length === 0 ? (
+          <NoDataMessage>No hay asistencias registradas en el sistema</NoDataMessage>
+        ) : (
         <AttendanceTable>
           <thead>
             <tr>
               <th>Alumno</th>
               <th>Grupo</th>
               <th>Fecha</th>
-              <th>Asistencia</th>
             </tr>
           </thead>
           <tbody>
             {currentAttendances.map((attendance, index) => (
               <tr key={index}>
                 <td>{attendance.studentName}</td>
-                <td>{attendance.groupId}</td>
+                <td>{attendance.groupName}</td>
                 <td>{attendance.date.toLocaleDateString("es-CR")}</td>
-                <td>{attendance.status}</td>
               </tr>
             ))}
           </tbody>
         </AttendanceTable>
+        )}
       </TableContainer>
       <Pagination>
         {currentPage > 1 && (
@@ -246,6 +222,13 @@ const AttendanceReport = ({ onBack }) => {
     </Wrapper>
   );
 }
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;
@@ -287,11 +270,11 @@ const FilterSection = styled.div`
 
 const TableContainer = styled.div`
   width: 100%;
-  padding: 0 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   background-color: rgba(221, 221, 221, 1);
+  overflow-x: auto;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -342,8 +325,6 @@ const AttendanceTable = styled.table`
   }
 
   @media (max-width: 480px) {
-    margin-left: 160px;
-    
     th, td {
       font-size: 10px;
       padding: 10px 12px;
