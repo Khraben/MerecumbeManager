@@ -1,91 +1,130 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { fetchReceipts, fetchStudentById } from "../firebase/firebaseFirestoreService";
+import { fetchStudents, fetchReceipts, fetchAttendances } from "../firebase/firebaseFirestoreService";
+import Loading from "./Loading";
+import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt } from 'react-icons/fa';
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
-import "react-datepicker/dist/react-datepicker.css";
-import Loading from "./Loading"; 
-import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt} from 'react-icons/fa';
 
-const PaymentHistory = ({ onBack }) => {
-  const [payments, setPayments] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedDetail, setSelectedDetail] = useState(''); 
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
-  const [filteredPayments, setFilteredPayments] = useState([]);
-  const [loading, setLoading] = useState(true); 
+const PendingPayments = ({ onBack }) => {
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [monthFilter, setMonthFilter] = useState(null);
   const paymentsPerPage = 10;
   const maxPageButtons = 4;
 
   useEffect(() => {
-    const loadPayments = async () => {
-      setLoading(true); 
+    const loadPendingPayments = async () => {
+      setLoading(true);
       try {
-        const allPayments = await fetchReceipts();
-        const paymentsWithStudentNames = await Promise.all(allPayments.map(async (payment) => {
-          try {
-            const studentData = await fetchStudentById(payment.studentId);
-            return {
-              ...payment,
-              studentName: studentData.name
-            };
-          } catch (error) {
-            console.error(`Error al cargar el estudiante con ID ${payment.studentId}: `, error);
-            return {
-              ...payment,
-              studentName: payment.studentId 
-            };
-          }
-        }));
-        setPayments(paymentsWithStudentNames);
-        setFilteredPayments(paymentsWithStudentNames);
+        const students = await fetchStudents();
+        const receipts = await fetchReceipts();
+        const attendances = await fetchAttendances();
+
+        const monthTranslations = {
+          January: 'Enero',
+          February: 'Febrero',
+          March: 'Marzo',
+          April: 'Abril',
+          May: 'Mayo',
+          June: 'Junio',
+          July: 'Julio',
+          August: 'Agosto',
+          September: 'Septiembre',
+          October: 'Octubre',
+          November: 'Noviembre',
+          December: 'Diciembre'
+        };
+
+        const monthOrder = {
+          'Enero': 0,
+          'Febrero': 1,
+          'Marzo': 2,
+          'Abril': 3,
+          'Mayo': 4,
+          'Junio': 5,
+          'Julio': 6,
+          'Agosto': 7,
+          'Septiembre': 8,
+          'Octubre': 9,
+          'Noviembre': 10,
+          'Diciembre': 11
+        };
+
+        const pendingPayments = students.map(student => {
+          const studentAttendances = attendances.filter(att => att.studentId === student.id);
+          const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
+
+          const pendingMonths = studentAttendances.reduce((acc, att) => {
+            const attDate = new Date(att.date.seconds * 1000);
+            const monthYear = `${monthTranslations[attDate.toLocaleString('default', { month: 'long' })]} de ${attDate.getFullYear()}`;
+            const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
+            if (!hasReceipt) {
+              acc.add(monthYear);
+            }
+            return acc;
+          }, new Set());
+
+          return Array.from(pendingMonths).map(month => ({
+            studentName: student.name,
+            studentPhone: student.phone,
+            month,
+            paymentDate: student.paymentDate || "Pendiente"
+          }));
+        }).flat();
+
+        pendingPayments.sort((a, b) => {
+          const [monthA, yearA] = a.month.split(' de ');
+          const [monthB, yearB] = b.month.split(' de ');
+          const dateA = new Date(yearA, monthOrder[monthA]);
+          const dateB = new Date(yearB, monthOrder[monthB]);
+          return dateA - dateB;
+        });
+
+        setPendingPayments(pendingPayments);
       } catch (error) {
-        console.error("Error al cargar los pagos: ", error);
+        console.error("Error al cargar los pagos pendientes: ", error);
       } finally {
-        setLoading(false); 
+        setLoading(false);
       }
     };
-  
-    loadPayments();
+
+    loadPendingPayments();
   }, []);
 
   useEffect(() => {
-    let filtered = payments;
+    let filtered = pendingPayments;
 
     if (selectedStudent) {
       filtered = filtered.filter(payment => 
         payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
     }
-    if (selectedDetail) { 
-      filtered = filtered.filter(payment => 
-        payment.specification && payment.specification.toLowerCase().includes(selectedDetail.toLowerCase())
-      );
-    }
-    if (startDate) {
+
+    if (monthFilter) {
+      const filterMonth = monthFilter.getMonth() + 1;
+      const filterYear = monthFilter.getFullYear();
       filtered = filtered.filter(payment => {
-        const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
-        return paymentDate >= startDate && (!endDate || paymentDate <= new Date(endDate).setHours(23, 59, 59, 999));
+        const [month, year] = payment.month.split(' de ');
+        const monthNumber = Object.keys(monthTranslations).find(key => monthTranslations[key] === month);
+        return parseInt(monthNumber) === filterMonth && parseInt(year) === filterYear;
       });
     }
-    setFilteredPayments(filtered);
-    setCurrentPage(1);
-  }, [selectedStudent, selectedDetail, startDate, endDate, payments]); 
 
-  const handleStartDateChange = (date) => {
-    setStartDate(date);
-    setIsEndDateDisabled(!date);
-    if (!date) {
-      setEndDate(null);
-    }
+    setPendingPayments(filtered);
+    setCurrentPage(1);
+  }, [selectedStudent, monthFilter]);
+
+  const handleMonthFilterChange = (date) => {
+    setMonthFilter(date);
   };
+
   const indexOfLastPayment = currentPage * paymentsPerPage;
   const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
-  const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
-  const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
+  const currentPayments = pendingPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const totalPages = Math.ceil(pendingPayments.length / paymentsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const getPageNumbers = () => {
@@ -98,12 +137,14 @@ const PaymentHistory = ({ onBack }) => {
     }
     return pages;
   };
+
   if (loading) {
     return <Loading />;
   }
+
   return (
     <Wrapper>
-      <Title>Historial de Pagos</Title>
+      <Title>Pagos Pendientes</Title>
       <FilterSection>
         <SearchContainer>
           <SearchInput
@@ -115,70 +156,41 @@ const PaymentHistory = ({ onBack }) => {
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
-          <SearchInput
-            type="text"
-            value={selectedDetail} 
-            onChange={(e) => setSelectedDetail(e.target.value)} 
-            placeholder="Filtrar por detalle..."
-          />
-          <SearchIcon />
-        </SearchContainer>
-        <SearchContainer>
           <StyledDatePicker
-            selected={startDate}
-            onChange={handleStartDateChange}
-            dateFormat="dd/MM/yyyy"
+            selected={monthFilter}
+            onChange={handleMonthFilterChange}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
             locale={es}
-            placeholderText="Fecha de inicio"
+            placeholderText="Filtro por mes"
           />
-          <CalendarIcon />
+          <MonthCalendarIcon />
         </SearchContainer>
-        {startDate && (
-          <SearchContainer>
-            <StyledDatePicker
-              selected={endDate}
-              onChange={(date) => setEndDate(date)}
-              dateFormat="dd/MM/yyyy"
-              locale={es}
-              placeholderText="Fecha de fin"
-              disabled={isEndDateDisabled}
-              minDate={startDate}
-            />
-            <CalendarIcon />
-          </SearchContainer>
-        )}
       </FilterSection>
       <TableContainer>
-      {currentPayments.length === 0 ? (
-          <NoDataMessage>No hay pagos registrados en el sistema</NoDataMessage>
+        {currentPayments.length === 0 ? (
+          <NoDataMessage>No hay pagos pendientes registrados en el sistema</NoDataMessage>
         ) : (
-        <PaymentTable>
-          <thead>
-            <tr>
-              <th># Recibo</th>
-              <th>Alumno</th>
-              <th>Fecha</th>
-              <th>Concepto</th>
-              <th>Detalle</th>
-              <th>Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentPayments.map((payment, index) => (
-              <tr key={index}>
-                <td>{payment.receiptNumber}</td>
-                <td>{payment.studentName}</td>
-                <td>{payment.paymentDate && payment.paymentDate.toDate
-                      ? payment.paymentDate.toDate().toLocaleDateString("es-CR")
-                      : new Date(payment.paymentDate).toLocaleDateString("es-CR")}
-                </td>
-                <td>{payment.concept}</td>
-                <td>{payment.specification ? payment.specification : "Sin detalles"}</td>
-                <td>{payment.amount}</td>
+          <PaymentTable>
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Celular</th>
+                <th>Mes</th>
+                <th>F. Pago</th>
               </tr>
-            ))}
-          </tbody>
-        </PaymentTable>
+            </thead>
+            <tbody>
+              {currentPayments.map((payment, index) => (
+                <tr key={index}>
+                  <td>{payment.studentName}</td>
+                  <td>{payment.studentPhone}</td>
+                  <td>{payment.month}</td>
+                  <td>{payment.paymentDate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </PaymentTable>
         )}
       </TableContainer>
       <Pagination>
@@ -201,7 +213,7 @@ const PaymentHistory = ({ onBack }) => {
       <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
-}
+};
 
 const NoDataMessage = styled.p`
   font-size: 18px;
@@ -250,11 +262,11 @@ const FilterSection = styled.div`
 
 const TableContainer = styled.div`
   width: 100%;
-  padding: 0 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   background-color: rgba(221, 221, 221, 1);
+  overflow-x: auto;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -305,8 +317,6 @@ const PaymentTable = styled.table`
   }
 
   @media (max-width: 480px) {
-    margin-left: 160px;
-    
     th, td {
       font-size: 10px;
       padding: 10px 12px;
@@ -460,7 +470,7 @@ const SearchIcon = styled(FaSearch)`
   }
 `;
 
-const CalendarIcon = styled(FaCalendarAlt)`
+const MonthCalendarIcon = styled(FaRegCalendarAlt)`
   position: absolute;
   right: 30px; 
   color: #0b0f8b;
@@ -473,4 +483,4 @@ const CalendarIcon = styled(FaCalendarAlt)`
   }
 `;
 
-export default PaymentHistory;
+export default PendingPayments;

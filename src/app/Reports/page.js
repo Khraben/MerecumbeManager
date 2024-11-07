@@ -1,30 +1,73 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import PaymentHistory from "../components/PaymentHistory";
+import FinancialIncome from "../components/FinancialIncome";
+import PendingPayments from "../components/PendingPayments";
+import AttendanceReport from "../components/AttendanceReport";
 
 const Reports = () => {
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
-
+  const [showFinancialIncome, setShowFinancialIncome] = useState(false);
+  const [showPendingPayments, setShowPendingPayments] = useState(false);
+  const [showAttendanceReport, setShowAttendanceReport] = useState(false);
+  
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
 
+  const handleShowPendingPayments = () => {
+    setShowPendingPayments(true);
+  };
+
+  const handleshowFinancialIncome= ()=> {
+    setShowFinancialIncome(true);
+  }
+
+  const handleShowAttendanceReport = () => {
+    setShowAttendanceReport(true);
+  };
+
   const handleBackToReports = () => {
     setShowPaymentHistory(false);
+    setShowPendingPayments(false);
+    setShowFinancialIncome(false);
+    setShowAttendanceReport(false);
   };
 
   return (
     <Wrapper>
       {showPaymentHistory ? (
         <PaymentHistory onBack={handleBackToReports} />
-      ) : (
+      ): showFinancialIncome?(
+        <FinancialIncome onBack={handleBackToReports} />
+      ): showPendingPayments?(
+        <PendingPayments onBack={handleBackToReports} />
+        ): showAttendanceReport?(
+          <AttendanceReport onBack={handleBackToReports} />
+        )  :(
         <>
           <Title>Reportes</Title>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
             <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
+          
+          <ReportTypeSection onClick={handleshowFinancialIncome}>
+            <Subtitle>Informe de Ingresos </Subtitle>
+            <p>Genera un reporte de los ingresos.</p>
+          </ReportTypeSection>
+
+          <ReportTypeSection onClick={handleShowPendingPayments}>
+            <Subtitle>Pagos Pendientes</Subtitle>
+            <p>Genera un reporte detallado de los alumnos con pagos pendientes.</p>
+          </ReportTypeSection>
+
+          <ReportTypeSection onClick={handleShowAttendanceReport}>
+            <Subtitle>Informe de asistencias </Subtitle>
+            <p>Genera un reporte de las asistencias.</p>
+          </ReportTypeSection>
+
         </>
       )}
     </Wrapper>
@@ -42,7 +85,6 @@ const Wrapper = styled.div`
     padding: 10px;
   }
 `;
-
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -55,8 +97,6 @@ const Title = styled.h1`
     font-size: 20px;
   }
 `;
-
-
 const ReportTypeSection = styled.section`
   width: 100%;
   max-width: 1200px;
@@ -89,7 +129,6 @@ const ReportTypeSection = styled.section`
     max-width: 75%;
   }
 `;
-
 const Subtitle = styled.h2`
   font-size: 20px;
   color: #0b0f8b;
@@ -102,5 +141,4 @@ const Subtitle = styled.h2`
     font-size: 18px;
   }
 `;
-
 export default Reports;

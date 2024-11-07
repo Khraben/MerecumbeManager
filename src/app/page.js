@@ -3,7 +3,7 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchStudents, fetchReceiptsByMonth } from "./conf/firebaseService";
+import { fetchStudents, fetchReceiptsByMonth } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
 
 const getSpanishMonthName = (monthNumber) => {

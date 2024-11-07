@@ -7,7 +7,7 @@ import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails"; 
 import Loading from "../components/Loading"; 
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchStudents, deleteStudent, fetchGroupsByIds } from "../conf/firebaseService"; 
+import { fetchStudents, deleteStudent, fetchGroupsByIds, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService"; 
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,7 +28,8 @@ export default function StudentList() {
     try {
       const studentsData = await fetchStudents(); 
       const studentsWithLevels = await Promise.all(studentsData.map(async student => {
-        const groups = await fetchGroupsByIds(student.groups);
+        const groupIds = await fetchStudentGroupsByStudentId(student.id);
+        const groups = await fetchGroupsByIds(groupIds);
         const highestLevel = getHighestLevel(groups);
         return { ...student, highestLevel };
       }));
@@ -81,7 +82,7 @@ export default function StudentList() {
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const levelsOrder = ["Nivel I", "Nivel II", "Nivel III", "Nivel IV"];
+  const levelsOrder = ["Nivel I", "Nivel II-A", "Nivel II-B", "Nivel III-1", "Nivel III-2", "Nivel III-3", "Nivel IV", "Taller"];
 
   const getHighestLevel = (groups) => {
     let highestLevelIndex = -1;
@@ -91,7 +92,7 @@ export default function StudentList() {
         highestLevelIndex = levelIndex;
       }
     });
-    return highestLevelIndex !== -1 ? levelsOrder[highestLevelIndex] : "N/A";
+    return highestLevelIndex !== -1 ? levelsOrder[highestLevelIndex] : "INACTIVO";
   };
 
   if (loading) {
@@ -111,30 +112,34 @@ export default function StudentList() {
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
-        <Table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Celular</th>
-              <th>Nivel</th>
-              <th> </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student, index) => (
-              <tr key={index}>
-                <td>{student.name}</td>
-                <td>{student.phone}</td>
-                <td>{student.highestLevel}</td>
-                <td>
-                  <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
-                  <EditIcon onClick={() => handleOpenModal(student.id)} />
-                  <DeleteIcon onClick={() => handleOpenConfirmation(student)} />
-                </td>
+        {filteredStudents.length === 0 ? (
+          <NoDataMessage>No hay alumnos registrados en el sistema</NoDataMessage>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Celular</th>
+                <th>Nivel</th>
+                <th> </th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student, index) => (
+                <tr key={index}>
+                  <td>{student.name}</td>
+                  <td>{student.phone}</td>
+                  <td>{student.highestLevel}</td>
+                  <td>
+                    <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
+                    <EditIcon onClick={() => handleOpenModal(student.id)} />
+                    <DeleteIcon onClick={() => handleOpenConfirmation(student)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
       </TableContainer>
       <AddButton onClick={() => handleOpenModal()}>Agregar Alumno</AddButton>
       <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} studentId={editingStudentId} />
@@ -152,6 +157,13 @@ export default function StudentList() {
     </Wrapper>
   );
 }
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

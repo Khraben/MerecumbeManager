@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaTimes, FaUser, FaPhone, FaEnvelope, FaVenusMars, FaUsers, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
-import { fetchStudentDetails } from "../conf/firebaseService";
+import { fetchStudentDetails } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
 const StudentDetails = ({ isOpen, onClose, studentId }) => {
@@ -56,17 +56,21 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           </Card>
           <Card>
             <FaExclamationTriangle />
-            <DetailItem><strong>Contacto de Emergencia:</strong></DetailItem>
-            <DetailItem>{student.emergencyName}</DetailItem>
-            <DetailItem>{student.emergencyPhone}</DetailItem>
+            <DetailItem><strong>Contacto de Emergencia:</strong> {student.emergencyName}, {student.emergencyPhone}</DetailItem>
           </Card>
           <Card>
             <FaUsers />
             <DetailItem><strong>Grupos:</strong></DetailItem>
             <GroupList>
-              {groupDetails.map((group, index) => (
-                <li key={index}>{group.name} ({group.level})</li>
-              ))}
+              {groupDetails.length === 0 ? (
+                <li>INACTIVO</li>
+              ) : (
+                groupDetails.map((group, index) => (
+                  <li key={index} style={{ fontWeight: group.isPrimary ? 'bold' : 'normal' }}>
+                    {group.name} ({group.level})
+                  </li>
+                ))
+              )}
             </GroupList>
           </Card>
           <Card>
@@ -117,6 +121,7 @@ const ModalContainer = styled.div`
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
+    height: auto;
   }
 `;
 
@@ -167,10 +172,21 @@ const Card = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 
   svg {
     font-size: 24px;
     color: #0b0f8b;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+
+    svg {
+      font-size: 20px;
+    }
   }
 `;
 
@@ -178,6 +194,10 @@ const DetailItem = styled.p`
   margin: 0;
   font-size: 16px;
   color: #333;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const GroupList = styled.ul`
@@ -189,6 +209,10 @@ const GroupList = styled.ul`
     margin-bottom: 5px;
     font-size: 16px;
     color: #333;
+
+    @media (max-width: 480px) {
+      font-size: 14px;
+    }
   }
 `;
 

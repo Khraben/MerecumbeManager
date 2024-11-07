@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; 
 import styled from "styled-components";
-import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt, FaCog } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
 export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
@@ -18,7 +18,7 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
 
   const handleLogout_Hidden = () => {
     router.push("/");
-    logout()
+    logout();
     propOnLogout(); 
   };
 
@@ -40,6 +40,12 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
 
   const handleLinkClick_Hidden = (path) => {
     router.push(path);
+  };
+
+  const handleAdminSettings = () => {
+    router.push("/AdminConf");
+    setIsOpen(false);
+    toggleSideNavbar();
   };
 
   return (
@@ -87,11 +93,17 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
               </HiddenLink>
             </HiddenLinkContainer>
           </HiddenLinks>
+          <SettingsContainer>
+            <HiddenLink onClick={handleAdminSettings}>
+              <FaCog />
+              <Tooltip>Configuración</Tooltip>
+            </HiddenLink>
+          </SettingsContainer>
         </>
       )}
       <SideNav isOpen={isOpen}>
         <NavList isOpen={isOpen}>
-        <NavItem>
+          <NavItem>
             <StyledLink onClick={() => handleLinkClick_Show("/")}>
               <FaHome /> Inicio
             </StyledLink>
@@ -121,6 +133,11 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
               <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} /> Salir
             </LogoutButton>
           </NavItem>
+          <NavItem>
+            <StyledLink onClick={handleAdminSettings}>
+              <FaCog /> Configuración
+            </StyledLink>
+          </NavItem>
         </NavList>
       </SideNav>
     </>
@@ -145,6 +162,12 @@ const ToggleButton = styled.button`
 
   &:hover {
     background-color: #081075;
+  }
+
+  @media (max-width: 480px) {
+    left: ${({ isOpen }) => (isOpen ? "10px" : "7px")};
+    padding: ${({ isOpen }) => (isOpen ? "10px" : "5px")};
+    font-size: ${({ isOpen }) => (isOpen ? "20px" : "16px")};
   }
 `;
 
@@ -175,6 +198,13 @@ const Tooltip = styled.span`
     border-style: solid;
     border-color: #081075;
   }
+  
+  @media (max-width: 480px) {
+    width: 80px;
+    font-size: 11px;
+    top: 60%;
+    left: 60%;
+  }
 `;
 
 const HiddenLinks = styled.div`
@@ -185,6 +215,11 @@ const HiddenLinks = styled.div`
   flex-direction: column;
   gap: 10px;
   z-index: 1001;
+
+  @media (max-width: 480px) {
+    width: ${({ isOpen }) => (isOpen ? "auto" : "50px")};
+    left: ${({ isOpen }) => (isOpen ? "10px" : "7px")};
+  }
 `;
 
 const HiddenLinkContainer = styled.div`
@@ -195,6 +230,18 @@ const HiddenLinkContainer = styled.div`
   &:hover ${Tooltip} {
     visibility: visible;
     opacity: 1;
+  }
+`;
+
+const SettingsContainer = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 10px;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    width: ${({ isOpen }) => (isOpen ? "auto" : "50px")};
+    left: ${({ isOpen }) => (isOpen ? "10px" : "7px")};
   }
 `;
 
@@ -213,6 +260,16 @@ const HiddenLink = styled.button`
 
   &:hover {
     background-color: #081075;
+  }
+
+  @media (max-width: 480px) {
+    padding: ${({ isOpen }) => (isOpen ? "10px" : "5px")};
+    font-size: ${({ isOpen }) => (isOpen ? "20px" : "16px")};
+  }
+
+  &:hover ${Tooltip} {
+    visibility: visible;
+    opacity: 1;
   }
 `;
 
@@ -234,7 +291,7 @@ const SideNav = styled.nav`
   
   @media (max-width: 480px) {
     width: 100vw;
-    left: ${({ isOpen }) => (isOpen ? "0" : "-95vw")};
+    left: ${({ isOpen }) => (isOpen ? "0" : "-99.9vw")};
   }
 `;
 
@@ -259,7 +316,7 @@ const StyledLink = styled.a`
   display: flex;
   align-items: center;
   width: calc(100% - 40px); 
-  padding: 10px 20px;
+  padding: 5px 20px;
   border-radius: 5px;
   transition: background-color 0.3s ease-in-out;
   cursor: pointer;
@@ -286,7 +343,7 @@ const LogoutButton = styled.button`
   cursor: pointer;
   font-weight: bold;
   width: calc(100%); 
-  padding: 10px 20px;
+  padding: 5px 20px;
   text-align: left;
   margin-top: auto;
   border-radius: 5px;

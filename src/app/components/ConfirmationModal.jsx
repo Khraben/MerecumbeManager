@@ -1,27 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+import Loading from "./Loading";
 
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, message }) => {
+  const [loading, setLoading] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onConfirm();
+    } finally {
+      setLoading(false);
+      onClose();
+    }
+  };
 
   return (
     <Overlay>
-      <ModalContainer>
-        <ModalHeader>
-          <h2>Confirmación</h2>
-        </ModalHeader>
-        <ModalBody>
-          <Message>{message}</Message>
-        </ModalBody>
-        <ModalFooter>
-          <CancelButton onClick={onClose}>
-            Cancelar
-          </CancelButton>
-          <ConfirmButton onClick={onConfirm}>
-            Confirmar
-          </ConfirmButton>
-        </ModalFooter>
-      </ModalContainer>
+      {loading ? (
+        <LoadingContainer>
+          <Loading />
+        </LoadingContainer>
+      ) : (
+        <ModalContainer>
+          <ModalHeader>
+            <h2>Confirmación</h2>
+          </ModalHeader>
+          <ModalBody>
+            <Message>{message}</Message>
+          </ModalBody>
+          <ModalFooter>
+            <CancelButton onClick={onClose}>Cancelar</CancelButton>
+            <ConfirmButton onClick={handleConfirm}>Confirmar</ConfirmButton>
+          </ModalFooter>
+        </ModalContainer>
+      )}
     </Overlay>
   );
 };
@@ -37,6 +52,14 @@ const Overlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 1002;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
 `;
 
 const ModalContainer = styled.div`
