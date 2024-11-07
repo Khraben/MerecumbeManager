@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
-import { toPng } from "html-to-image";
+import {styled } from "styled-components";
 import Image from "next/image";
 import Loading from "../components/Loading";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es"; 
-import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept } from "../firebase/firebaseFirestoreService";
+import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService";
 import axios from 'axios'; 
 
 registerLocale("es", es);
@@ -50,7 +49,7 @@ export default function MakePayment() {
     if (selectedStudent) {
       const student = students.find(s => s.name === selectedStudent);
       if (student) {
-        loadGroups(student.groups);
+        loadGroups(student.id);
       }
     } else {
       setGroups([]);
@@ -59,22 +58,20 @@ export default function MakePayment() {
     }
   }, [selectedStudent, selectedConcept]);
 
-  const loadGroups = async (groupIds) => {
+  const loadGroups = async (studentId) => {
+    const groupIds = await fetchStudentGroupsByStudentId(studentId);
     const groupData = await fetchGroupsByIds(groupIds);
     const validGroups = groupData.filter(group => group.level !== "Taller");
     const tallerGroups = groupData.filter(group => group.level === "Taller");
     setGroups(validGroups.map(group => group.name));
     setTallerGroups(tallerGroups.map(group => group.name));
 
-    const student = students.find(s => s.name === selectedStudent);
-    if (student) {
-      const receipts = await fetchReceiptsByStudentAndConcept(student.id, "Mensualidad");
-      const paidMonths = receipts.map(receipt => {
-        const date = new Date(receipt.specification);
-        return { month: date.getMonth(), year: date.getFullYear() };
-      });
-      setPaidMonths(paidMonths);
-    }
+    const receipts = await fetchReceiptsByStudentAndConcept(studentId, "Mensualidad");
+    const paidMonths = receipts.map(receipt => {
+      const date = new Date(receipt.specification);
+      return { month: date.getMonth(), year: date.getFullYear() };
+    });
+    setPaidMonths(paidMonths);
   };
 
   const handleStudentChange = (e) => {
@@ -100,67 +97,98 @@ export default function MakePayment() {
   };
 
   const handleConfirmReceipt = async () => {
+    setLoading(true); 
     try {
       if (receiptRef.current) {
-        receiptRef.current.style.margin = "0";
-        receiptRef.current.style.padding = "0";
-        receiptRef.current.style.width = "100%";
-        receiptRef.current.style.height = "auto";
-
-        const dataUrl = await toPng(receiptRef.current);
-
-        // Restaura el estilo original del contenedor
-        receiptRef.current.style.margin = "";
-        receiptRef.current.style.padding = "";
-        receiptRef.current.style.width = "";
-        receiptRef.current.style.height = "";
+        const htmlContent = receiptRef.current.outerHTML;
+  
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL; 
+        const updatedHtmlContent = htmlContent.replace(/src="\/(.*?)"/g, `src="${baseUrl}/$1"`);
+  
+        const styles = Array.from(document.styleSheets)
+          .map(styleSheet => {
+            try {
+              return Array.from(styleSheet.cssRules)
+                .map(rule => rule.cssText)
+                .join('');
+            } catch (e) {
+              console.error('No se pudieron leer algunos estilos', e);
+              return '';
+            }
+          })
+          .join('');
+  
+        const response = await axios.post(
+          '/api/generate-pdf', 
+          { htmlContent: updatedHtmlContent, cssStyles: styles },
+          { responseType: 'blob' }
+        );
         
-        const student = students.find(s => s.name === selectedStudent);
-        if (!student) {
-          setErrorMessage("No se pudo encontrar el alumno.");
-          return;
-        }
-
-        const studentEmail = await fetchStudentEmail(student.id); 
-        if (!studentEmail) {
-          setErrorMessage("No se pudo obtener el correo del alumno.");
-          return;
-        }
-
-        const studentName = student.name.replace(/\s+/g, '');
-
-        setLoading(true);
-        await axios.post('/api/send-email', {
-          email: studentEmail, 
-          image: dataUrl.split(',')[1],
-          studentName: studentName,
-          receiptNumber: receiptNumber,
-        });
-
-        console.log('Correo enviado con éxito');
+        const pdfBlob = response.data;
+  
+        const reader = new FileReader();
+        reader.readAsDataURL(pdfBlob);
+        reader.onloadend = async () => {
+          const pdfBase64 = reader.result.split(',')[1];
+  
+          const student = students.find(s => s.name === selectedStudent);
+          if (!student) {
+            setErrorMessage("No se pudo encontrar el alumno.");
+            setLoading(false);
+            return;
+          }
+  
+          const studentEmail = await fetchStudentEmail(student.id);
+          if (!studentEmail) {
+            setErrorMessage("No se pudo obtener el correo del alumno.");
+            setLoading(false); 
+            return;
+          }
+  
+          const studentName = student.name.replace(/\s+/g, '');
+  
+          await axios.post('/api/send-email', {
+            email: studentEmail,
+            pdf: pdfBase64,
+            studentName: studentName,
+            receiptNumber: receiptNumber,
+          });
+  
+          console.log('Correo enviado con éxito');
+          
+          const receiptData = {
+            studentId: student.id,
+            paymentDate: new Date(),
+            specification: specifiedMonth
+              ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }))
+              : selectedTaller,
+            concept: selectedConcept,
+            amount: `₡${amount}`,
+            receiptNumber,
+          };
+          
+          await addReceipt(receiptData);
+          setLoading(false); 
+          setShowPreview(false);
+          loadInitialData();
+          setSelectedStudent("");
+          setselectedConcept("");
+          setSpecifiedMonth(null);
+          setSelectedTaller("");
+          setAmount("");
+          setPaymentMethod("");
+        };
+  
+        reader.onerror = (error) => {
+          console.error('Error al leer el PDF como base64:', error);
+          setErrorMessage("Error al procesar el PDF para el correo.");
+          setLoading(false); 
+        };
       }
-
-      const receiptData = {
-        studentId: students.find(s => s.name === selectedStudent).id,
-        paymentDate: new Date(),
-        specification: specifiedMonth ? specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }) : selectedTaller,
-        concept: selectedConcept,
-        amount: `₡${amount}`,
-        receiptNumber,
-      };
-
-      await addReceipt(receiptData);
-      setLoading(false);
-      setShowPreview(false);
-      loadInitialData();
-      setSelectedStudent("");
-      setselectedConcept("");
-      setSpecifiedMonth(null);
-      setSelectedTaller("");
-      setAmount("");
-      setPaymentMethod("");
     } catch (error) {
       console.error('Error al confirmar y enviar el recibo:', error);
+      setErrorMessage("Error al confirmar y enviar el recibo.");
+      setLoading(false);
     }
   };
 
