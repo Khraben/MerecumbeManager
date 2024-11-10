@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-<<<<<<< HEAD
-import { fetchAttendances, fetchAttendancesByGroup, fetchStudentById, fetchGroups, fetchGroupById } from "../firebase/firebaseFirestoreService";
-=======
 import { fetchAttendances, fetchStudentById, fetchGroupById, fetchGroups } from "../firebase/firebaseFirestoreService";
->>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
@@ -40,25 +36,6 @@ const AttendanceReport = ({ onBack }) => {
       try {
         const allAttendances = await fetchAttendances();
         const attendancesWithDetails = await Promise.all(allAttendances.map(async (attendance) => {
-<<<<<<< HEAD
-          try {
-            const studentData = await fetchStudentById(attendance.studentId);
-            const groupData = await fetchGroupById(attendance.groupId);
-            return {
-              ...attendance,
-              studentName: studentData.name,
-              groupName: groupData ? groupData.name : 'Unknown',
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
-            };
-          } catch (error) {
-            console.error(`Error al cargar los detalles de la asistencia: `, error);
-            return {
-              ...attendance,
-              studentName: attendance.studentId,
-              groupName: 'Unknown',
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
-            };
-=======
           let studentName = attendance.studentId;
           let groupName = attendance.groupId;
 
@@ -67,7 +44,6 @@ const AttendanceReport = ({ onBack }) => {
             studentName = studentData.name;
           } catch (error) {
             console.error(`Error al cargar los detalles del estudiante: `, error);
->>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
           }
 
           try {
@@ -84,10 +60,7 @@ const AttendanceReport = ({ onBack }) => {
             date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
           };
         }));
-<<<<<<< HEAD
-=======
         attendancesWithDetails.sort((a, b) => a.date - b.date);
->>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
         setAttendances(attendancesWithDetails);
         setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
@@ -105,51 +78,8 @@ const AttendanceReport = ({ onBack }) => {
     applyFilters();
   }, [selectedStudent, selectedGroup, startDate, endDate]);
 
-<<<<<<< HEAD
-      setLoading(true); 
-      try {
-        const allAttendances = await fetchAttendancesByGroup(selectedGroup);
-        const attendancesWithDetails = await Promise.all(Object.values(allAttendances).map(async (attendance) => {
-          try {
-            const studentData = await fetchStudentById(attendance.studentId);
-            const groupData = await fetchGroupById(attendance.groupId);
-            return {
-              ...attendance,
-              studentName: studentData.name,
-              groupName: groupData ? groupData.name : 'Unknown',
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
-            };
-          } catch (error) {
-            console.error(`Error al cargar los detalles de la asistencia: `, error);
-            return {
-              ...attendance,
-              studentName: attendance.studentId,
-              groupName: 'Unknown',
-              date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
-            };
-          }
-        }));
-        setFilteredAttendances(attendancesWithDetails);
-      } catch (error) {
-        console.error("Error al cargar las asistencias: ", error);
-      } finally {
-        setLoading(false); 
-      }
-    };
-
-    if (selectedGroup) {
-      loadAttendancesByGroup();
-    } else {
-      setFilteredAttendances(attendances);
-    }
-  }, [selectedGroup, attendances]);
-
-  useEffect(() => {
-    let filtered = filteredAttendances;
-=======
   const applyFilters = () => {
     let filtered = attendances;
->>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
 
     if (selectedStudent) {
       filtered = filtered.filter(attendance => 
