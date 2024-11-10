@@ -43,7 +43,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       fetchGroupDetailsData();
       setCurrentMonth();
     }
-  }, [isOpen, groupId, refresh]);
+  }, [isOpen]);
 
   const setCurrentMonth = () => {
     const currentDate = new Date();
@@ -57,11 +57,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     try {
       const { groupData, studentsData } = await fetchGroupDetails(groupId);
       setGroup(groupData);
-      setStudents(studentsData.map(student => ({
-        ...student,
-        isPrimaryGroup: student.groups[0] === groupId
-      })));
-
+      setStudents(studentsData);
       setLoading(false);
       setInitialLoad(false);
 

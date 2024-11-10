@@ -142,12 +142,16 @@ const PaymentHistory = ({ onBack }) => {
               locale={es}
               placeholderText="Fecha de fin"
               disabled={isEndDateDisabled}
+              minDate={startDate}
             />
             <CalendarIcon />
           </SearchContainer>
         )}
       </FilterSection>
       <TableContainer>
+      {currentPayments.length === 0 ? (
+          <NoDataMessage>No hay pagos registrados en el sistema</NoDataMessage>
+        ) : (
         <PaymentTable>
           <thead>
             <tr>
@@ -175,6 +179,7 @@ const PaymentHistory = ({ onBack }) => {
             ))}
           </tbody>
         </PaymentTable>
+        )}
       </TableContainer>
       <Pagination>
         {currentPage > 1 && (
@@ -197,6 +202,14 @@ const PaymentHistory = ({ onBack }) => {
     </Wrapper>
   );
 }
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
+
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
@@ -208,6 +221,7 @@ const Wrapper = styled.div`
     padding: 1px;
   }
 `;
+
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -221,6 +235,7 @@ const Title = styled.h1`
     margin-bottom: 10px;
   }
 `;
+
 const FilterSection = styled.div`
   margin-bottom: 20px;
   display: flex;
@@ -232,6 +247,7 @@ const FilterSection = styled.div`
     align-items: center;
   }
 `;
+
 const TableContainer = styled.div`
   width: 100%;
   padding: 0 20px;
@@ -244,6 +260,7 @@ const TableContainer = styled.div`
     padding: 0 10px;
   }
 `;
+
 const PaymentTable = styled.table`
   width: 100%;
   max-width: 1200px;
@@ -296,6 +313,7 @@ const PaymentTable = styled.table`
     }
   }
 `;
+
 const Pagination = styled.div`
   display: flex;
   justify-content: center;
@@ -305,6 +323,7 @@ const Pagination = styled.div`
     margin-top: 10px;
   }
 `;
+
 const PageButton = styled.button`
   padding: 10px 15px;
   margin: 0 5px;
@@ -330,6 +349,7 @@ const PageButton = styled.button`
     font-size: 12px;
   }
 `;
+
 const PageIcon = styled.div`
   padding: 10px 15px;
   margin: 0 5px;
@@ -352,6 +372,7 @@ const PageIcon = styled.div`
     font-size: 12px;
   }
 `;
+
 const BackButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
@@ -378,6 +399,7 @@ const BackButton = styled.button`
     margin-top: 10px;
   }
 `;
+
 const StyledDatePicker = styled(DatePicker)`
   width: 100%;
   padding: 10px 15px;
@@ -392,6 +414,7 @@ const StyledDatePicker = styled(DatePicker)`
     font-size: 12px;
   }
 `;
+
 const SearchContainer = styled.div`
   display: flex;
   align-items: center;
@@ -408,6 +431,7 @@ const SearchContainer = styled.div`
     margin-bottom: 10px;
   }
 `;
+
 const SearchInput = styled.input`
   width: 100%;
   padding: 10px 40px 10px 15px;
@@ -422,6 +446,7 @@ const SearchInput = styled.input`
     font-size: 12px;
   }
 `;
+
 const SearchIcon = styled(FaSearch)`
   position: absolute;
   right: 30px; 
@@ -434,6 +459,7 @@ const SearchIcon = styled(FaSearch)`
     font-size: 16px;
   }
 `;
+
 const CalendarIcon = styled(FaCalendarAlt)`
   position: absolute;
   right: 30px; 
@@ -446,4 +472,5 @@ const CalendarIcon = styled(FaCalendarAlt)`
     font-size: 16px;
   }
 `;
+
 export default PaymentHistory;

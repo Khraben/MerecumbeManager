@@ -93,6 +93,9 @@ export default function GroupList() {
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
+      {filteredGroups.length === 0 ? (
+          <NoDataMessage>No hay grupos registrados en el sistema</NoDataMessage>
+        ) : (
         <Table>
           <thead>
             <tr>
@@ -119,6 +122,7 @@ export default function GroupList() {
             ))}
           </tbody>
         </Table>
+        )}
       </TableContainer>
       <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
       <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
@@ -136,6 +140,13 @@ export default function GroupList() {
     </Wrapper>
   );
 }
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

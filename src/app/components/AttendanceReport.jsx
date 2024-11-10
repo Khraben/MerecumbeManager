@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+<<<<<<< HEAD
 import { fetchAttendances, fetchAttendancesByGroup, fetchStudentById, fetchGroups, fetchGroupById } from "../firebase/firebaseFirestoreService";
+=======
+import { fetchAttendances, fetchStudentById, fetchGroupById, fetchGroups } from "../firebase/firebaseFirestoreService";
+>>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
@@ -36,6 +40,7 @@ const AttendanceReport = ({ onBack }) => {
       try {
         const allAttendances = await fetchAttendances();
         const attendancesWithDetails = await Promise.all(allAttendances.map(async (attendance) => {
+<<<<<<< HEAD
           try {
             const studentData = await fetchStudentById(attendance.studentId);
             const groupData = await fetchGroupById(attendance.groupId);
@@ -53,8 +58,36 @@ const AttendanceReport = ({ onBack }) => {
               groupName: 'Unknown',
               date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate() 
             };
+=======
+          let studentName = attendance.studentId;
+          let groupName = attendance.groupId;
+
+          try {
+            const studentData = await fetchStudentById(attendance.studentId);
+            studentName = studentData.name;
+          } catch (error) {
+            console.error(`Error al cargar los detalles del estudiante: `, error);
+>>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
           }
+
+          try {
+            const groupData = await fetchGroupById(attendance.groupId);
+            groupName = groupData.name;
+          } catch (error) {
+            console.error(`Error al cargar los detalles del grupo: `, error);
+          }
+
+          return {
+            ...attendance,
+            studentName,
+            groupName,
+            date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
+          };
         }));
+<<<<<<< HEAD
+=======
+        attendancesWithDetails.sort((a, b) => a.date - b.date);
+>>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
         setAttendances(attendancesWithDetails);
         setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
@@ -69,12 +102,10 @@ const AttendanceReport = ({ onBack }) => {
   }, []);
 
   useEffect(() => {
-    const loadAttendancesByGroup = async () => {
-      if (!selectedGroup) {
-        setFilteredAttendances(attendances);
-        return;
-      }
+    applyFilters();
+  }, [selectedStudent, selectedGroup, startDate, endDate]);
 
+<<<<<<< HEAD
       setLoading(true); 
       try {
         const allAttendances = await fetchAttendancesByGroup(selectedGroup);
@@ -115,11 +146,18 @@ const AttendanceReport = ({ onBack }) => {
 
   useEffect(() => {
     let filtered = filteredAttendances;
+=======
+  const applyFilters = () => {
+    let filtered = attendances;
+>>>>>>> bbd6863d28ce1a9b7bbd00855c7044d1739ca95a
 
     if (selectedStudent) {
       filtered = filtered.filter(attendance => 
         attendance.studentName && attendance.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
+    }
+    if (selectedGroup) {
+      filtered = filtered.filter(attendance => attendance.groupId === selectedGroup);
     }
     if (startDate) {
       filtered = filtered.filter(attendance => {
@@ -129,7 +167,7 @@ const AttendanceReport = ({ onBack }) => {
     }
     setFilteredAttendances(filtered);
     setCurrentPage(1);
-  }, [selectedStudent, startDate, endDate, attendances, selectedGroup]); 
+  };
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -138,6 +176,7 @@ const AttendanceReport = ({ onBack }) => {
       setEndDate(null);
     }
   };
+
   const indexOfLastAttendance = currentPage * attendancesPerPage;
   const indexOfFirstAttendance = indexOfLastAttendance - attendancesPerPage;
   const currentAttendances = filteredAttendances.slice(indexOfFirstAttendance, indexOfLastAttendance);
@@ -182,7 +221,6 @@ const AttendanceReport = ({ onBack }) => {
               <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </SearchSelect>
-          <SearchIcon />
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
@@ -203,19 +241,22 @@ const AttendanceReport = ({ onBack }) => {
               locale={es}
               placeholderText="Fecha de fin"
               disabled={isEndDateDisabled}
+              minDate={startDate}
             />
             <CalendarIcon />
           </SearchContainer>
         )}
       </FilterSection>
       <TableContainer>
+      {currentAttendances.length === 0 ? (
+          <NoDataMessage>No hay asistencias registradas en el sistema</NoDataMessage>
+        ) : (
         <AttendanceTable>
           <thead>
             <tr>
               <th>Alumno</th>
               <th>Grupo</th>
               <th>Fecha</th>
-              <th>Asistencia</th>
             </tr>
           </thead>
           <tbody>
@@ -224,11 +265,11 @@ const AttendanceReport = ({ onBack }) => {
                 <td>{attendance.studentName}</td>
                 <td>{attendance.groupName}</td>
                 <td>{attendance.date.toLocaleDateString("es-CR")}</td>
-                <td>{attendance.status}</td>
               </tr>
             ))}
           </tbody>
         </AttendanceTable>
+        )}
       </TableContainer>
       <Pagination>
         {currentPage > 1 && (
@@ -251,6 +292,13 @@ const AttendanceReport = ({ onBack }) => {
     </Wrapper>
   );
 }
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
 
 const Wrapper = styled.div`
   width: 100%;
@@ -292,11 +340,11 @@ const FilterSection = styled.div`
 
 const TableContainer = styled.div`
   width: 100%;
-  padding: 0 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   background-color: rgba(221, 221, 221, 1);
+  overflow-x: auto;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -347,8 +395,6 @@ const AttendanceTable = styled.table`
   }
 
   @media (max-width: 480px) {
-    margin-left: 160px;
-    
     th, td {
       font-size: 10px;
       padding: 10px 12px;

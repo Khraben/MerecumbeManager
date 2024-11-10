@@ -1,119 +1,239 @@
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Loading from "./Loading"; 
-import { FaSearch } from "react-icons/fa";
-import { useState, useEffect } from "react";
-import { fetchStudents, fetchAttendancesByStudentAndMonth,fetchReceiptsByStudentAndMonth } from "../firebase/firebaseFirestoreService";
+import { fetchStudents, fetchReceipts, fetchAttendances } from "../firebase/firebaseFirestoreService";
+import Loading from "./Loading";
+import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt } from 'react-icons/fa';
+import DatePicker from "react-datepicker";
+import { es } from "date-fns/locale/es"; 
 
-const PendingPayments = ({onBack}) => {
-    const [pendingStudents, setpendingStudents] = useState([]);
-    const [loading, setLoading] = useState(true); 
-    const [MonthMorosos, setMonth] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("");
+const PendingPayments = ({ onBack }) => {
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [monthFilter, setMonthFilter] = useState(null);
+  const paymentsPerPage = 10;
+  const maxPageButtons = 4;
 
-    const getSpanishMonthName = (monthNumber) => {
-      const months = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-      ];
-      return months[monthNumber - 1];
-    };
-  const getCurrentMonthYear = () => {
-    const currentDate = new Date();
-    const month = currentDate.getMonth(-1);
-    const year = currentDate.getFullYear();
-    const monthName = getSpanishMonthName(month);
-    setMonth(monthName);
-    const monthYear = `${monthName} de ${year}`;
-    return monthYear;
-  };
-    useEffect(() => {
-        const loadPayments = async () => {
-          setLoading(true); 
-          try {
-            const mesConsulta = getCurrentMonthYear();
-            const allStudents = await fetchStudents();
-            const studentsWithVerification = await Promise.all(allStudents.map(async (student) => {
-              const studentAsistencia = await fetchAttendancesByStudentAndMonth(student.id, mesConsulta);
-              const hasAssis = Object.keys(studentAsistencia).length > 0;
-              return {
-                ...student,
-                hasAssis,
-              };
-            }));
-          const allStudentConAsistencia = studentsWithVerification.filter(student => student.hasAssis);
-          const CheckPaidStudents= await Promise.all(allStudentConAsistencia.map(async (student) => {
-            const studentPayments = await fetchReceiptsByStudentAndMonth(student.id, mesConsulta);
-            const hasPaid = Object.keys(studentPayments).length > 0;
-            return {
-              ...student,
-              hasPaid,
-            };
-            }));
-          const StudentPendientePago = CheckPaidStudents.filter(student => !student.hasPaid);
-          setpendingStudents(StudentPendientePago);
-          } catch (error) {
-            console.error("Error al cargar: ", error);
-          } finally {
-            setLoading(false); 
-          }
+  useEffect(() => {
+    const loadPendingPayments = async () => {
+      setLoading(true);
+      try {
+        const students = await fetchStudents();
+        const receipts = await fetchReceipts();
+        const attendances = await fetchAttendances();
+
+        const monthTranslations = {
+          January: 'Enero',
+          February: 'Febrero',
+          March: 'Marzo',
+          April: 'Abril',
+          May: 'Mayo',
+          June: 'Junio',
+          July: 'Julio',
+          August: 'Agosto',
+          September: 'Septiembre',
+          October: 'Octubre',
+          November: 'Noviembre',
+          December: 'Diciembre'
         };
-        loadPayments();
-      }, []);
 
-    if (loading) {
-        return <Loading />;
+        const monthOrder = {
+          'Enero': 0,
+          'Febrero': 1,
+          'Marzo': 2,
+          'Abril': 3,
+          'Mayo': 4,
+          'Junio': 5,
+          'Julio': 6,
+          'Agosto': 7,
+          'Septiembre': 8,
+          'Octubre': 9,
+          'Noviembre': 10,
+          'Diciembre': 11
+        };
+
+        const pendingPayments = students.map(student => {
+          const studentAttendances = attendances.filter(att => att.studentId === student.id);
+          const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
+
+          const pendingMonths = studentAttendances.reduce((acc, att) => {
+            const attDate = new Date(att.date.seconds * 1000);
+            const monthYear = `${monthTranslations[attDate.toLocaleString('default', { month: 'long' })]} de ${attDate.getFullYear()}`;
+            const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
+            if (!hasReceipt) {
+              acc.add(monthYear);
+            }
+            return acc;
+          }, new Set());
+
+          return Array.from(pendingMonths).map(month => ({
+            studentName: student.name,
+            studentPhone: student.phone,
+            month,
+            paymentDate: student.paymentDate || "Pendiente"
+          }));
+        }).flat();
+
+        pendingPayments.sort((a, b) => {
+          const [monthA, yearA] = a.month.split(' de ');
+          const [monthB, yearB] = b.month.split(' de ');
+          const dateA = new Date(yearA, monthOrder[monthA]);
+          const dateB = new Date(yearB, monthOrder[monthB]);
+          return dateA - dateB;
+        });
+
+        setPendingPayments(pendingPayments);
+      } catch (error) {
+        console.error("Error al cargar los pagos pendientes: ", error);
+      } finally {
+        setLoading(false);
       }
-      const filteredStudents = pendingStudents.filter(student =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    };
+
+    loadPendingPayments();
+  }, []);
+
+  useEffect(() => {
+    let filtered = pendingPayments;
+
+    if (selectedStudent) {
+      filtered = filtered.filter(payment => 
+        payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
-      return (
-        <Wrapper>
-          <Title>Lista de alumnos pendientes de pago</Title>
-          <SearchContainer>
-            <SearchInput
-              type="text"
-              placeholder="Filtrar por nombre de alumno..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <SearchIcon />
-          </SearchContainer>
-          <TableContainer>
-            <Table>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Celular</th>
-                  <th>Mes</th>
+    }
+
+    if (monthFilter) {
+      const filterMonth = monthFilter.getMonth() + 1;
+      const filterYear = monthFilter.getFullYear();
+      filtered = filtered.filter(payment => {
+        const [month, year] = payment.month.split(' de ');
+        const monthNumber = Object.keys(monthTranslations).find(key => monthTranslations[key] === month);
+        return parseInt(monthNumber) === filterMonth && parseInt(year) === filterYear;
+      });
+    }
+
+    setPendingPayments(filtered);
+    setCurrentPage(1);
+  }, [selectedStudent, monthFilter]);
+
+  const handleMonthFilterChange = (date) => {
+    setMonthFilter(date);
+  };
+
+  const indexOfLastPayment = currentPage * paymentsPerPage;
+  const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
+  const currentPayments = pendingPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const totalPages = Math.ceil(pendingPayments.length / paymentsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    const endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  return (
+    <Wrapper>
+      <Title>Pagos Pendientes</Title>
+      <FilterSection>
+        <SearchContainer>
+          <SearchInput
+            type="text"
+            value={selectedStudent}
+            onChange={(e) => setSelectedStudent(e.target.value)}
+            placeholder="Filtrar por nombre..."
+          />
+          <SearchIcon />
+        </SearchContainer>
+        <SearchContainer>
+          <StyledDatePicker
+            selected={monthFilter}
+            onChange={handleMonthFilterChange}
+            dateFormat="MM/yyyy"
+            showMonthYearPicker
+            locale={es}
+            placeholderText="Filtro por mes"
+          />
+          <MonthCalendarIcon />
+        </SearchContainer>
+      </FilterSection>
+      <TableContainer>
+        {currentPayments.length === 0 ? (
+          <NoDataMessage>No hay pagos pendientes registrados en el sistema</NoDataMessage>
+        ) : (
+          <PaymentTable>
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Celular</th>
+                <th>Mes</th>
+                <th>F. Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentPayments.map((payment, index) => (
+                <tr key={index}>
+                  <td>{payment.studentName}</td>
+                  <td>{payment.studentPhone}</td>
+                  <td>{payment.month}</td>
+                  <td>{payment.paymentDate}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map((student, index) => (
-                  <tr key={index}>
-                    <td>{student.name}</td>
-                    <td>{student.phone}</td>
-                    <td>{MonthMorosos}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </TableContainer>
-          <BackButton onClick={onBack}>Volver</BackButton>
-        </Wrapper>
-      );
-}
-export default PendingPayments;
+              ))}
+            </tbody>
+          </PaymentTable>
+        )}
+      </TableContainer>
+      <Pagination>
+        {currentPage > 1 && (
+          <PageIcon onClick={() => paginate(currentPage - 1)}>
+            <FaArrowLeft />
+          </PageIcon>
+        )}
+        {getPageNumbers().map((page) => (
+          <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
+            {page}
+          </PageButton>
+        ))}
+        {currentPage < totalPages && (
+          <PageIcon onClick={() => paginate(currentPage + 1)}>
+            <FaArrowRight />
+          </PageIcon>
+        )}
+      </Pagination>
+      <BackButton onClick={onBack}>Volver</BackButton>
+    </Wrapper>
+  );
+};
+
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+`;
+
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 20px;
-  
+  padding: 10px;
+
   @media (max-width: 480px) {
-    padding: 30px;
+    padding: 1px;
   }
 `;
+
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -124,36 +244,47 @@ const Title = styled.h1`
 
   @media (max-width: 480px) {
     font-size: 20px;
+    margin-bottom: 10px;
   }
 `;
+
+const FilterSection = styled.div`
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+
 const TableContainer = styled.div`
   width: 100%;
-  padding: 0 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  overflow-x: auto;
-  overflow-y: auto;
-  max-height: 500px;
+  align-items: center;
   background-color: rgba(221, 221, 221, 1);
+  overflow-x: auto;
 
   @media (max-width: 480px) {
     padding: 0 10px;
   }
 `;
-const Table = styled.table`
+
+const PaymentTable = styled.table`
   width: 100%;
   max-width: 1200px;
   border-collapse: collapse;
   background-color: transparent;
   border-radius: 8px;
-
+ 
   thead {
     position: sticky;
     top: 0;
     background-color: #0b0f8b;
     color: #dddddd;
-    z-index: 1;
   }
 
   th, td {
@@ -175,7 +306,7 @@ const Table = styled.table`
   }
 
   tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.05); 
+    background-color: rgba(0, 0, 0, 0.05);
   }
 
   @media (max-width: 768px) {
@@ -192,38 +323,66 @@ const Table = styled.table`
     }
   }
 `;
-const SearchContainer = styled.div`
+
+const Pagination = styled.div`
   display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 1200px;
-  padding: 0 20px;
-  margin-bottom: 20px;
+  justify-content: center;
+  margin-top: 20px;
+
+  @media (max-width: 480px) {
+    margin-top: 10px;
+  }
 `;
-const SearchInput = styled.input`
-  width: 95%;
+
+const PageButton = styled.button`
   padding: 10px 15px;
+  margin: 0 5px;
   font-size: 14px;
-  border: 2px solid #0b0f8b;
+  font-weight: bold;
+  color: #dddddd;
+  background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
+  border: none;
   border-radius: 5px;
-  outline: none;
-  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
 
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
   }
 `;
-const SearchIcon = styled(FaSearch)`
-  margin-left: -35px;
+
+const PageIcon = styled.div`
+  padding: 10px 15px;
+  margin: 0 5px;
+  font-size: 14px;
+  font-weight: bold;
   color: #0b0f8b;
-  font-size: 18px;
   cursor: pointer;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: #073e8a;
+  }
+
+  &:focus {
+    outline: none;
+  }
 
   @media (max-width: 480px) {
-    font-size: 16px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
 `;
+
 const BackButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
@@ -250,3 +409,78 @@ const BackButton = styled.button`
     margin-top: 10px;
   }
 `;
+
+const StyledDatePicker = styled(DatePicker)`
+  width: 100%;
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  background-color: transparent;
+  z-index: 5;
+  position: relative; 
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 220px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+  position: relative;
+
+  @media (max-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 10px;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  font-size: 14px;
+  border: 2px solid #0b0f8b;
+  border-radius: 5px;
+  outline: none;
+  background-color: transparent;
+
+  @media (max-width: 480px) {
+    padding: 8px 35px 8px 12px; 
+    font-size: 12px;
+  }
+`;
+
+const SearchIcon = styled(FaSearch)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
+`;
+
+const MonthCalendarIcon = styled(FaRegCalendarAlt)`
+  position: absolute;
+  right: 30px; 
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    right: 25px; 
+    font-size: 16px;
+  }
+`;
+
+export default PendingPayments;
