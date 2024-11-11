@@ -9,8 +9,13 @@ export const createSecretaryUser = async (email) => {
     await sendPasswordResetEmail(auth, email);
     console.log("Password reset email sent");
   } catch (error) {
-    console.error("Error creating user:", error);
-    throw error;
+    if (error.code === 'auth/email-already-in-use') {
+      console.log("Email already in use, sending password reset email");
+      await sendPasswordResetEmail(auth, email);
+    } else {
+      console.error("Error creating user:", error);
+      throw error;
+    }
   }
 };
 
