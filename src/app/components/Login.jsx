@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation"; 
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
 import { signInUser } from "../firebase/firebaseAuthService";
@@ -13,6 +14,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const loginButtonRef = useRef(null); 
+  const router = useRouter(); 
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -36,6 +38,7 @@ export default function Login({ onLogin }) {
       }
       await signInUser(email, password);
       onLogin();
+      router.push("/"); // Redirigir a la página de inicio después del inicio de sesión exitoso
     } catch (error) {
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setError("Contraseña incorrecta. Por favor, verifica tu contraseña.");
