@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { addInstructor, fetchInstructorById, updateInstructor } from "../firebase/firebaseFirestoreService";
 import { TextInput } from './Input';
+import Loading from "./Loading";
 
 export default function InstructorModal({ isOpen, onClose, onInstructorAdded, instructorId }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && instructorId) {
@@ -34,11 +36,12 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
       setError("Formato del teléfono inválido");
       return;
     }
-
+  
     setError("");
-
+    setIsLoading(true);
+  
     const instructorData = { name, phone };
-
+  
     try {
       if (instructorId) {
         await updateInstructor(instructorId, instructorData);
@@ -52,6 +55,8 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
       }
     } catch (error) {
       setError("Error al guardar instructor.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,7 +75,8 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   };
 
   if (!isOpen) return null;
-
+  if (isLoading) return <Loading />;
+  
   return (
     <Overlay>
       <ModalContainer>
