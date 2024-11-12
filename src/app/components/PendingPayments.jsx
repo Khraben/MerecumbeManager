@@ -8,6 +8,7 @@ import { es } from "date-fns/locale/es";
 
 const PendingPayments = ({ onBack }) => {
   const [pendingPayments, setPendingPayments] = useState([]);
+  const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState('');
@@ -22,51 +23,38 @@ const PendingPayments = ({ onBack }) => {
         const students = await fetchStudents();
         const receipts = await fetchReceipts();
         const attendances = await fetchAttendances();
-
-        const monthTranslations = {
-          January: 'Enero',
-          February: 'Febrero',
-          March: 'Marzo',
-          April: 'Abril',
-          May: 'Mayo',
-          June: 'Junio',
-          July: 'Julio',
-          August: 'Agosto',
-          September: 'Septiembre',
-          October: 'Octubre',
-          November: 'Noviembre',
-          December: 'Diciembre'
-        };
-
+  
         const monthOrder = {
-          'Enero': 0,
-          'Febrero': 1,
-          'Marzo': 2,
-          'Abril': 3,
-          'Mayo': 4,
-          'Junio': 5,
-          'Julio': 6,
-          'Agosto': 7,
-          'Septiembre': 8,
-          'Octubre': 9,
-          'Noviembre': 10,
-          'Diciembre': 11
+          'enero': 0,
+          'febrero': 1,
+          'marzo': 2,
+          'abril': 3,
+          'mayo': 4,
+          'junio': 5,
+          'julio': 6,
+          'agosto': 7,
+          'septiembre': 8,
+          'octubre': 9,
+          'noviembre': 10,
+          'diciembre': 11
         };
-
+  
         const pendingPayments = students.map(student => {
           const studentAttendances = attendances.filter(att => att.studentId === student.id);
           const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
-
+  
           const pendingMonths = studentAttendances.reduce((acc, att) => {
             const attDate = new Date(att.date.seconds * 1000);
-            const monthYear = `${monthTranslations[attDate.toLocaleString('default', { month: 'long' })]} de ${attDate.getFullYear()}`;
+            let monthName = attDate.toLocaleString('es-ES', { month: 'long' });
+            monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            const monthYear = `${monthName} de ${attDate.getFullYear()}`;
             const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
             if (!hasReceipt) {
               acc.add(monthYear);
             }
             return acc;
           }, new Set());
-
+  
           return Array.from(pendingMonths).map(month => ({
             studentName: student.name,
             studentPhone: student.phone,
@@ -74,31 +62,36 @@ const PendingPayments = ({ onBack }) => {
             paymentDate: student.paymentDate || "Pendiente"
           }));
         }).flat();
-
+  
         pendingPayments.sort((a, b) => {
           const [monthA, yearA] = a.month.split(' de ');
           const [monthB, yearB] = b.month.split(' de ');
-          const dateA = new Date(yearA, monthOrder[monthA]);
-          const dateB = new Date(yearB, monthOrder[monthB]);
+          const dateA = new Date(yearA, monthOrder[monthA.toLowerCase()]);
+          const dateB = new Date(yearB, monthOrder[monthB.toLowerCase()]);
           return dateA - dateB;
         });
-
+  
         setPendingPayments(pendingPayments);
+        setFilteredPayments(pendingPayments);
       } catch (error) {
         console.error("Error al cargar los pagos pendientes: ", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     loadPendingPayments();
   }, []);
 
   useEffect(() => {
+    applyFilters();
+  }, [selectedStudent, monthFilter]);
+
+  const applyFilters = () => {
     let filtered = pendingPayments;
 
     if (selectedStudent) {
-      filtered = filtered.filter(payment => 
+      filtered = filtered.filter(payment =>
         payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
     }
@@ -108,23 +101,27 @@ const PendingPayments = ({ onBack }) => {
       const filterYear = monthFilter.getFullYear();
       filtered = filtered.filter(payment => {
         const [month, year] = payment.month.split(' de ');
-        const monthNumber = Object.keys(monthTranslations).find(key => monthTranslations[key] === month);
+        const monthNumber = new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
         return parseInt(monthNumber) === filterMonth && parseInt(year) === filterYear;
       });
     }
 
-    setPendingPayments(filtered);
+    setFilteredPayments(filtered);
     setCurrentPage(1);
-  }, [selectedStudent, monthFilter]);
+  };
 
   const handleMonthFilterChange = (date) => {
     setMonthFilter(date);
   };
 
+  const handleStudentChange = (e) => {
+    setSelectedStudent(e.target.value);
+  };
+
   const indexOfLastPayment = currentPage * paymentsPerPage;
   const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
-  const currentPayments = pendingPayments.slice(indexOfFirstPayment, indexOfLastPayment);
-  const totalPages = Math.ceil(pendingPayments.length / paymentsPerPage);
+  const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const getPageNumbers = () => {
@@ -150,7 +147,7 @@ const PendingPayments = ({ onBack }) => {
           <SearchInput
             type="text"
             value={selectedStudent}
-            onChange={(e) => setSelectedStudent(e.target.value)}
+            onChange={handleStudentChange}
             placeholder="Filtrar por nombre..."
           />
           <SearchIcon />
@@ -210,7 +207,6 @@ const PendingPayments = ({ onBack }) => {
           </PageIcon>
         )}
       </Pagination>
-      <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
 };

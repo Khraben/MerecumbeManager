@@ -2,7 +2,7 @@
 
 import "@/styles/globals.css";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider } from "./context/AuthContext";
 import SideNavbar from "./components/SideNavbar";
 import Login from "./components/Login";
@@ -13,9 +13,11 @@ export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSideNavbarOpen, setIsSideNavbarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const handleLogin = () => {
     setIsLoggedIn(true);
+    router.push("/"); // Redirigir a la página de inicio después del inicio de sesión exitoso
   };
 
   const handleLogout = () => {

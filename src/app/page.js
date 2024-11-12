@@ -3,7 +3,7 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchStudents, fetchReceiptsByMonth } from "./firebase/firebaseFirestoreService";
+import { fetchActiveStudents, fetchReceiptsByMonth } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
 
 const getSpanishMonthName = (monthNumber) => {
@@ -14,6 +14,10 @@ const getSpanishMonthName = (monthNumber) => {
   return months[monthNumber - 1];
 };
 
+const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
@@ -22,15 +26,14 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const students = await fetchStudents();
-      const activeStudents = students.filter(student => student.groups[0] !== "INACTIVO");
+      const activeStudents = await fetchActiveStudents();
       setActiveStudentsCount(activeStudents.length);
 
       const currentDate = new Date();
       const month = currentDate.getMonth() + 1;
       const year = currentDate.getFullYear();
       const monthName = getSpanishMonthName(month);
-      const monthYear = `${monthName} de ${year}`;
+      const monthYear = `${capitalizeFirstLetter(monthName)} de ${year}`;
       const receipts = await fetchReceiptsByMonth(monthYear);
 
       const paymentsThisMonth = receipts.filter(receipt => 

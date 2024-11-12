@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { addSecretary, fetchSecretaryById, updateSecretary, isEmailRegistered, isUsernameRegistered } from "../firebase/firebaseFirestoreService";
 import { TextInput } from './Input';
 import { createSecretaryUser } from "../firebase/firebaseAuthService";
+import Loading from "./Loading";
 
 export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secretaryId }) {
   const [name, setName] = useState("");
@@ -11,6 +12,7 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [originalUsername, setOriginalUsername] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && secretaryId) {
@@ -50,10 +52,12 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
       setError("Por favor ingresa un correo electrónico válido.");
       return;
     }
-  
+    setIsLoading(true);
+
     if (!secretaryId) {
       const emailExists = await isEmailRegistered(email);
       if (emailExists) {
+        setIsLoading(false);
         setError("El correo electrónico ya está registrado.");
         return;
       }
@@ -63,6 +67,7 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
     if (!secretaryId || (secretaryId && username !== originalUsername)) {
       usernameExists = await isUsernameRegistered(username);
       if (usernameExists) {
+        setIsLoading(false);
         setError("El nombre de usuario ya está registrado.");
         return;
       }
@@ -81,8 +86,16 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
       if (secretaryId) {
         await updateSecretary(secretaryId, secretaryData);
       } else {
+        try {
+          await createSecretaryUser(email);
+        } catch (error) {
+          if (error.code === 'auth/email-already-in-use') {
+            await sendPasswordResetEmail(auth, email);
+          } else {
+            throw error;
+          }
+        }
         await addSecretary(secretaryData);
-        await createSecretaryUser(email);
       }
       resetFields();
       onClose();
@@ -91,6 +104,8 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
       }
     } catch (error) {
       setError("Error al guardar secretaria.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,6 +138,7 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
   };
 
   if (!isOpen) return null;
+  if (isLoading) return <Loading />;
 
   return (
     <Overlay>
@@ -208,11 +224,14 @@ const ModalContainer = styled.div`
   @media (max-width: 768px) {
     width: 90%;
     padding: 15px;
+    margin-left: 20px;
   }
 
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
+    margin-left: 45px;
+    margin-right: 5px;
   }
 `;
 
