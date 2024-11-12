@@ -154,14 +154,21 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   };
 
   const getAttendanceDates = useCallback((monthYear, groupDay) => {
-    // Fechas quemadas para pruebas
-    return [
-      new Date(2023, 0, 1), // 1 de enero de 2023
-      new Date(2023, 0, 8), // 8 de enero de 2023
-      new Date(2023, 0, 15), // 15 de enero de 2023
-      new Date(2023, 0, 22), // 22 de enero de 2023
-      new Date(2023, 0, 29)  // 29 de enero de 2023
-    ];
+    const [monthName, year] = monthYear.split(" ");
+    const month = new Date(`${monthName} 1, ${year}`).getMonth();
+    const selectedYear = parseInt(year, 10);
+    const dayOfWeekIndex = getDayOfWeekIndex(groupDay);
+  
+    let dates = [];
+    let date = new Date(selectedYear, month, 1);
+  
+    while (date.getMonth() === month) {
+      if (date.getDay() === dayOfWeekIndex) {
+        dates.push(new Date(date));
+      }
+      date.setDate(date.getDate() + 1);
+    }
+    return dates;
   }, []);
 
   if (!isOpen) return null;
