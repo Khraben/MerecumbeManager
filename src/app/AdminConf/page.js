@@ -214,7 +214,7 @@ export default function AdminConf() {
                 <td>{instructor.phone}</td>
                 <td>{instructor.groupCount}</td>
                 <td>
-                  <InfoIcon onClick={() => handleOpenInstructorDetails(instructor.id)} /> {/* Ver detalles */}
+                  <InfoIcon onClick={() => handleOpenInstructorDetails(instructor.id)} />
                   <EditIcon onClick={() => handleOpenInstructorModal(instructor.id)} />
                   <DeleteIcon onClick={() => handleOpenConfirmation("instructor", instructor)} />
                 </td>

@@ -24,8 +24,8 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
   }, [isOpen, instructorId]);
 
   if (!isOpen) return null;
-  if (error) return <ErrorMessage>{error}</ErrorMessage>; // Mostrar error
-  if (!instructor) return <Loading />; // Mostrar cargando
+  if (error) return <ErrorMessage>{error}</ErrorMessage>; 
+  if (!instructor) return <Loading />;
 
   return (
     <Overlay>
@@ -57,7 +57,6 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
   );
 };
 
-// Estilos
 const Overlay = styled.div`
   position: fixed;
   top: 0;

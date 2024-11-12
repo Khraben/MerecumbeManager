@@ -38,7 +38,7 @@ export default function Login({ onLogin }) {
       }
       await signInUser(email, password);
       onLogin();
-      router.push("/"); // Redirigir a la página de inicio después del inicio de sesión exitoso
+      router.push("/");
     } catch (error) {
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setError("Contraseña incorrecta. Por favor, verifica tu contraseña.");
@@ -81,7 +81,7 @@ export default function Login({ onLogin }) {
               labelStyle={{ color: "#dddddd" }}
               loginButtonRef={loginButtonRef}
             />
-            <Button ref={loginButtonRef} type="submit">Ingresar</Button> {/* Attach the ref to the button */}
+            <Button ref={loginButtonRef} type="submit">Ingresar</Button>
             {error && <ErrorMessage>{error}</ErrorMessage>}
           </Form>
         </LoginContainer>

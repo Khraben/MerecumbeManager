@@ -8,6 +8,7 @@ import SideNavbar from "./components/SideNavbar";
 import Login from "./components/Login";
 import Image from 'next/image';
 import styled from 'styled-components';
+import Head from 'next/head';
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,7 +18,7 @@ export default function RootLayout({ children }) {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    router.push("/"); // Redirigir a la página de inicio después del inicio de sesión exitoso
+    router.push("/"); 
   };
 
   const handleLogout = () => {
@@ -34,6 +35,9 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="es">
+      <Head>
+        <title>Merecumbé San Ramón</title>
+      </Head>
       <body style={{ margin: 0, padding: 0 }}>
         <AuthProvider>
           {shouldShowLayout ? (
