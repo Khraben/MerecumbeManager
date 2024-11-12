@@ -7,9 +7,11 @@ import Image from "next/image";
 import { signInUser } from "../firebase/firebaseAuthService";
 import { fetchEmailByUsername } from "../firebase/firebaseFirestoreService";
 import { UserInput, PasswordInput } from './Input';
+import Loading from './Loading'; 
 
 export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setloading] = useState(false); 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -30,10 +32,12 @@ export default function Login({ onLogin }) {
       setError("Por favor, ingrese usuario y contraseña.");
       return;
     }
+    setloading(true); 
     try {
       const email = await fetchEmailByUsername(username);
       if (!email) {
         setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
+        setloading(false);
         return;
       }
       await signInUser(email, password);
@@ -45,6 +49,7 @@ export default function Login({ onLogin }) {
       } else {
         setError("Error al iniciar sesión: " + error.message);
       }
+      setloading(false);
     }
   };
   
@@ -54,6 +59,8 @@ export default function Login({ onLogin }) {
         <AnimationContainer>
           <Logo src="/logo.svg" alt="Loading Logo" width={180} height={180} />
         </AnimationContainer>
+      ) : loading ? ( 
+        <Loading />
       ) : (
         <LoginContainer>
           <StyledLogo src="/logo.svg" alt="Logo" width={120} height={120} />
