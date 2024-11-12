@@ -1,14 +1,13 @@
 "use client";
 
 import "@/styles/globals.css";
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider } from "./context/AuthContext";
 import SideNavbar from "./components/SideNavbar";
 import Login from "./components/Login";
 import Image from 'next/image';
 import styled from 'styled-components';
-import Head from 'next/head';
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,11 +32,12 @@ export default function RootLayout({ children }) {
 
   const shouldShowLayout = !noLayoutRoutes.includes(pathname);
 
+  useEffect(() => {
+    document.title = "Merecumbé San Ramón - Manager";
+  }, []);
+
   return (
     <html lang="es">
-      <Head>
-        <title>Merecumbé San Ramón</title>
-      </Head>
       <body style={{ margin: 0, padding: 0 }}>
         <AuthProvider>
           {shouldShowLayout ? (
