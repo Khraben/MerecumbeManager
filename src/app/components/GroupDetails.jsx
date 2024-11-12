@@ -211,54 +211,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
               <ControlTitle>Control de:</ControlTitle>
               <SelectMonth>{selectedMonth}</SelectMonth>
 
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Nombre Alumno</th>
-                    {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                      <th key={date.toString()} style={{ width: "20px" }}>
-                        {date.getDate()}
-                      </th>
-                    ))}
-                    <th>D. Pago</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...femaleStudents, ...maleStudents].map((student, index) => (
-                    <React.Fragment key={student.id}>
-                      {index === femaleStudents.length && maleStudents.length > 0 && (
-                        <tr className="divider-row">
-                          <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
-                        </tr>
-                      )}
-                      <tr style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                        <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                          {student.name}
-                          {student.groups.length > 1 && (
-                            <>
-                              <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                              <Tooltip>
-                                <strong>OTROS GRUPOS:</strong>
-                                <ul>
-                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                    <li key={index}>
-                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Tooltip>
-                            </>
-                          )}
-                        </StudentName>
-                        
-                        <PaymentStatus>
-                          {student.paymentDate}
-                        </PaymentStatus>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </Table>
+              
               <Summary>
                 <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
                 <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
