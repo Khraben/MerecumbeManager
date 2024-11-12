@@ -154,24 +154,9 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   };
 
   const getAttendanceDates = useCallback((monthYear, groupDay) => {
-    const [monthName, year] = monthYear.split(" ");
-    const month = new Date(`${monthName} 1, ${year}`).getMonth();
-    const selectedYear = parseInt(year);
-    const dayOfWeekIndex = getDayOfWeekIndex(groupDay);
+    
 
-    let dates = [];
-    let date = new Date(selectedYear, month, 1);
-
-    while (date.getDay() !== dayOfWeekIndex) {
-      date.setDate(date.getDate() + 1);
-    }
-
-    while (date.getMonth() === month) {
-      dates.push(new Date(date));
-      date.setDate(date.getDate() + 7);
-    }
-
-    return dates;
+    return [1,2,3,4];
   }, []);
 
   if (!isOpen) return null;
@@ -210,7 +195,65 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
             <AttendanceControl>
               <ControlTitle>Control de:</ControlTitle>
               <SelectMonth>{selectedMonth}</SelectMonth>
-
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Nombre Alumno</th>
+                    {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                      <th key={date.toString()} style={{ width: "20px" }}>
+                        {date.getDate()}
+                      </th>
+                    ))}
+                    <th>D. Pago</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...femaleStudents, ...maleStudents].map((student, index) => (
+                    <React.Fragment key={student.id}>
+                      {index === femaleStudents.length && maleStudents.length > 0 && (
+                        <tr className="divider-row">
+                          <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
+                        </tr>
+                      )}
+                      <tr style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
+                        <StudentName isPrimaryGroup={student.isPrimaryGroup}>
+                          {student.name}
+                          {student.groups.length > 1 && (
+                            <>
+                              <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                              <Tooltip>
+                                <strong>OTROS GRUPOS:</strong>
+                                <ul>
+                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                    <li key={index}>
+                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </Tooltip>
+                            </>
+                          )}
+                        </StudentName>
+                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
+                          <AttendanceCell
+                            key={date.toString()}
+                            onClick={() => handleAttendanceClick(student.id, date)}
+                            className={pendingChanges[`temp-${student.id}-${date.getTime()}`] || pendingChanges[Object.keys(attendance).find(
+                              (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                            )] ? "pending-change" : ""}
+                            isPrimaryGroup={student.isPrimaryGroup}
+                          >
+                            {getAttendanceCellComponent(student.id, date)}
+                          </AttendanceCell>
+                        ))}
+                        <PaymentStatus>
+                          {student.paymentDate}
+                        </PaymentStatus>
+                      </tr>
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </Table>
               
               <Summary>
                 <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
