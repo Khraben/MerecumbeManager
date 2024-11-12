@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo } from "react-icons/fa";
 import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, fetchSpecificAttendance, deleteAttendance, fetchGroupsByIds } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
-const GroupDetails = ({ isOpen, onClose, groupId }) => {
+export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [group, setGroup] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,36 +14,55 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [originalAttendance, setOriginalAttendance] = useState({});
   const [pendingChanges, setPendingChanges] = useState({});
-  const [refresh, setRefresh] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
   const [groupDetails, setGroupDetails] = useState({});
+  const [error, setError] = useState(null);
 
   const monthTranslations = {
-    January: 'Enero',
-    February: 'Febrero',
-    March: 'Marzo',
-    April: 'Abril',
-    May: 'Mayo',
-    June: 'Junio',
-    July: 'Julio',
-    August: 'Agosto',
-    September: 'Septiembre',
-    October: 'Octubre',
-    November: 'Noviembre',
-    December: 'Diciembre'
+    January: 'Enero', February: 'Febrero', March: 'Marzo', April: 'Abril',
+    May: 'Mayo', June: 'Junio', July: 'Julio', August: 'Agosto',
+    September: 'Septiembre', October: 'Octubre', November: 'Noviembre', December: 'Diciembre'
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      setStudents([]);
-      setAttendance({});
-      setLoading(true);
-      setAttendanceLoading(true);
-      fetchAttendancesData();
-      fetchGroupDetailsData();
+  const fetchData = useCallback(async () => {
+    if (!isOpen) return;
+    setLoading(true);
+    setAttendanceLoading(true);
+    setError(null);
+
+    try {
+      const [groupDetailsResult, attendancesResult] = await Promise.all([
+        fetchGroupDetails(groupId),
+        fetchAttendancesByGroup(groupId)
+      ]);
+
+      const { groupData, studentsData } = groupDetailsResult;
+      setGroup(groupData);
+      setStudents(studentsData);
+      setAttendance(attendancesResult);
+      setOriginalAttendance(attendancesResult);
+
+      const otherGroupIds = studentsData.reduce((acc, student) => 
+        acc.concat(student.groups.filter(id => id !== groupId)), []);
+      const groupDetailsArray = await fetchGroupsByIds(otherGroupIds);
+      const groupDetailsMap = groupDetailsArray.reduce((acc, group) => {
+        acc[group.id] = group;
+        return acc;
+      }, {});
+      setGroupDetails(groupDetailsMap);
+
       setCurrentMonth();
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Error al cargar los datos. Por favor, intente de nuevo.");
+    } finally {
+      setLoading(false);
+      setAttendanceLoading(false);
     }
-  }, [isOpen]);
+  }, [isOpen, groupId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const setCurrentMonth = () => {
     const currentDate = new Date();
@@ -52,101 +71,61 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     setSelectedMonth(`${monthName} ${year}`);
   };
 
-  const fetchGroupDetailsData = async () => {
-    if (initialLoad) setLoading(true);
-    try {
-      const { groupData, studentsData } = await fetchGroupDetails(groupId);
-      setGroup(groupData);
-      setStudents(studentsData);
-      setLoading(false);
-      setInitialLoad(false);
-
-      const otherGroupIds = studentsData.reduce((acc, student) => {
-        return acc.concat(student.groups.filter(id => id !== groupId));
-      }, []);
-      const groupDetailsArray = await fetchGroupsByIds(otherGroupIds);
-      const groupDetailsMap = groupDetailsArray.reduce((acc, group) => {
-        acc[group.id] = group;
-        return acc;
-      }, {});
-      setGroupDetails(groupDetailsMap);
-
-    } catch (error) {
-      console.error("Error al obtener detalles del grupo:", error);
-      setLoading(false);
-      setInitialLoad(false);
-    }
-  };
-
-  const fetchAttendancesData = async () => {
-    if (initialLoad) setAttendanceLoading(true);
-    try {
-      const attendances = await fetchAttendancesByGroup(groupId);
-      setAttendance(attendances);
-      setOriginalAttendance(attendances);
-      setAttendanceLoading(false);
-      setInitialLoad(false);
-    } catch (error) {
-      console.error("Error fetching attendances: ", error);
-      setAttendanceLoading(false);
-      setInitialLoad(false);
-    }
-  };
-
-  const handleAttendanceClick = (studentId, date) => {
+  const handleAttendanceClick = useCallback((studentId, date) => {
     if (!isEditing) return;
-
-    const attendanceId = Object.keys(attendance).find(
-      (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
-    );
-
-    const tempId = `temp-${studentId}-${date.getTime()}`;
 
     setPendingChanges((prevChanges) => {
       const updatedChanges = { ...prevChanges };
+      const attendanceId = Object.keys(attendance).find(
+        (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
+      );
+      const tempId = `temp-${studentId}-${date.getTime()}`;
 
       if (attendanceId) {
         if (updatedChanges[attendanceId]?.action === 'delete') {
-          delete updatedChanges[attendanceId];  
+          delete updatedChanges[attendanceId];
         } else {
-          updatedChanges[attendanceId] = { action: 'delete' }; 
+          updatedChanges[attendanceId] = { action: 'delete' };
         }
-      } 
-      else {
+      } else {
         if (updatedChanges[tempId]?.action === 'add') {
           delete updatedChanges[tempId];
         } else {
-          updatedChanges[tempId] = { action: 'add', groupId, studentId, date };  
+          updatedChanges[tempId] = { action: 'add', groupId, studentId, date };
         }
       }
 
       return updatedChanges;
     });
-
-  };
+  }, [isEditing, attendance, groupId]);
 
   const handleSave = async () => {
     setIsEditing(false);
+    setError(null);
     const newAttendance = { ...attendance };
 
-    for (const [id, change] of Object.entries(pendingChanges)) {
-      if (change.action === 'delete') {
-        delete newAttendance[id];
-        await deleteAttendance(id);
-      } else if (change.action === 'add') {
-        const { date, groupId, studentId } = change;
-        await addAttendance(date, groupId, studentId);
-        const newAttendanceId = await fetchSpecificAttendance(groupId, studentId, date);
-        if (newAttendanceId) {
-          newAttendance[newAttendanceId] = { groupId, studentId, date };
+    try {
+      for (const [id, change] of Object.entries(pendingChanges)) {
+        if (change.action === 'delete') {
+          delete newAttendance[id];
+          await deleteAttendance(id);
+        } else if (change.action === 'add') {
+          const { date, groupId, studentId } = change;
+          await addAttendance(date, groupId, studentId);
+          const newAttendanceId = await fetchSpecificAttendance(groupId, studentId, date);
+          if (newAttendanceId) {
+            newAttendance[newAttendanceId] = { groupId, studentId, date };
+          }
         }
       }
-    }
 
-    setAttendance(newAttendance);
-    setOriginalAttendance(newAttendance);
-    setPendingChanges({});
-    setRefresh(!refresh);
+      setAttendance(newAttendance);
+      setOriginalAttendance(newAttendance);
+      setPendingChanges({});
+    } catch (err) {
+      console.error("Error saving attendance:", err);
+      setError("Error al guardar la asistencia. Por favor, intente de nuevo.");
+    }
   };
 
   const handleCancel = () => {
@@ -155,43 +134,26 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     setIsEditing(false);
   };
 
-  const getAttendanceCellComponent = (studentId, date) => {
+  const getAttendanceCellComponent = useCallback((studentId, date) => {
     const attendanceId = Object.keys(attendance).find(
       (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
     );
-
     const tempId = `temp-${studentId}-${date.getTime()}`;
-
     const pendingAdd = pendingChanges[tempId]?.action === 'add';
     const pendingDelete = pendingChanges[attendanceId]?.action === 'delete';
 
-    if (pendingAdd) {
-      return <PresentIcon className="pending-change" />;  
-    }
-    if (pendingDelete) {
-      return <AbsentIcon className="pending-change" />; 
-    }
-    if (attendanceId) {
-      return <PresentIcon />;  
-    }
-
+    if (pendingAdd) return <PresentIcon className="pending-change" />;
+    if (pendingDelete) return <AbsentIcon className="pending-change" />;
+    if (attendanceId) return <PresentIcon />;
     return isEditing ? <AbsentIcon /> : null;
-  };
+  }, [attendance, pendingChanges, isEditing]);
 
   const getDayOfWeekIndex = (day) => {
-    const daysOfWeek = {
-      Lunes: 1,
-      Martes: 2,
-      Miércoles: 3,
-      Jueves: 4,
-      Viernes: 5,
-      Sábado: 6,
-      Domingo: 0,
-    };
+    const daysOfWeek = { Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 0 };
     return daysOfWeek[day] ?? 1;
   };
 
-  const getAttendanceDates = (monthYear, groupDay) => {
+  const getAttendanceDates = useCallback((monthYear, groupDay) => {
     const [monthName, year] = monthYear.split(" ");
     const month = new Date(`${monthName} 1, ${year}`).getMonth();
     const selectedYear = parseInt(year);
@@ -210,15 +172,11 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
     }
 
     return dates;
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
+  }, []);
 
   if (!isOpen) return null;
-
   if (loading || attendanceLoading) return <Loading />;
+  if (error) return <ErrorMessage>{error}</ErrorMessage>;
 
   const femaleStudents = students
     .filter(student => student.gender === "Mujer")
@@ -266,92 +224,49 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {femaleStudents.map((student) => (
-                    <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                      <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                        {student.name}
-                        {student.groups.length > 1 && (
-                          <>
-                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                            <Tooltip>
-                              <strong>OTROS GRUPOS:</strong>
-                              <ul>
-                                {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                  <li key={index}>
-                                    {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                  </li>
-                                ))}
-                              </ul>
-                            </Tooltip>
-                          </>
-                        )}
-                      </StudentName>
-                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
-                        const attendanceId = Object.keys(attendance).find(
-                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                        );
-                        const tempId = `temp-${student.id}-${date.getTime()}`;
-                        return (
+                  {[...femaleStudents, ...maleStudents].map((student, index) => (
+                    <React.Fragment key={student.id}>
+                      {index === femaleStudents.length && maleStudents.length > 0 && (
+                        <tr className="divider-row">
+                          <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
+                        </tr>
+                      )}
+                      <tr style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
+                        <StudentName isPrimaryGroup={student.isPrimaryGroup}>
+                          {student.name}
+                          {student.groups.length > 1 && (
+                            <>
+                              <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
+                              <Tooltip>
+                                <strong>OTROS GRUPOS:</strong>
+                                <ul>
+                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
+                                    <li key={index}>
+                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </Tooltip>
+                            </>
+                          )}
+                        </StudentName>
+                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
                           <AttendanceCell
                             key={date.toString()}
                             onClick={() => handleAttendanceClick(student.id, date)}
-                            className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
+                            className={pendingChanges[`temp-${student.id}-${date.getTime()}`] || pendingChanges[Object.keys(attendance).find(
+                              (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
+                            )] ? "pending-change" : ""}
                             isPrimaryGroup={student.isPrimaryGroup}
                           >
                             {getAttendanceCellComponent(student.id, date)}
                           </AttendanceCell>
-                        );
-                      })}
-                      <PaymentStatus>
-                        {student.paymentDate}
-                      </PaymentStatus>
-                    </tr>
-                  ))}
-                  {femaleStudents.length > 0 && maleStudents.length > 0 && (
-                    <tr className="divider-row">
-                      <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
-                    </tr>
-                  )}
-                  {maleStudents.map((student) => (
-                    <tr key={student.id} style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                      <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                        {student.name}
-                        {student.groups.length > 1 && (
-                          <>
-                            <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                            <Tooltip>
-                              <strong>OTROS GRUPOS:</strong>
-                              <ul>
-                                {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                  <li key={index}>
-                                    {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                  </li>
-                                ))}
-                              </ul>
-                            </Tooltip>
-                          </>
-                        )}
-                      </StudentName>
-                      {getAttendanceDates(selectedMonth, group.day).map((date) => {
-                        const attendanceId = Object.keys(attendance).find(
-                          (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                        );
-                        const tempId = `temp-${student.id}-${date.getTime()}`;
-                        return (
-                          <AttendanceCell
-                            key={date.toString()}
-                            onClick={() => handleAttendanceClick(student.id, date)}
-                            className={pendingChanges[attendanceId] || pendingChanges[tempId] ? "pending-change" : ""}
-                            isPrimaryGroup={student.isPrimaryGroup}
-                          >
-                            {getAttendanceCellComponent(student.id, date)}
-                          </AttendanceCell>
-                        );
-                      })}
-                      <PaymentStatus >
-                        {student.paymentDate}
-                      </PaymentStatus>
-                    </tr>
+                        ))}
+                        <PaymentStatus>
+                          {student.paymentDate}
+                        </PaymentStatus>
+                      </tr>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </Table>
@@ -370,7 +285,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
                   Recordar Clase
                 </ActionButton>
               )}
-              <ActionButton onClick={isEditing ? handleSave : handleEdit}>
+              <ActionButton onClick={isEditing ? handleSave : () => setIsEditing(true)}>
                 {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
               </ActionButton>
             </ButtonContainer>
@@ -379,7 +294,7 @@ const GroupDetails = ({ isOpen, onClose, groupId }) => {
       </ModalContainer>
     </Overlay>
   );
-};
+}
 
 const Overlay = styled.div`
   position: fixed;
@@ -414,11 +329,14 @@ const ModalContainer = styled.div`
   @media (max-width: 768px) {
     width: 90%;
     padding: 15px;
+    margin-left: 20px;
   }
 
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
   }
 `;
 
@@ -699,4 +617,9 @@ const CancelButton = styled(ActionButton)`
   }
 `;
 
-export default GroupDetails;
+const ErrorMessage = styled.div`
+  color: red;
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+`;
