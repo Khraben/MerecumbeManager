@@ -193,6 +193,35 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
           <CloseButton onClick={() => !isEditing && onClose()}><FaTimes /></CloseButton>
         </ModalHeader>
         <ModalBody>
+          <DetailsWrapper>
+            <Title>CONTROL ASISTENCIA</Title>
+            <GroupName>{group.name.toUpperCase()}</GroupName>
+            <GroupInfo>
+              <Column>
+                <p><strong>Instructor:</strong> {group.instructor}</p>
+                <p><strong>Nivel:</strong> {group.level}</p>
+              </Column>
+              <Column>
+                <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
+                <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
+              </Column>
+            </GroupInfo>
+
+            <ButtonContainer>
+              {isEditing ? (
+                <CancelButton onClick={handleCancel}>
+                  Cancelar
+                </CancelButton>
+              ) : (
+                <ActionButton onClick={null}>
+                  Recordar Clase
+                </ActionButton>
+              )}
+              <ActionButton onClick={isEditing ? handleSave : () => setIsEditing(true)}>
+                {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
+              </ActionButton>
+            </ButtonContainer>
+          </DetailsWrapper>
         </ModalBody>
       </ModalContainer>
     </Overlay>
@@ -238,8 +267,8 @@ const ModalContainer = styled.div`
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: 45px;
+    margin-right: 5px;
   }
 `;
 
