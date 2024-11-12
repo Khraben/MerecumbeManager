@@ -648,4 +648,17 @@ const ModalContent = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 15px;
+    margin-left: 20px;
+  }
+
+  @media (max-width: 480px) {
+    width: 95%;
+    padding: 10px;
+    margin-left: 45px;
+    margin-right: 5px;
+  }
 `;

@@ -56,7 +56,11 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           </Card>
           <Card>
             <FaExclamationTriangle />
-            <DetailItem><strong>Contacto de Emergencia:</strong> {student.emergencyName}, {student.emergencyPhone}</DetailItem>
+            <DetailItem>
+              <strong>Contacto de Emergencia:</strong>
+              <div>{student.emergencyName}</div>
+              <div>{student.emergencyPhone}</div>
+            </DetailItem>
           </Card>
           <Card>
             <FaUsers />
@@ -116,12 +120,14 @@ const ModalContainer = styled.div`
   @media (max-width: 768px) {
     width: 90%;
     padding: 15px;
+    margin-left: 20px;
   }
 
   @media (max-width: 480px) {
     width: 95%;
     padding: 10px;
-    height: auto;
+    margin-left: 45px;
+    margin-right: 5px;
   }
 `;
 
