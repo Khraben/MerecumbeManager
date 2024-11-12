@@ -17,12 +17,6 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [groupDetails, setGroupDetails] = useState({});
   const [error, setError] = useState(null);
 
-  const monthTranslations = {
-    January: 'Enero', February: 'Febrero', March: 'Marzo', April: 'Abril',
-    May: 'Mayo', June: 'Junio', July: 'Julio', August: 'Agosto',
-    September: 'Septiembre', October: 'Octubre', November: 'Noviembre', December: 'Diciembre'
-  };
-
   const fetchData = useCallback(async () => {
     if (!isOpen) return;
     setLoading(true);
@@ -66,10 +60,10 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
 
   const setCurrentMonth = () => {
     const currentDate = new Date();
-    const monthName = monthTranslations[currentDate.toLocaleString('default', { month: 'long' })];
+    const monthName = currentDate.toLocaleString('es-ES', { month: 'long' });
     const year = currentDate.getFullYear();
-    setSelectedMonth(`${monthName} ${year}`);
-  };
+    setSelectedMonth(`${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`);
+  }
 
   const handleAttendanceClick = useCallback((studentId, date) => {
     if (!isEditing) return;
