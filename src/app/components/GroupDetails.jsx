@@ -250,18 +250,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                             </>
                           )}
                         </StudentName>
-                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                          <AttendanceCell
-                            key={date.toString()}
-                            //onClick={() => handleAttendanceClick(student.id, date)}
-                            //className={pendingChanges[`temp-${student.id}-${date.getTime()}`] || pendingChanges[Object.keys(attendance).find(
-                            //  (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                            //)] ? "pending-change" : ""}
-                            isPrimaryGroup={student.isPrimaryGroup}
-                          >
-                            {getAttendanceCellComponent(student.id, date)}
-                          </AttendanceCell>
-                        ))}
+                        
                         <PaymentStatus>
                           {student.paymentDate}
                         </PaymentStatus>
