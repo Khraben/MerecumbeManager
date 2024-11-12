@@ -154,9 +154,14 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   };
 
   const getAttendanceDates = useCallback((monthYear, groupDay) => {
-    
-
-    return [1,2,3,4];
+    // Fechas quemadas para pruebas
+    return [
+      new Date(2023, 0, 1), // 1 de enero de 2023
+      new Date(2023, 0, 8), // 8 de enero de 2023
+      new Date(2023, 0, 15), // 15 de enero de 2023
+      new Date(2023, 0, 22), // 22 de enero de 2023
+      new Date(2023, 0, 29)  // 29 de enero de 2023
+    ];
   }, []);
 
   if (!isOpen) return null;
