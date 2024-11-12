@@ -149,15 +149,29 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   }, [attendance, pendingChanges, isEditing]);
 
   const getDayOfWeekIndex = (day) => {
-    const daysOfWeek = { Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 0 };
+    const daysOfWeek = { 
+      Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 0, 
+      Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0 };
     return daysOfWeek[day] ?? 1;
   };
-
+  
+  const getMonthIndex = (monthName) => {
+    const months = {
+      Enero: 0, Febrero: 1, Marzo: 2, Abril: 3, Mayo: 4, Junio: 5, Julio: 6, Agosto: 7, Septiembre: 8, Octubre: 9, Noviembre: 10, Diciembre: 11,
+      January: 0, February: 1, March: 2, April: 3, May: 4, June: 5, July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+    };
+    return months[monthName] ?? -1;
+  };
+  
   const getAttendanceDates = useCallback((monthYear, groupDay) => {
     const [monthName, year] = monthYear.split(" ");
-    const month = new Date(`${monthName} 1, ${year}`).getMonth();
+    const month = getMonthIndex(monthName);
     const selectedYear = parseInt(year, 10);
     const dayOfWeekIndex = getDayOfWeekIndex(groupDay);
+  
+    if (month === -1) {
+      return []; // Mes no válido
+    }
   
     let dates = [];
     let date = new Date(selectedYear, month, 1);
