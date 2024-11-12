@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); 
-  const { user, logout } = useAuth();
+  const { isOwnerUser, logout } = useAuth();
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -93,12 +93,14 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
               </HiddenLink>
             </HiddenLinkContainer>
           </HiddenLinks>
+          {isOwnerUser && (
           <SettingsContainer>
             <HiddenLink onClick={handleAdminSettings}>
               <FaCog />
               <Tooltip>Configuración</Tooltip>
             </HiddenLink>
           </SettingsContainer>
+          )}
         </>
       )}
       <SideNav isOpen={isOpen}>
@@ -133,11 +135,13 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
               <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} /> Salir
             </LogoutButton>
           </NavItem>
+          {isOwnerUser && (
           <NavItem>
             <StyledLink onClick={handleAdminSettings}>
               <FaCog /> Configuración
             </StyledLink>
           </NavItem>
+          )}
         </NavList>
       </SideNav>
     </>
