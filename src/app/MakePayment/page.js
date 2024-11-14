@@ -19,7 +19,6 @@ setDefaultLocale("es");
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState("");
-  const [date, setDate] = useState(new Date().toLocaleDateString("es-CR"));
   const [groups, setGroups] = useState([]);
   const [tallerGroups, setTallerGroups] = useState([]);
   const [amount, setAmount] = useState("");
@@ -33,6 +32,8 @@ export default function MakePayment() {
   const [receiptNumber, setReceiptNumber] = useState(null);
   const [paidMonths, setPaidMonths] = useState([]);
   const receiptRef = useRef(null);
+
+  const date = new Date().toLocaleDateString("es-CR");
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -103,7 +104,7 @@ export default function MakePayment() {
     try {
       if (receiptRef.current) {
         const canvas = await html2canvas(receiptRef.current, {
-          scale: 3,
+          scale: 2,
           useCORS: true, 
           logging: true, 
           backgroundColor: null, 
