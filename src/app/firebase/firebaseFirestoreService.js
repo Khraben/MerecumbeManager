@@ -76,6 +76,18 @@ export const addStudentGroupRelation = async (studentId, groupId, isPrimary = fa
   }
 };
 
+export const addScholarshipStudent = async (studentId) => {
+  try {
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
+    await addDoc(collection(db, "scholarshipStudents"), { studentId, dateAdded: formattedDate });
+    console.log("Scholarship student added with ID: ", studentId);
+  } catch (e) {
+    console.error("Error adding scholarship student: ", e);
+    throw e;
+  }
+};
+
  //FETCH
  export const fetchStudents = async () => {
   const querySnapshot = await getDocs(query(collection(db, "students"), orderBy("name")));
@@ -569,6 +581,19 @@ export const fetchStudentGroupsByGroupId = async (groupId) => {
   return querySnapshot.docs.map(doc => doc.data().studentId);
 };
 
+export const fetchScholarshipStudents = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "scholarshipStudents"));
+    return querySnapshot.docs.map(doc => ({
+      studentId: doc.data().studentId,
+      dateAdded: doc.data().dateAdded
+    }));
+  } catch (e) {
+    console.error("Error fetching scholarship students: ", e);
+    throw e;
+  }
+};
+
 //UPDATE
 export const updateStudent = async (studentId, studentData) => {
   try {
@@ -729,6 +754,20 @@ export const deleteStudentGroupRelation = async (studentId, groupId) => {
     });
   } catch (e) {
     console.error("Error deleting student-group relation: ", e);
+    throw e;
+  }
+};
+
+export const deleteScholarshipStudent = async (studentId) => {
+  try {
+    const q = query(collection(db, "scholarshipStudents"), where("studentId", "==", studentId));
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+    console.log("Scholarship student deleted with ID: ", studentId);
+  } catch (e) {
+    console.error("Error deleting scholarship student: ", e);
     throw e;
   }
 };

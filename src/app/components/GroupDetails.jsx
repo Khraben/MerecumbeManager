@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
-import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo } from "react-icons/fa";
-import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, fetchSpecificAttendance, deleteAttendance, fetchGroupsByIds } from "../firebase/firebaseFirestoreService";
+import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo, FaExclamationTriangle } from "react-icons/fa";
+import { FaSackDollar, FaSackXmark } from "react-icons/fa6";
+import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, fetchSpecificAttendance, deleteAttendance, fetchGroupsByIds, fetchReceiptsByMonth, fetchScholarshipStudents } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
 export default function GroupDetails({ isOpen, onClose, groupId }) {
@@ -16,6 +17,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [pendingChanges, setPendingChanges] = useState({});
   const [groupDetails, setGroupDetails] = useState({});
   const [error, setError] = useState(null);
+  const [paymentStatuses, setPaymentStatuses] = useState({});
 
   const fetchData = useCallback(async () => {
     if (!isOpen) return;
@@ -45,6 +47,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
       setGroupDetails(groupDetailsMap);
 
       setCurrentMonth();
+      await fetchPaymentStatuses(studentsData);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Error al cargar los datos. Por favor, intente de nuevo.");
@@ -64,6 +67,37 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     const year = currentDate.getFullYear();
     setSelectedMonth(`${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`);
   }
+
+  const fetchPaymentStatuses = async (studentsData) => {
+    const currentDate = new Date();
+    const currentDay = currentDate.getDate();
+    const month = currentDate.toLocaleString('es-ES', { month: 'long' });
+    const year = currentDate.getFullYear();
+    const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+    const receipts = await fetchReceiptsByMonth(monthYear);
+    const scholarshipStudents = await fetchScholarshipStudents();
+    const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
+
+    const statuses = studentsData.reduce((acc, student) => {
+      if (scholarshipStudentIds.has(student.id)) {
+        acc[student.id] = 'paid';
+      } else {
+        const hasPaid = receipts.some(receipt => receipt.studentId === student.id);
+        const paymentDate = parseInt(student.paymentDate, 10);
+
+        if (hasPaid) {
+          acc[student.id] = 'paid';
+        } else if (currentDay <= paymentDate) {
+          acc[student.id] = 'pending';
+        } else {
+          acc[student.id] = 'overdue';
+        }
+      }
+      return acc;
+    }, {});
+
+    setPaymentStatuses(statuses);
+  };
 
   const handleAttendanceClick = useCallback((studentId, date) => {
     if (!isEditing) return;
@@ -197,7 +231,6 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                 <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
               </Column>
             </GroupInfo>
-            
             <AttendanceControl>
               <ControlTitle>Control de:</ControlTitle>
               <SelectMonth>{selectedMonth}</SelectMonth>
@@ -252,31 +285,28 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                             {getAttendanceCellComponent(student.id, date)}
                           </AttendanceCell>
                         ))}
-                        <PaymentStatus>
+                        <td>
                           {student.paymentDate}
-                        </PaymentStatus>
+                          {paymentStatuses[student.id] === 'paid' && <PaidIcon />}
+                          {paymentStatuses[student.id] === 'pending' && <PendingIcon />}
+                          {paymentStatuses[student.id] === 'overdue' && <OverdueIcon />}
+                        </td>
                       </tr>
                     </React.Fragment>
                   ))}
                 </tbody>
               </Table>
-              
               <Summary>
                 <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
                 <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
               </Summary>
             </AttendanceControl>
-
             <ButtonContainer>
               {isEditing ? (
                 <CancelButton onClick={handleCancel}>
                   Cancelar
                 </CancelButton>
-              ) : (
-                <ActionButton onClick={null}>
-                  Recordar Clase
-                </ActionButton>
-              )}
+              ) : null}
               <ActionButton onClick={isEditing ? handleSave : () => setIsEditing(true)}>
                 {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
               </ActionButton>
@@ -450,9 +480,10 @@ const Table = styled.table`
   margin-bottom: 20px;
 
   th, td {
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #ccc;
     text-align: center;
+    font-weight: bold;
   }
 
   th {
@@ -543,20 +574,58 @@ const AttendanceCell = styled.td`
     border-left: 10px solid transparent;
     border-top: 10px solid #0b0f8b;
   }
+
+  @media (max-width: 480px) {
+    width: 15px;
+  }
 `;
 
 const PresentIcon = styled(FaCheckCircle)`
   color: #0b0f8b;
   font-size: 20px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
 const AbsentIcon = styled(FaTimesCircle)`
   color: #999;
   font-size: 20px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
-const PaymentStatus = styled.td`
-  font-weight: bold;
+const OverdueIcon = styled(FaSackXmark)`
+  color: #8b0b0b;
+  font-size: 18px;
+  margin-left: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`;
+
+const PendingIcon = styled(FaExclamationTriangle)`
+  color: #8b6d0b;
+  font-size: 18px;
+  margin-left: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`;
+
+const PaidIcon = styled(FaSackDollar)`
+  color: #0b8b4d; 
+  font-size: 18px;
+  margin-left: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const Summary = styled.div`

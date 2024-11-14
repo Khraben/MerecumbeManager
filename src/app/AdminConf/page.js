@@ -10,7 +10,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import Loading from "../components/Loading";
 import {fetchSecretaries, fetchInstructors, deleteSecretary, deleteInstructor, fetchCountGroupsByInstructor } from "../firebase/firebaseFirestoreService";
 import SecretaryDetails from "../components/SecretaryDetails";
-
+import ScholarshipModal from "../components/ScholarshipModal";
 
 export default function AdminConf() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,6 +32,8 @@ export default function AdminConf() {
 
   const [isSecretaryDetailsOpen, setIsSecretaryDetailsOpen] = useState(false);
   const [viewingSecretaryId, setViewingSecretaryId] = useState(null);
+
+  const [isScholarshipModalOpen, setIsScholarshipModalOpen] = useState(false);
 
   useEffect(() => {
     const loadSecretaries = async () => {
@@ -110,6 +112,14 @@ export default function AdminConf() {
   const handleCloseInstructorDetails = () => {
     setIsInstructorDetailsOpen(false);
     setViewingInstructorId(null);
+  };
+
+  const handleOpenScholarshipModal = () => {
+    setIsScholarshipModalOpen(true);
+  };
+
+  const handleCloseScholarshipModal = () => {
+    setIsScholarshipModalOpen(false);
   };
 
   const handleOpenConfirmation = (type, item) => {
@@ -224,7 +234,6 @@ export default function AdminConf() {
         </Table>
         )}
       </TableContainer>
-
       <SectionTitle>Secretarias</SectionTitle>
       <TableContainer>
       {filteredSecretaries.length === 0 ? (
@@ -256,34 +265,36 @@ export default function AdminConf() {
         </Table>
         )}
       </TableContainer>
-
       <ButtonContainer>
         <ActionButton onClick={() => handleOpenInstructorModal()}>Agregar Instructor</ActionButton>
         <ActionButton onClick={() => handleOpenSecretaryModal()}>Agregar Secretaria</ActionButton>
       </ButtonContainer>
-
+      <ButtonContainer>
+        <ActionButton onClick={handleOpenScholarshipModal}>Administrar Alumnos Becados</ActionButton>
+      </ButtonContainer>
       <InstructorModal
         isOpen={isInstructorModalOpen}
         onClose={handleCloseInstructorModal}
         instructorId={editingInstructorId}
       />
-
       <SecretaryDetails
         isOpen={isSecretaryDetailsOpen}
         onClose={handleCloseSecretaryDetails}
         secretaryId={viewingSecretaryId}
       />
-
       <SecretaryModal
         isOpen={isSecretaryModalOpen}
         onClose={handleCloseSecretaryModal}
         secretaryId={editingSecretaryId}
       />
-
       <InstructorDetails
         isOpen={isInstructorDetailsOpen}
         onClose={handleCloseInstructorDetails}
         instructorId={viewingInstructorId}
+      />
+      <ScholarshipModal
+        isOpen={isScholarshipModalOpen}
+        onClose={handleCloseScholarshipModal}
       />
       <ConfirmationModal
         isOpen={isConfirmationOpen}

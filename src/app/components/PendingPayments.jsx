@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { fetchStudents, fetchReceipts, fetchAttendances } from "../firebase/firebaseFirestoreService";
+import { fetchStudents, fetchReceipts, fetchAttendances, fetchScholarshipStudents } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt } from 'react-icons/fa';
 import DatePicker from "react-datepicker";
@@ -13,7 +13,7 @@ const PendingPayments = ({ onBack }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [monthFilter, setMonthFilter] = useState(null);
-  const paymentsPerPage = 10;
+  const paymentsPerPage = 8;
   const maxPageButtons = 4;
 
   useEffect(() => {
@@ -23,6 +23,8 @@ const PendingPayments = ({ onBack }) => {
         const students = await fetchStudents();
         const receipts = await fetchReceipts();
         const attendances = await fetchAttendances();
+        const scholarshipStudents = await fetchScholarshipStudents();
+        const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
   
         const monthOrder = {
           'enero': 0,
@@ -39,29 +41,31 @@ const PendingPayments = ({ onBack }) => {
           'diciembre': 11
         };
   
-        const pendingPayments = students.map(student => {
-          const studentAttendances = attendances.filter(att => att.studentId === student.id);
-          const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
+        const pendingPayments = students
+          .filter(student => !scholarshipStudentIds.has(student.id))
+          .map(student => {
+            const studentAttendances = attendances.filter(att => att.studentId === student.id);
+            const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
   
-          const pendingMonths = studentAttendances.reduce((acc, att) => {
-            const attDate = new Date(att.date.seconds * 1000);
-            let monthName = attDate.toLocaleString('es-ES', { month: 'long' });
-            monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-            const monthYear = `${monthName} de ${attDate.getFullYear()}`;
-            const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
-            if (!hasReceipt) {
-              acc.add(monthYear);
-            }
-            return acc;
-          }, new Set());
+            const pendingMonths = studentAttendances.reduce((acc, att) => {
+              const attDate = new Date(att.date.seconds * 1000);
+              let monthName = attDate.toLocaleString('es-ES', { month: 'long' });
+              monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+              const monthYear = `${monthName} de ${attDate.getFullYear()}`;
+              const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
+              if (!hasReceipt) {
+                acc.add(monthYear);
+              }
+              return acc;
+            }, new Set());
   
-          return Array.from(pendingMonths).map(month => ({
-            studentName: student.name,
-            studentPhone: student.phone,
-            month,
-            paymentDate: student.paymentDate || "Pendiente"
-          }));
-        }).flat();
+            return Array.from(pendingMonths).map(month => ({
+              studentName: student.name,
+              studentPhone: student.phone,
+              month,
+              paymentDate: student.paymentDate || "Pendiente"
+            }));
+          }).flat();
   
         pendingPayments.sort((a, b) => {
           const [monthA, yearA] = a.month.split(' de ');
@@ -207,6 +211,8 @@ const PendingPayments = ({ onBack }) => {
           </PageIcon>
         )}
       </Pagination>
+      <TotalPaymentsMessage>Total de Pagos Pendientes Encontrados: {filteredPayments.length}</TotalPaymentsMessage>
+      <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
 };
@@ -376,6 +382,19 @@ const PageIcon = styled.div`
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
+  }
+`;
+
+const TotalPaymentsMessage = styled.p`
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-top: 20px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-top: 10px;
   }
 `;
 
