@@ -27,7 +27,7 @@ const Overlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1002;
+  z-index: 1005;
 `;
 
 const SpinnerContainer = styled.div`
