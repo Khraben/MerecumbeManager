@@ -85,9 +85,23 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       return;
     }
     setError("");
-  
-    const primaryGroup = group === "" ? "INACTIVO" : group;
-  
+
+    const allGroups = [group, ...additionalGroups].filter(g => g !== "INACTIVO");
+    if (allGroups.length === 0) {
+      setError("Debe seleccionar al menos un grupo.");
+      return;
+    }
+
+    const sortedGroups = allGroups.sort((a, b) => {
+      const groupA = groups.find(g => g.id === a);
+      const groupB = groups.find(g => g.id === b);
+      const dateA = new Date(groupA.startDate.split('/').reverse().join('-'));
+      const dateB = new Date(groupB.startDate.split('/').reverse().join('-'));
+      return dateA - dateB;
+    });
+
+    const primaryGroup = sortedGroups[0];
+
     const studentData = {
       name,
       phone,
@@ -96,17 +110,9 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       emergencyPhone,
       gender,
       paymentDate, 
-      groups: [primaryGroup, ...additionalGroups],
+      groups: sortedGroups,
     };
-  
-    studentData.groups = studentData.groups.filter(g => g !== "INACTIVO");
-  
-    studentData.groups.sort((a, b) => {
-      const groupA = groups.find(g => g.id === a);
-      const groupB = groups.find(g => g.id === b);
-      return new Date(groupA.startDate) - new Date(groupB.startDate);
-    });
-  
+
     setLoading(true);
     try {
       if (studentId) {

@@ -1,7 +1,7 @@
 "use client";
 
 import "@/styles/globals.css";
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider } from "./context/AuthContext";
 import SideNavbar from "./components/SideNavbar";
@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    router.push("/"); // Redirigir a la página de inicio después del inicio de sesión exitoso
+    router.push("/"); 
   };
 
   const handleLogout = () => {
@@ -31,6 +31,10 @@ export default function RootLayout({ children }) {
   const noLayoutRoutes = ['/SetPassword'];
 
   const shouldShowLayout = !noLayoutRoutes.includes(pathname);
+
+  useEffect(() => {
+    document.title = "Merecumbé San Ramón - Manager";
+  }, []);
 
   return (
     <html lang="es">

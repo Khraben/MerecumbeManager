@@ -3,20 +3,8 @@
 import styled from "styled-components";
 import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchActiveStudents, fetchReceiptsByMonth } from "./firebase/firebaseFirestoreService";
+import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
-
-const getSpanishMonthName = (monthNumber) => {
-  const months = [
-    "enero", "febrero", "marzo", "abril", "mayo", "junio",
-    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-  ];
-  return months[monthNumber - 1];
-};
-
-const capitalizeFirstLetter = (string) => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
@@ -27,21 +15,23 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       const activeStudents = await fetchActiveStudents();
-      setActiveStudentsCount(activeStudents.length);
+      const scholarshipStudents = await fetchScholarshipStudents();
+      const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
+      const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
+      setActiveStudentsCount(nonScholarshipStudents.length);
 
       const currentDate = new Date();
-      const month = currentDate.getMonth() + 1;
+      const month = currentDate.toLocaleString('es-ES', { month: 'long' });
       const year = currentDate.getFullYear();
-      const monthName = getSpanishMonthName(month);
-      const monthYear = `${capitalizeFirstLetter(monthName)} de ${year}`;
+      const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
       const receipts = await fetchReceiptsByMonth(monthYear);
 
       const paymentsThisMonth = receipts.filter(receipt => 
-        activeStudents.some(student => student.id === receipt.studentId)
+        nonScholarshipStudents.some(student => student.id === receipt.studentId)
       );
       setPaymentsThisMonthCount(paymentsThisMonth.length);
 
-      const pendingPayments = activeStudents.length - paymentsThisMonth.length;
+      const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
       setPendingPaymentsCount(pendingPayments);
     };
 

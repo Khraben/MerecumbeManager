@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {styled } from "styled-components";
+import { styled } from "styled-components";
 import Image from "next/image";
 import Loading from "../components/Loading";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
-import es from "date-fns/locale/es"; 
+import es from "date-fns/locale/es";
 import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService";
-import axios from 'axios'; 
+import axios from 'axios';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 registerLocale("es", es);
 setDefaultLocale("es");
@@ -17,20 +19,21 @@ setDefaultLocale("es");
 export default function MakePayment() {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState("");
-  const [date, setDate] = useState(new Date().toLocaleDateString("es-CR"));
   const [groups, setGroups] = useState([]);
   const [tallerGroups, setTallerGroups] = useState([]);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedConcept, setselectedConcept] = useState("");
   const [selectedTaller, setSelectedTaller] = useState("");
-  const [specifiedMonth, setSpecifiedMonth] = useState(null); 
+  const [specifiedMonth, setSpecifiedMonth] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [receiptNumber, setReceiptNumber] = useState(null);
   const [paidMonths, setPaidMonths] = useState([]);
   const receiptRef = useRef(null);
+
+  const date = new Date().toLocaleDateString("es-CR");
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -97,34 +100,25 @@ export default function MakePayment() {
   };
 
   const handleConfirmReceipt = async () => {
-    setLoading(true); 
+    setLoading(true);
     try {
       if (receiptRef.current) {
-        const htmlContent = receiptRef.current.outerHTML;
-  
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL; 
-        const updatedHtmlContent = htmlContent.replace(/src="\/(.*?)"/g, `src="${baseUrl}/$1"`);
-  
-        const styles = Array.from(document.styleSheets)
-          .map(styleSheet => {
-            try {
-              return Array.from(styleSheet.cssRules)
-                .map(rule => rule.cssText)
-                .join('');
-            } catch (e) {
-              console.error('No se pudieron leer algunos estilos', e);
-              return '';
-            }
-          })
-          .join('');
-  
-        const response = await axios.post(
-          '/api/generate-pdf', 
-          { htmlContent: updatedHtmlContent, cssStyles: styles },
-          { responseType: 'blob' }
-        );
-        
-        const pdfBlob = response.data;
+        const canvas = await html2canvas(receiptRef.current, {
+          scale: 2,
+          useCORS: true, 
+          logging: true, 
+          backgroundColor: null, 
+          windowWidth: receiptRef.current.scrollWidth, 
+          windowHeight: receiptRef.current.scrollHeight 
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        const pdfBlob = pdf.output('blob');
   
         const reader = new FileReader();
         reader.readAsDataURL(pdfBlob);
@@ -141,7 +135,7 @@ export default function MakePayment() {
           const studentEmail = await fetchStudentEmail(student.id);
           if (!studentEmail) {
             setErrorMessage("No se pudo obtener el correo del alumno.");
-            setLoading(false); 
+            setLoading(false);
             return;
           }
   
@@ -155,7 +149,7 @@ export default function MakePayment() {
           });
   
           console.log('Correo enviado con éxito');
-          
+  
           const receiptData = {
             studentId: student.id,
             paymentDate: new Date(),
@@ -166,9 +160,9 @@ export default function MakePayment() {
             amount: `₡${amount}`,
             receiptNumber,
           };
-          
+  
           await addReceipt(receiptData);
-          setLoading(false); 
+          setLoading(false);
           setShowPreview(false);
           loadInitialData();
           setSelectedStudent("");
@@ -182,7 +176,7 @@ export default function MakePayment() {
         reader.onerror = (error) => {
           console.error('Error al leer el PDF como base64:', error);
           setErrorMessage("Error al procesar el PDF para el correo.");
-          setLoading(false); 
+          setLoading(false);
         };
       }
     } catch (error) {
@@ -222,7 +216,7 @@ export default function MakePayment() {
   };
 
   const isMonthDisabled = (date) => {
-    return paidMonths.some(paidMonth => 
+    return paidMonths.some(paidMonth =>
       paidMonth.month === date.getMonth() && paidMonth.year === date.getFullYear()
     );
   };
@@ -237,95 +231,95 @@ export default function MakePayment() {
 
   return (
     <>
-    <Wrapper>
-      <Title>Registrar Pago</Title>
-      <Receipt ref={receiptRef}>
-        <ReceiptHeader>
-          <LogoContainer>
-            <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
-          </LogoContainer>
-          <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
-          <p>Fecha: {date}</p>
-        </ReceiptHeader>
-        <ReceiptBody>
-          <Label>Alumno</Label>
-          <Select value={selectedStudent} onChange={handleStudentChange}>
-            <option value="">Seleccione un alumno</option>
-            {students.map((student, index) => (
-              <option key={index} value={student.name}>{student.name}</option>
-            ))}
-          </Select>
-          <Label>Por concepto de</Label>
-          <Select value={selectedConcept} onChange={handleMonthChange} disabled={!selectedStudent}>
-            <option value="">Seleccione una opción...</option>
-            {groups.length > 0 && groups[0] !== "Grupo no encontrado" && <option value="Mensualidad">Mensualidad</option>}
-            <option value="Clases Privadas">Clases Privadas</option>
-            {tallerGroups.length > 0 && <option value="Taller">Taller</option>}
-          </Select>
+      <Wrapper>
+        <Title>Registrar Pago</Title>
+        <Receipt ref={receiptRef}>
+          <ReceiptHeader>
+            <LogoContainer>
+              <Image src={"/receiptLogo.svg"} alt="Logo" width={100} height={100} draggable="false" />
+            </LogoContainer>
+            <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
+            <p>Fecha: {date}</p>
+          </ReceiptHeader>
+          <ReceiptBody>
+            <Label>Alumno</Label>
+            <Select value={selectedStudent} onChange={handleStudentChange}>
+              <option value="">Seleccione un alumno</option>
+              {students.map((student, index) => (
+                <option key={index} value={student.name}>{student.name}</option>
+              ))}
+            </Select>
+            <Label>Por concepto de</Label>
+            <Select value={selectedConcept} onChange={handleMonthChange} disabled={!selectedStudent}>
+              <option value="">Seleccione una opción...</option>
+              {groups.length > 0 && groups[0] !== "Grupo no encontrado" && <option value="Mensualidad">Mensualidad</option>}
+              <option value="Clases Privadas">Clases Privadas</option>
+              {tallerGroups.length > 0 && <option value="Taller">Taller</option>}
+            </Select>
 
-          {selectedConcept === "Mensualidad" && (
-            <>
-              <Label>Grupos</Label>
-              <GroupList>
-                {groups.map((group, index) => (
-                  <GroupItem key={index}>{group}</GroupItem>
-                ))}
-              </GroupList>
-              <Label>Detalle</Label>
-              <StyledDatePicker
-                selected={specifiedMonth}
-                onChange={(date) => setSpecifiedMonth(date)}
-                dateFormat="MM/yyyy"
-                showMonthYearPicker
-                locale="es"
-                placeholderText="Seleccionar mes y año"
-                filterDate={(date) => !isMonthDisabled(date)}
-              />
-            </>
-          )}
+            {selectedConcept === "Mensualidad" && (
+              <>
+                <Label>Grupos</Label>
+                <GroupList>
+                  {groups.map((group, index) => (
+                    <GroupItem key={index}>{group}</GroupItem>
+                  ))}
+                </GroupList>
+                <Label>Detalle</Label>
+                <StyledDatePicker
+                  selected={specifiedMonth}
+                  onChange={(date) => setSpecifiedMonth(date)}
+                  dateFormat="MM/yyyy"
+                  showMonthYearPicker
+                  locale="es"
+                  placeholderText="Seleccionar mes y año"
+                  filterDate={(date) => !isMonthDisabled(date)}
+                />
+              </>
+            )}
 
-          {selectedConcept === "Taller" && (
-            <>
-              <Label>Detalle</Label>
-              <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
-                <option value="">Seleccione un taller...</option>
-                {tallerGroups.map((taller, index) => (
-                  <option key={index} value={taller}>{taller}</option>
-                ))}
-              </Select>
-            </>
-          )}
+            {selectedConcept === "Taller" && (
+              <>
+                <Label>Detalle</Label>
+                <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
+                  <option value="">Seleccione un taller...</option>
+                  {tallerGroups.map((taller, index) => (
+                    <option key={index} value={taller}>{taller}</option>
+                  ))}
+                </Select>
+              </>
+            )}
 
-          <Label>Monto</Label>
-          <Input 
-            type="text" 
-            value={`₡${amount}`} 
-            onChange={handleAmountChange} 
-          />
+            <Label>Monto</Label>
+            <Input
+              type="text"
+              value={`₡${amount}`}
+              onChange={handleAmountChange}
+            />
 
-          <Label>Forma de Pago</Label>
-          <Select value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); handleInputChange(); }}>
-            <option value="">Seleccione una forma de pago</option>
-            <option value="SINPE">SINPE</option>
-            <option value="Efectivo">Efectivo</option>
-          </Select>
-        </ReceiptBody>
-        <Description>
-          ❖ La factura electronica será enviado luego a su Email o WhatsApp
-        </Description>
-      </Receipt>
-      {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-      <ButtonContainer>
-        <GenerateButton onClick={handleGenerateImage}>Generar Recibo</GenerateButton>
-      </ButtonContainer>
+            <Label>Forma de Pago</Label>
+            <Select value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); handleInputChange(); }}>
+              <option value="">Seleccione una forma de pago</option>
+              <option value="SINPE">SINPE</option>
+              <option value="Efectivo">Efectivo</option>
+            </Select>
+          </ReceiptBody>
+          <Description>
+            ❖ La factura electronica será enviado luego a su Email o WhatsApp
+          </Description>
+        </Receipt>
+        {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+        <ButtonContainer>
+          <GenerateButton onClick={handleGenerateImage}>Generar Recibo</GenerateButton>
+        </ButtonContainer>
 
-      {showPreview && (
+        {showPreview && (
           <Modal>
             <ModalContent>
               <Receipt ref={receiptRef}>
                 <ReceiptHeader>
                   <LogoContainer>
-                    <Image src={"/logo.svg"} alt="Logo" width={100} height={100} draggable= "false"/>
+                    <Image src={"/receiptLogo.svg"} alt="Logo" width={100} height={100} draggable="false" />
                   </LogoContainer>
                   <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>
@@ -373,8 +367,8 @@ export default function MakePayment() {
               </ButtonContainer>
             </ModalContent>
           </Modal>
-      )}
-    </Wrapper>
+        )}
+      </Wrapper>
     </>
   );
 }
@@ -436,10 +430,6 @@ const LogoContainer = styled.div`
   display: flex;
   justify-content: center;
   margin-bottom: 0;
-
-  img {
-    filter: invert(24%) sepia(100%) saturate(7472%) hue-rotate(223deg) brightness(91%) contrast(101%);
-  }
 `;
 
 const ReceiptBody = styled.div`
