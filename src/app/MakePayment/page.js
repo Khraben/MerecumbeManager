@@ -319,7 +319,6 @@ export default function MakePayment() {
               <option value="SINPE">SINPE</option>
               <option value="Efectivo">Efectivo</option>
               <option value="Tarjeta">Tarjeta</option>
-              <option value="Transferencia">Transferencia</option>
             </Select>
           </ReceiptBody>
           <Description>
