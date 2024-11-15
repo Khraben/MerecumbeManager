@@ -15,6 +15,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [gender, setGender] = useState(""); 
   const [paymentDate, setPaymentDate] = useState(""); 
+  const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setEmergencyPhone(studentData.emergencyPhone);
       setGender(studentData.gender || ""); 
       setPaymentDate(studentData.paymentDate || ""); 
+      setBirthday(studentData.birthday || "");
     } catch (error) {
       console.error("Error fetching student data:", error);
     }
@@ -80,18 +82,23 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setError("Por favor ingresa un correo electrónico válido.");
       return;
     }
+    const birthdayRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/;
+    if (!birthdayRegex.test(birthday)) {
+      setError("Por favor ingresa una fecha de cumpleaños válida (DD/MM).");
+      return;
+    }
     if (isNaN(paymentDate) || paymentDate < 1 || paymentDate > 30) {
       setError("Por favor ingresa una fecha de pago válida (1-30).");
       return;
     }
     setError("");
-
+  
     const allGroups = [group, ...additionalGroups].filter(g => g !== "INACTIVO");
     if (allGroups.length === 0) {
       setError("Debe seleccionar al menos un grupo.");
       return;
     }
-
+  
     const sortedGroups = allGroups.sort((a, b) => {
       const groupA = groups.find(g => g.id === a);
       const groupB = groups.find(g => g.id === b);
@@ -99,9 +106,9 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       const dateB = new Date(groupB.startDate.split('/').reverse().join('-'));
       return dateA - dateB;
     });
-
+  
     const primaryGroup = sortedGroups[0];
-
+  
     const studentData = {
       name,
       phone,
@@ -110,9 +117,10 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       emergencyPhone,
       gender,
       paymentDate, 
+      birthday,
       groups: sortedGroups,
     };
-
+  
     setLoading(true);
     try {
       if (studentId) {
@@ -142,6 +150,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setEmergencyPhone("");
     setGender(""); 
     setPaymentDate(""); 
+    setBirthday("");
     setError("");
   };
 
@@ -199,6 +208,18 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setError("");
   };
 
+  const handleBirthdayChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 4) {
+      value = value.slice(0, 4);
+    }
+    if (value.length > 2) {
+      value = value.slice(0, 2) + '/' + value.slice(2);
+    }
+    setBirthday(value);
+    setError("");
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -242,6 +263,18 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                   <option value="Hombre">Hombre</option>
                   <option value="Mujer">Mujer</option>
                 </ComboBox>
+                <TextInput
+                  id="birthday"
+                  placeholder="Fecha de Cumpleaños (DD/MM)"
+                  value={birthday}
+                  onChange={handleBirthdayChange}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  maxLength="5"
+                />
                 <NumberInput
                   id="paymentDate"
                   placeholder="Fecha de Pago"

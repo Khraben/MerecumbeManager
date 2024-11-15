@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaTimes, FaUser, FaPhone, FaEnvelope, FaVenusMars, FaUsers, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaTimes, FaUser, FaPhone, FaEnvelope, FaVenusMars, FaBirthdayCake,FaUsers, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
 import { fetchStudentDetails } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
@@ -53,6 +53,10 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           <Card>
             <FaVenusMars />
             <DetailItem><strong>Género:</strong> {student.gender}</DetailItem>
+          </Card>
+          <Card>
+          <FaBirthdayCake />
+            <DetailItem><strong>Fecha de Cumpleaños:</strong> {student.birthday}</DetailItem>
           </Card>
           <Card>
             <FaExclamationTriangle />
