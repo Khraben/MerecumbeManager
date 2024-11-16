@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchStudents, fetchReceipts, fetchAttendances, fetchScholarshipStudents } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
-import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt, FaTimes } from 'react-icons/fa';
 import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 
@@ -118,8 +118,16 @@ const PendingPayments = ({ onBack }) => {
     setMonthFilter(date);
   };
 
+  const handleClearMonthFilter = () => {
+    setMonthFilter(null);
+  };
+
   const handleStudentChange = (e) => {
     setSelectedStudent(e.target.value);
+  };
+
+  const handleClearStudent = () => {
+    setSelectedStudent('');
   };
 
   const indexOfLastPayment = currentPage * paymentsPerPage;
@@ -154,6 +162,7 @@ const PendingPayments = ({ onBack }) => {
             onChange={handleStudentChange}
             placeholder="Filtrar por nombre..."
           />
+          {selectedStudent && <ClearButton onClick={handleClearStudent}><FaTimes /></ClearButton>}
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
@@ -165,6 +174,7 @@ const PendingPayments = ({ onBack }) => {
             locale={es}
             placeholderText="Filtro por mes"
           />
+          {monthFilter && <ClearButton onClick={handleClearMonthFilter}><FaTimes /></ClearButton>}
           <MonthCalendarIcon />
         </SearchContainer>
       </FilterSection>
@@ -216,6 +226,8 @@ const PendingPayments = ({ onBack }) => {
     </Wrapper>
   );
 };
+
+export default PendingPayments;
 
 const NoDataMessage = styled.p`
   font-size: 18px;
@@ -498,4 +510,19 @@ const MonthCalendarIcon = styled(FaRegCalendarAlt)`
   }
 `;
 
-export default PendingPayments;
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
+    font-size: 16px;
+  }
+`;

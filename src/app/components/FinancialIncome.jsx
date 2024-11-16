@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import Loading from "./Loading"; 
 import DatePicker from "react-datepicker";
 import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaRegCalendarAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaRegCalendarAlt, FaTimes } from 'react-icons/fa';
 import { es } from "date-fns/locale/es"; 
 import { fetchReceipts } from "../firebase/firebaseFirestoreService";
 
@@ -105,6 +105,7 @@ const FinancialIncome = ({ onBack }) => {
   const formatAmount = (value) => {
     return `₡${value.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
   };
+
   const handleStartDateChange = (date) => {
     setStartDate(date);
     setIsEndDateDisabled(!date);
@@ -112,15 +113,31 @@ const FinancialIncome = ({ onBack }) => {
       setEndDate(null);
     }
   };
+
+  const handleClearStartDate = () => {
+    setStartDate(null);
+    setIsEndDateDisabled(true);
+    setEndDate(null);
+  };
+
+  const handleClearEndDate = () => {
+    setEndDate(null);
+  };
+
   const handleMonthFilterChange = (date) => {
     setMonthFilter(date);
     setStartDate(null);
     setEndDate(null);
   };
 
+  const handleClearMonthFilter = () => {
+    setMonthFilter(null);
+  };
+
   if (loading) {
     return <Loading />;
   }
+
   return (
     <Wrapper>
       <Title>Ingresos</Title>
@@ -134,6 +151,7 @@ const FinancialIncome = ({ onBack }) => {
             locale={es}
             placeholderText="Filtro por mes"
           />
+          {monthFilter && <ClearButton onClick={handleClearMonthFilter}><FaTimes /></ClearButton>}
           <MonthCalendarIcon />
         </SearchContainer>
         <SearchContainer>
@@ -144,6 +162,7 @@ const FinancialIncome = ({ onBack }) => {
             locale={es}
             placeholderText="Fecha de inicio"
           />
+          {startDate && <ClearButton onClick={handleClearStartDate}><FaTimes /></ClearButton>}
           <CalendarIcon />
         </SearchContainer>
         {startDate && (
@@ -157,6 +176,7 @@ const FinancialIncome = ({ onBack }) => {
               disabled={isEndDateDisabled}
               minDate={startDate}
             />
+            {endDate && <ClearButton onClick={handleClearEndDate}><FaTimes /></ClearButton>}
             <CalendarIcon />
           </SearchContainer>
         )}
@@ -440,5 +460,22 @@ const TotalAmountRow = styled.tr`
     td {
       padding: 10px 12px;
     }
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
+    font-size: 16px;
   }
 `;

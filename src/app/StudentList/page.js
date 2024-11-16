@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
 import StudentDetails from "../components/StudentDetails"; 
 import Loading from "../components/Loading"; 
@@ -78,6 +78,10 @@ export default function StudentList() {
     setStudentToDelete(null);
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -109,6 +113,7 @@ export default function StudentList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
@@ -291,6 +296,7 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
+  position: relative;
 `;
 
 const SearchInput = styled.input`
@@ -359,6 +365,23 @@ const DeleteIcon = styled(FaTrash)`
   }
 
   @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
     font-size: 16px;
   }
 `;

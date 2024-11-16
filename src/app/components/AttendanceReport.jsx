@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
 import Loading from "./Loading"; 
-import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt, FaTimes } from 'react-icons/fa';
 
 const AttendanceReport = ({ onBack }) => {
   const [attendances, setAttendances] = useState([]);
@@ -107,6 +107,24 @@ const AttendanceReport = ({ onBack }) => {
     }
   };
 
+  const handleClearStartDate = () => {
+    setStartDate(null);
+    setIsEndDateDisabled(true);
+    setEndDate(null);
+  };
+
+  const handleClearEndDate = () => {
+    setEndDate(null);
+  };
+
+  const handleClearStudent = () => {
+    setSelectedStudent('');
+  };
+
+  const handleClearGroup = () => {
+    setSelectedGroup('');
+  };
+
   const indexOfLastAttendance = currentPage * attendancesPerPage;
   const indexOfFirstAttendance = indexOfLastAttendance - attendancesPerPage;
   const currentAttendances = filteredAttendances.slice(indexOfFirstAttendance, indexOfLastAttendance);
@@ -139,6 +157,7 @@ const AttendanceReport = ({ onBack }) => {
             onChange={(e) => setSelectedStudent(e.target.value)}
             placeholder="Filtrar por nombre..."
           />
+          {selectedStudent && <ClearButton onClick={handleClearStudent}><FaTimes /></ClearButton>}
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
@@ -151,6 +170,7 @@ const AttendanceReport = ({ onBack }) => {
               <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </SearchSelect>
+          {selectedGroup && <ClearButton onClick={handleClearGroup}><FaTimes /></ClearButton>}
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
@@ -160,6 +180,7 @@ const AttendanceReport = ({ onBack }) => {
             locale={es}
             placeholderText="Fecha de inicio"
           />
+          {startDate && <ClearButton onClick={handleClearStartDate}><FaTimes /></ClearButton>}
           <CalendarIcon />
         </SearchContainer>
         {startDate && (
@@ -173,6 +194,7 @@ const AttendanceReport = ({ onBack }) => {
               disabled={isEndDateDisabled}
               minDate={startDate}
             />
+            {endDate && <ClearButton onClick={handleClearEndDate}><FaTimes /></ClearButton>}
             <CalendarIcon />
           </SearchContainer>
         )}
@@ -222,6 +244,8 @@ const AttendanceReport = ({ onBack }) => {
     </Wrapper>
   );
 }
+
+export default AttendanceReport;
 
 const NoDataMessage = styled.p`
   font-size: 18px;
@@ -506,4 +530,19 @@ const CalendarIcon = styled(FaCalendarAlt)`
   }
 `;
 
-export default AttendanceReport;
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
+    font-size: 16px;
+  }
+`;

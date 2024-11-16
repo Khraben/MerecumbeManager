@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails"; 
 import Loading from "../components/Loading";
@@ -72,6 +72,10 @@ export default function GroupList() {
     setGroupToDelete(null);
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -90,6 +94,7 @@ export default function GroupList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
@@ -275,6 +280,7 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
+  position: relative;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -357,6 +363,23 @@ const DeleteIcon = styled(FaTrash)`
   }
 
   @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
     font-size: 16px;
   }
 `;
