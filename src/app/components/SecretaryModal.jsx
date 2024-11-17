@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { addSecretary, fetchSecretaryById, updateSecretary, isEmailRegistered, isUsernameRegistered } from "../firebase/firebaseFirestoreService";
 import { TextInput } from './Input';
-import { createSecretaryUser } from "../firebase/firebaseAuthService";
+import { createUser } from "../firebase/firebaseAuthService";
 import Loading from "./Loading";
 
 export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secretaryId }) {
@@ -87,7 +87,7 @@ export default function SecretaryModal({ isOpen, onClose, onSecretaryAdded, secr
         await updateSecretary(secretaryId, secretaryData);
       } else {
         try {
-          await createSecretaryUser(email);
+          await createUser(email);
         } catch (error) {
           if (error.code === 'auth/email-already-in-use') {
             await sendPasswordResetEmail(auth, email);

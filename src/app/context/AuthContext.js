@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isOwnerUser, setIsOwnerUser] = useState(false);
+  const [isInstructorUser, setIsInstructorUser] = useState(false);
   const db = getFirestore();
 
   useEffect(() => {
@@ -20,8 +21,16 @@ export function AuthProvider({ children }) {
         );
         const ownerSnapshot = await getDocs(ownerQuery);
         setIsOwnerUser(!ownerSnapshot.empty);
+  
+        const instructorQuery = query(
+          collection(db, "instructors"),
+          where("email", "==", currentUser.email)
+        );
+        const instructorSnapshot = await getDocs(instructorQuery);
+        setIsInstructorUser(!instructorSnapshot.empty);
       } else {
         setIsOwnerUser(false);
+        setIsInstructorUser(false);
       }
     });
     return () => unsubscribe();
@@ -32,7 +41,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isOwnerUser, logout }}>
+    <AuthContext.Provider value={{ user, isOwnerUser, isInstructorUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

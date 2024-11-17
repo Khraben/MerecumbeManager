@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
 import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./context/AuthContext"; 
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
   const router = useRouter();
+  const { isInstructorUser } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,31 +51,37 @@ export default function Home() {
         <StyledButton onClick={() => handleLinkClick("/GroupList")}>
           <FaUsers /> Grupos
         </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/StudentList")}>
-          <FaUserGraduate /> Alumnos
-        </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/MakePayment")}>
-          <FaFileInvoiceDollar /> Facturar
-        </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/Reports")}>
-          <FaChartBar /> Reportes
-        </StyledButton>
+        {!isInstructorUser && (
+          <>
+            <StyledButton onClick={() => handleLinkClick("/StudentList")}>
+              <FaUserGraduate /> Alumnos
+            </StyledButton>
+            <StyledButton onClick={() => handleLinkClick("/MakePayment")}>
+              <FaFileInvoiceDollar /> Facturar
+            </StyledButton>
+            <StyledButton onClick={() => handleLinkClick("/Reports")}>
+              <FaChartBar /> Reportes
+            </StyledButton>
+          </>
+        )}
       </ButtonSection>
-      <DashboardSection>
-        <DashboardTitle>Panel de Control</DashboardTitle>
-        <DashboardItem>
-          <DashboardLabel>Alumnos Activos:</DashboardLabel>
-          <DashboardValue>{activeStudentsCount}</DashboardValue>
-        </DashboardItem>
-        <DashboardItem>
-          <DashboardLabel>Pagos Realizados Este Mes:</DashboardLabel>
-          <DashboardValue>{paymentsThisMonthCount}</DashboardValue>
-        </DashboardItem>
-        <DashboardItem>
-          <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
-          <DashboardValue>{pendingPaymentsCount}</DashboardValue>
-        </DashboardItem>
-      </DashboardSection>
+      {!isInstructorUser && (
+        <DashboardSection>
+          <DashboardTitle>Panel de Control</DashboardTitle>
+          <DashboardItem>
+            <DashboardLabel>Alumnos Activos:</DashboardLabel>
+            <DashboardValue>{activeStudentsCount}</DashboardValue>
+          </DashboardItem>
+          <DashboardItem>
+            <DashboardLabel>Pagos Realizados Este Mes:</DashboardLabel>
+            <DashboardValue>{paymentsThisMonthCount}</DashboardValue>
+          </DashboardItem>
+          <DashboardItem>
+            <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
+            <DashboardValue>{pendingPaymentsCount}</DashboardValue>
+          </DashboardItem>
+        </DashboardSection>
+      )}
     </Wrapper>
   );
 }

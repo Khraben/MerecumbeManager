@@ -29,7 +29,7 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
 
   return (
     <Overlay>
-      <ModalContainer $isOpen={isOpen}>
+      <ModalContainer>
         <ModalHeader>
           <CloseButton onClick={onClose}>
             <FaTimes />
@@ -45,6 +45,10 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
             <FaPhone />
             <DetailItem><strong>Celular:</strong> {instructor.phone}</DetailItem>
           </Card>
+          <Card>
+            <FaUser />
+            <DetailItem><strong>Usuario:</strong> {instructor.username}</DetailItem>
+          </Card>
           {instructor.email && (
             <Card>
               <FaEnvelope />
@@ -52,7 +56,7 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
             </Card>
           )}
         </ModalBody>
-      </ModalContainer> 
+      </ModalContainer>
     </Overlay>
   );
 };
@@ -71,7 +75,6 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  display: ${(props) => (props.$isOpen ? 'block' : 'none')};
   background-color: #dddddd;
   padding: 20px;
   width: 400px;
@@ -84,6 +87,7 @@ const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+
   @media (max-width: 768px) {
     width: 90%;
     padding: 15px;
