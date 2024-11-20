@@ -308,7 +308,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                     <option value="INACTIVO">INACTIVO</option>
                     {groups.map((group) => (
                       <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                        {group.level + ' - ' + group.name}
+                        {group.level + ' - ' + group.name + ' - ' + group.instructor}
                       </option>
                     ))}
                   </ComboBox>
