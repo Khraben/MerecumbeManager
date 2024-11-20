@@ -183,7 +183,9 @@ export const fetchActiveStudents = async () => {
   const instructorsData = querySnapshot.docs.map(doc => ({
     id: doc.id,
     name: doc.data().name,
-    phone: doc.data().phone
+    phone: doc.data().phone,
+    user: doc.data().user,
+    email: doc.data().email
   }));
   return instructorsData;
 };
@@ -200,6 +202,16 @@ export const fetchInstructorById = async (instructorId) => {
   } catch (e) {
     console.error("Error al obtener los datos del instructor por ID: ", e);
     throw e;
+  }
+};
+
+export const fetchInstructorByEmail = async (email) => {
+  const instructorsQuery = query(collection(db, "instructors"), where("email", "==", email));
+  const instructorsSnapshot = await getDocs(instructorsQuery);
+  if (!instructorsSnapshot.empty) {
+    return { id: instructorsSnapshot.docs[0].id, ...instructorsSnapshot.docs[0].data() };
+  } else {
+    throw new Error("Instructor no encontrado");
   }
 };
 
@@ -332,6 +344,21 @@ export const fetchGroupsByDay = async (day) => {
   });
 
   return groupsData;
+};
+
+export const fetchGroupsByInstructor = async (instructorId) => {
+  try {
+    const groupsQuery = query(collection(db, "groups"), where("instructor", "==", instructorId));
+    const querySnapshot = await getDocs(groupsQuery);
+    const groupsData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    return groupsData;
+  } catch (e) {
+    console.error("Error fetching groups by instructor: ", e);
+    throw e;
+  }
 };
 
 export const fetchGroupDetails = async (groupId) => {
@@ -559,12 +586,19 @@ export const fetchEmailByUsername = async (username) => {
   const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
   const ownersSnapshot = await getDocs(ownersQuery);
 
+  const instructorsQuery = query(collection(db, "instructors"), where("username", "==",username));
+  const instructorsSnapshot = await getDocs(instructorsQuery);
+
   if (!secretariesSnapshot.empty) {
     return secretariesSnapshot.docs[0].data().email;
   }
 
   if (!ownersSnapshot.empty) {
     return ownersSnapshot.docs[0].data().email;
+  }
+
+  if (!instructorsSnapshot.empty) {
+    return instructorsSnapshot.docs[0].data().email;
   }
   return null;
 };
@@ -780,7 +814,10 @@ export const isEmailRegistered = async (email) => {
   const ownersQuery = query(collection(db, "owners"), where("email", "==", email));
   const ownersSnapshot = await getDocs(ownersQuery);
 
-  return !secretariesSnapshot.empty || !ownersSnapshot.empty;
+  const instructorsQuery = query(collection(db, "instructors"), where("email", "==", email));
+  const instructorsSnapshot = await getDocs(instructorsQuery);
+
+  return !secretariesSnapshot.empty || !ownersSnapshot.empty || !instructorsSnapshot.empty;
 };
 
 export const isUsernameRegistered = async (username) => {
@@ -790,5 +827,8 @@ export const isUsernameRegistered = async (username) => {
   const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
   const ownersSnapshot = await getDocs(ownersQuery);
 
-  return !secretariesSnapshot.empty || !ownersSnapshot.empty;
+  const instructorsQuery = query(collection(db, "instructors"), where("username", "==", username));
+  const instructorsSnapshot = await getDocs(instructorsQuery);
+
+  return !secretariesSnapshot.empty || !ownersSnapshot.empty || !instructorsSnapshot.empty;
 };

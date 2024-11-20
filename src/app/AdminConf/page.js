@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import SecretaryModal from "../components/SecretaryModal";
 import InstructorModal from "../components/InstructorModal";
 import InstructorDetails from "../components/InstructorDetails"; 
@@ -179,6 +179,10 @@ export default function AdminConf() {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   const filteredSecretaries = secretaries.filter(secretary =>
     secretary.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -201,6 +205,7 @@ export default function AdminConf() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
         <SearchIcon />
       </SearchContainer>
       <SectionTitle>Instructores</SectionTitle>
@@ -361,6 +366,7 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
+  position: relative;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -508,12 +514,11 @@ const DeleteIcon = styled(FaTrash)`
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
 `;
 
 const ActionButton = styled.button`
   padding: 10px 20px;
-  margin: 20px 10px;
+  margin: 10px 10px;
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
@@ -534,5 +539,22 @@ const ActionButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 16px;
     font-size: 12px;
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
+    font-size: 16px;
   }
 `;

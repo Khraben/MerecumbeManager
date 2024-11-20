@@ -26,6 +26,7 @@ export default function MakePayment() {
   const [selectedConcept, setselectedConcept] = useState("");
   const [selectedTaller, setSelectedTaller] = useState("");
   const [specifiedMonth, setSpecifiedMonth] = useState(null);
+  const [privateClassDetail, setPrivateClassDetail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -82,6 +83,7 @@ export default function MakePayment() {
     setselectedConcept("");
     setSpecifiedMonth(null);
     setSelectedTaller("");
+    setPrivateClassDetail("");
     setAmount("");
     setPaymentMethod("");
     handleInputChange();
@@ -159,6 +161,7 @@ export default function MakePayment() {
             concept: selectedConcept,
             amount: `₡${amount}`,
             receiptNumber,
+            paymentMethod,
           };
   
           await addReceipt(receiptData);
@@ -169,6 +172,7 @@ export default function MakePayment() {
           setselectedConcept("");
           setSpecifiedMonth(null);
           setSelectedTaller("");
+          setPrivateClassDetail("");
           setAmount("");
           setPaymentMethod("");
         };
@@ -290,6 +294,18 @@ export default function MakePayment() {
               </>
             )}
 
+            {selectedConcept === "Clases Privadas" && (
+              <>
+                <Label>Detalle</Label>
+                <Input
+                  type="text"
+                  value={privateClassDetail}
+                  onChange={(e) => setPrivateClassDetail(e.target.value)}
+                  placeholder="Ingrese detalles adicionales"
+                />
+              </>
+            )}
+
             <Label>Monto</Label>
             <Input
               type="text"
@@ -302,6 +318,7 @@ export default function MakePayment() {
               <option value="">Seleccione una forma de pago</option>
               <option value="SINPE">SINPE</option>
               <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta</option>
             </Select>
           </ReceiptBody>
           <Description>
@@ -348,6 +365,13 @@ export default function MakePayment() {
                     <>
                       <Label>Detalle</Label>
                       <p>{selectedTaller}</p>
+                    </>
+                  )}
+
+                  {selectedConcept === "Clases Privadas" && (
+                    <>
+                      <Label>Detalle</Label>
+                      <p>{privateClassDetail || "Sin Detalles"}</p>
                     </>
                   )}
 

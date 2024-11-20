@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter(); 
-  const { isOwnerUser, logout } = useAuth();
+  const { isOwnerUser, isInstructorUser, logout } = useAuth();
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
@@ -68,24 +68,28 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
                 <Tooltip>Grupos</Tooltip>
               </HiddenLink>
             </HiddenLinkContainer>
-            <HiddenLinkContainer>
-              <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
-                <FaUserGraduate />
-                <Tooltip>Alumnos</Tooltip>
-              </HiddenLink>
-            </HiddenLinkContainer>
-            <HiddenLinkContainer>
-              <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
-                <FaFileInvoiceDollar />
-                <Tooltip>Facturar</Tooltip>
-              </HiddenLink>
-            </HiddenLinkContainer>
-            <HiddenLinkContainer>
-              <HiddenLink onClick={() => handleLinkClick_Hidden("/Reports")}>
-                <FaChartBar />
-                <Tooltip>Reportes</Tooltip>
-              </HiddenLink>
-            </HiddenLinkContainer>
+            {isOwnerUser && (
+              <>
+                <HiddenLinkContainer>
+                  <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
+                    <FaUserGraduate />
+                    <Tooltip>Alumnos</Tooltip>
+                  </HiddenLink>
+                </HiddenLinkContainer>
+                <HiddenLinkContainer>
+                  <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
+                    <FaFileInvoiceDollar />
+                    <Tooltip>Facturar</Tooltip>
+                  </HiddenLink>
+                </HiddenLinkContainer>
+                <HiddenLinkContainer>
+                  <HiddenLink onClick={() => handleLinkClick_Hidden("/Reports")}>
+                    <FaChartBar />
+                    <Tooltip>Reportes</Tooltip>
+                  </HiddenLink>
+                </HiddenLinkContainer>
+              </>
+            )}
             <HiddenLinkContainer>
               <HiddenLink onClick={handleLogout_Hidden}>
                 <FaSignOutAlt style={{ color: "red" }} />
@@ -94,12 +98,12 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
             </HiddenLinkContainer>
           </HiddenLinks>
           {isOwnerUser && (
-          <SettingsContainer>
-            <HiddenLink onClick={handleAdminSettings}>
-              <FaCog />
-              <Tooltip>Configuración</Tooltip>
-            </HiddenLink>
-          </SettingsContainer>
+            <SettingsContainer>
+              <HiddenLink onClick={handleAdminSettings}>
+                <FaCog />
+                <Tooltip>Configuración</Tooltip>
+              </HiddenLink>
+            </SettingsContainer>
           )}
         </>
       )}
@@ -115,32 +119,36 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
               <FaUsers /> Grupos
             </StyledLink>
           </NavItem>
-          <NavItem>
-            <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
-              <FaUserGraduate /> Alumnos  
-            </StyledLink>
-          </NavItem>
-          <NavItem>
-            <StyledLink onClick={() => handleLinkClick_Show("/MakePayment")}>
-              <FaFileInvoiceDollar /> Facturar
-            </StyledLink>
-          </NavItem>
-          <NavItem>
-            <StyledLink onClick={() => handleLinkClick_Show("/Reports")}>
-              <FaChartBar /> Reportes
-            </StyledLink>
-          </NavItem>
+          {isOwnerUser && (
+            <>
+              <NavItem>
+                <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
+                  <FaUserGraduate /> Alumnos
+                </StyledLink>
+              </NavItem>
+              <NavItem>
+                <StyledLink onClick={() => handleLinkClick_Show("/MakePayment")}>
+                  <FaFileInvoiceDollar /> Facturar
+                </StyledLink>
+              </NavItem>
+              <NavItem>
+                <StyledLink onClick={() => handleLinkClick_Show("/Reports")}>
+                  <FaChartBar /> Reportes
+                </StyledLink>
+              </NavItem>
+            </>
+          )}
           <NavItem>
             <LogoutButton onClick={handleLogout_Show}>
               <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} /> Salir
             </LogoutButton>
           </NavItem>
           {isOwnerUser && (
-          <NavItem>
-            <StyledLink onClick={handleAdminSettings}>
-              <FaCog /> Configuración
-            </StyledLink>
-          </NavItem>
+            <NavItem>
+              <StyledLink onClick={handleAdminSettings}>
+                <FaCog /> Configuración
+              </StyledLink>
+            </NavItem>
           )}
         </NavList>
       </SideNav>

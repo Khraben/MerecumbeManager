@@ -1,46 +1,85 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents } from "./firebase/firebaseFirestoreService";
+import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents, fetchGroupsByInstructor, fetchInstructorByEmail } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./context/AuthContext"; 
+import Loading from "./components/Loading";
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
+  const [instructorGroups, setInstructorGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
-      const activeStudents = await fetchActiveStudents();
-      const scholarshipStudents = await fetchScholarshipStudents();
-      const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
-      const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
-      setActiveStudentsCount(nonScholarshipStudents.length);
+      setLoading(true);
+      if (isInstructorUser) {
+        const instructor = await fetchInstructorByEmail(user.email);
+        const groups = await fetchGroupsByInstructor(instructor.id);
+        setInstructorGroups(groups);
+      }else{
+        const activeStudents = await fetchActiveStudents();
+        const scholarshipStudents = await fetchScholarshipStudents();
+        const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
+        const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
+        setActiveStudentsCount(nonScholarshipStudents.length);
 
-      const currentDate = new Date();
-      const month = currentDate.toLocaleString('es-ES', { month: 'long' });
-      const year = currentDate.getFullYear();
-      const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
-      const receipts = await fetchReceiptsByMonth(monthYear);
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString('es-ES', { month: 'long' });
+        const year = currentDate.getFullYear();
+        const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+        const receipts = await fetchReceiptsByMonth(monthYear);
 
-      const paymentsThisMonth = receipts.filter(receipt => 
-        nonScholarshipStudents.some(student => student.id === receipt.studentId)
-      );
-      setPaymentsThisMonthCount(paymentsThisMonth.length);
+        const paymentsThisMonth = receipts.filter(receipt => 
+          nonScholarshipStudents.some(student => student.id === receipt.studentId)
+        );
+        setPaymentsThisMonthCount(paymentsThisMonth.length);
 
-      const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
-      setPendingPaymentsCount(pendingPayments);
+        const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
+        setPendingPaymentsCount(pendingPayments);
+      }
+      setLoading(false);
     };
 
     fetchData();
-  }, []);
+  }, [isInstructorUser, user.email]);
 
   const handleLinkClick = (path) => {
     router.push(path);
   };
+
+  const parseTime = (timeStr) => {
+    const [time, modifier] = timeStr.split(/(am|pm)/);
+    let [hours, minutes] = time.trim().split(':');
+    if (hours === '12') {
+      hours = '00';
+    }
+    if (modifier === 'pm' && hours !== '12') {
+      hours = parseInt(hours, 10) + 12;
+    }
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
+  };
+
+  const groupedByDay = instructorGroups.reduce((acc, group) => {
+    if (!acc[group.day]) {
+      acc[group.day] = [];
+    }
+    acc[group.day].push(group);
+    return acc;
+  }, {});
+
+  const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Wrapper>
@@ -49,31 +88,56 @@ export default function Home() {
         <StyledButton onClick={() => handleLinkClick("/GroupList")}>
           <FaUsers /> Grupos
         </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/StudentList")}>
-          <FaUserGraduate /> Alumnos
-        </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/MakePayment")}>
-          <FaFileInvoiceDollar /> Facturar
-        </StyledButton>
-        <StyledButton onClick={() => handleLinkClick("/Reports")}>
-          <FaChartBar /> Reportes
-        </StyledButton>
+        {!isInstructorUser && (
+          <>
+            <StyledButton onClick={() => handleLinkClick("/StudentList")}>
+              <FaUserGraduate /> Alumnos
+            </StyledButton>
+            <StyledButton onClick={() => handleLinkClick("/MakePayment")}>
+              <FaFileInvoiceDollar /> Facturar
+            </StyledButton>
+            <StyledButton onClick={() => handleLinkClick("/Reports")}>
+              <FaChartBar /> Reportes
+            </StyledButton>
+          </>
+        )}
       </ButtonSection>
-      <DashboardSection>
-        <DashboardTitle>Panel de Control</DashboardTitle>
-        <DashboardItem>
-          <DashboardLabel>Alumnos Activos:</DashboardLabel>
-          <DashboardValue>{activeStudentsCount}</DashboardValue>
-        </DashboardItem>
-        <DashboardItem>
-          <DashboardLabel>Pagos Realizados Este Mes:</DashboardLabel>
-          <DashboardValue>{paymentsThisMonthCount}</DashboardValue>
-        </DashboardItem>
-        <DashboardItem>
-          <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
-          <DashboardValue>{pendingPaymentsCount}</DashboardValue>
-        </DashboardItem>
-      </DashboardSection>
+      {!isInstructorUser && (
+        <DashboardSection>
+          <DashboardTitle>Panel de Control</DashboardTitle>
+          <DashboardItem>
+            <DashboardLabel>Alumnos Activos:</DashboardLabel>
+            <DashboardValue>{activeStudentsCount}</DashboardValue>
+          </DashboardItem>
+          <DashboardItem>
+            <DashboardLabel>Pagos Realizados Este Mes:</DashboardLabel>
+            <DashboardValue>{paymentsThisMonthCount}</DashboardValue>
+          </DashboardItem>
+          <DashboardItem>
+            <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
+            <DashboardValue>{pendingPaymentsCount}</DashboardValue>
+          </DashboardItem>
+        </DashboardSection>
+      )}
+      {isInstructorUser && (
+        <DashboardSection>
+          <DashboardTitle>Tus Grupos</DashboardTitle>
+          {daysOfWeek.map(day => (
+            groupedByDay[day] && (
+              <DaySection key={day}>
+                <DayLabel>{day}:</DayLabel>
+                <GroupList>
+                  {groupedByDay[day]
+                    .sort((a, b) => parseTime(a.startTime).localeCompare(parseTime(b.startTime)))
+                    .map((group, index) => (
+                      <GroupItem key={index}>{`${group.name} - ${group.level}`}</GroupItem>
+                    ))}
+                </GroupList>
+              </DaySection>
+            )
+          ))}
+        </DashboardSection>
+      )}
     </Wrapper>
   );
 }
@@ -208,5 +272,37 @@ const DashboardValue = styled.span`
 
   @media (max-width: 480px) {
     font-size: 16px;
+  }
+`;
+
+const DaySection = styled.div`
+  margin-bottom: 20px;
+`;
+
+const DayLabel = styled.span`
+  font-size: 18px;
+  color: #0b0f8b;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 10px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const GroupList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const GroupItem = styled.li`
+  font-size: 16px;
+  color: #333;
+  margin: 5px 0;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
   }
 `;

@@ -1,7 +1,7 @@
 import { auth } from "./firebaseConfig";
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 
-export const createSecretaryUser = async (email) => {
+export const createUser = async (email) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, "tempPass1_");
     const user = userCredential.user;

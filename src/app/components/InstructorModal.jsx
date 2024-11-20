@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { addInstructor, fetchInstructorById, updateInstructor } from "../firebase/firebaseFirestoreService";
+import { addInstructor, fetchInstructorById, updateInstructor, isEmailRegistered, isUsernameRegistered } from "../firebase/firebaseFirestoreService";
 import { TextInput } from './Input';
+import { createUser } from "../firebase/firebaseAuthService";
 import Loading from "./Loading";
 
 export default function InstructorModal({ isOpen, onClose, onInstructorAdded, instructorId }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [originalUsername, setOriginalUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -17,18 +21,21 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
           const instructorData = await fetchInstructorById(instructorId);
           setName(instructorData.name);
           setPhone(instructorData.phone);
+          setUsername(instructorData.username);
+          setEmail(instructorData.email);
+          setOriginalUsername(instructorData.username);
         } catch (error) {
           setError("Error al cargar datos del instructor.");
         }
       };
       fetchInstructor();
-    } else if (!isOpen) {
-      resetFields(); 
+    } else {
+      resetFields();
     }
   }, [isOpen, instructorId]);
 
   const handleSave = async () => {
-    if (!name || !phone) {
+    if (!name || !phone || !username || (!instructorId && !email)) {
       setError("Todos los campos son requeridos.");
       return;
     }
@@ -36,20 +43,62 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
       setError("Formato del teléfono inválido");
       return;
     }
-  
-    setError("");
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!instructorId && email.includes(' ')) {
+      setError("El correo electrónico no debe contener espacios.");
+      return;
+    }
+    if (!instructorId && !emailRegex.test(email)) {
+      setError("Por favor ingresa un correo electrónico válido.");
+      return;
+    }
     setIsLoading(true);
-  
-    const instructorData = { name, phone };
-  
+
+    if (!instructorId) {
+      const emailExists = await isEmailRegistered(email);
+      if (emailExists) {
+        setIsLoading(false);
+        setError("El correo electrónico ya está registrado.");
+        return;
+      }
+    }
+
+    let usernameExists = false;
+    if (!instructorId || (instructorId && username !== originalUsername)) {
+      usernameExists = await isUsernameRegistered(username);
+      if (usernameExists) {
+        setIsLoading(false);
+        setError("El nombre de usuario ya está registrado.");
+        return;
+      }
+    }
+
+    setError("");
+
+    const instructorData = {
+      name,
+      phone,
+      username,
+      ...(instructorId ? {} : { email }),
+    };
+
     try {
       if (instructorId) {
         await updateInstructor(instructorId, instructorData);
       } else {
+        try {
+          await createUser(email);
+        } catch (error) {
+          if (error.code === 'auth/email-already-in-use') {
+            await sendPasswordResetEmail(auth, email);
+          } else {
+            throw error;
+          }
+        }
         await addInstructor(instructorData);
       }
       resetFields();
-      onClose(); 
+      onClose();
       if (onInstructorAdded) {
         onInstructorAdded(instructorData);
       }
@@ -63,20 +112,34 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   const resetFields = () => {
     setName("");
     setPhone("");
+    setUsername("");
+    setEmail("");
     setError("");
   };
 
-  const handlePhoneChange = (e) => {
-    let value = e.target.value.replace(/\D/g, ""); 
-    if (value.length > 4) {
-      value = `${value.slice(0, 4)}-${value.slice(4, 8)}`; 
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
+    setError("");
+  };
+
+  const formatPhoneNumber = (value) => {
+    const cleaned = ('' + value).replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{4})(\d{4})$/);
+    if (match) {
+      return `${match[1]}-${match[2]}`;
     }
-    setPhone(value.slice(0, 9)); 
+    return value;
+  };
+
+  const handlePhoneChange = (setter) => (e) => {
+    const formattedValue = formatPhoneNumber(e.target.value);
+    setter(formattedValue);
+    setError("");
   };
 
   if (!isOpen) return null;
   if (isLoading) return <Loading />;
-  
+
   return (
     <Overlay>
       <ModalContainer>
@@ -90,19 +153,32 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
               id="name"
               placeholder="Nombre y Apellido"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleInputChange(setName)}
             />
             <TextInput
               id="phone"
               placeholder="Celular"
               value={phone}
-              onChange={handlePhoneChange}
+              onChange={handlePhoneChange(setPhone)}
               onKeyPress={(e) => {
                 if (!/[0-9]/.test(e.key)) {
                   e.preventDefault();
                 }
               }}
               maxLength="9"
+            />
+            <TextInput
+              id="username"
+              placeholder="Usuario"
+              value={username}
+              onChange={handleInputChange(setUsername)}
+            />
+            <TextInput
+              id="email"
+              placeholder="Correo Electrónico"
+              value={email}
+              onChange={handleInputChange(setEmail)}
+              disabled={!!instructorId}
             />
           </Form>
           {error && <ErrorMessage>{error}</ErrorMessage>}

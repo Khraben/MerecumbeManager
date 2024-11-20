@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash } from "react-icons/fa";
+import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails"; 
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchGroups, deleteGroup } from "../firebase/firebaseFirestoreService";
+import { fetchGroups, deleteGroup, fetchInstructorByEmail } from "../firebase/firebaseFirestoreService";
+import { useAuth } from "../context/AuthContext"; 
 
 export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,6 +19,7 @@ export default function GroupList() {
   const [loading, setLoading] = useState(true);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
+  const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
     fetchGroupsData();
@@ -27,7 +29,15 @@ export default function GroupList() {
     setLoading(true);
     try {
       const groupsData = await fetchGroups();
-      setGroups(groupsData);
+      if (!isInstructorUser) {
+        setGroups(groupsData);
+      }else{
+        const instructor = await fetchInstructorByEmail(user.email);
+        const filteredGroups = isInstructorUser
+        ? groupsData.filter(group => group.instructor === instructor.name)
+        : groupsData;
+      setGroups(filteredGroups);
+      }
     } catch (error) {
       console.error("Error fetching groups: ", error);
     }
@@ -72,6 +82,10 @@ export default function GroupList() {
     setGroupToDelete(null);
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
   const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -90,6 +104,7 @@ export default function GroupList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
@@ -112,11 +127,19 @@ export default function GroupList() {
                 <td>{group.instructor}</td>
                 <td>{group.level}</td>
                 <td>
+                {!isInstructorUser && (
                   <IconContainer>
                     <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
                     <EditIcon onClick={() => handleOpenModal(group.id)} />
                     <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
-                  </IconContainer>
+                </IconContainer>
+                )}
+                
+                {isInstructorUser && (
+                  <IconContainer>
+                    <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
+                </IconContainer>
+                )}
                 </td>
               </tr>
             ))}
@@ -124,7 +147,9 @@ export default function GroupList() {
         </Table>
         )}
       </TableContainer>
-      <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+      {!isInstructorUser && (
+        <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+      )}
       <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
       <GroupDetails
         isOpen={!!selectedGroupId}
@@ -275,6 +300,7 @@ const SearchContainer = styled.div`
   max-width: 1200px;
   padding: 0 20px;
   margin-bottom: 20px;
+  position: relative;
 
   @media (max-width: 480px) {
     padding: 0 10px;
@@ -357,6 +383,23 @@ const DeleteIcon = styled(FaTrash)`
   }
 
   @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const ClearButton = styled.button`
+  position: absolute;
+  right: 50px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: #0b0f8b;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 1001;
+
+  @media (max-width: 480px) {
+    right: 45px;
     font-size: 16px;
   }
 `;
