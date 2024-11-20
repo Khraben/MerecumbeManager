@@ -147,7 +147,9 @@ export default function GroupList() {
         </Table>
         )}
       </TableContainer>
-      <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+      {!isInstructorUser && (
+        <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
+      )}
       <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
       <GroupDetails
         isOpen={!!selectedGroupId}
