@@ -6,42 +6,46 @@ import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-
 import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents, fetchGroupsByInstructor, fetchInstructorByEmail } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./context/AuthContext"; 
+import Loading from "./components/Loading";
 
 export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
   const [instructorGroups, setInstructorGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
-      const activeStudents = await fetchActiveStudents();
-      const scholarshipStudents = await fetchScholarshipStudents();
-      const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
-      const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
-      setActiveStudentsCount(nonScholarshipStudents.length);
-
-      const currentDate = new Date();
-      const month = currentDate.toLocaleString('es-ES', { month: 'long' });
-      const year = currentDate.getFullYear();
-      const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
-      const receipts = await fetchReceiptsByMonth(monthYear);
-
-      const paymentsThisMonth = receipts.filter(receipt => 
-        nonScholarshipStudents.some(student => student.id === receipt.studentId)
-      );
-      setPaymentsThisMonthCount(paymentsThisMonth.length);
-
-      const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
-      setPendingPaymentsCount(pendingPayments);
-
+      setLoading(true);
       if (isInstructorUser) {
         const instructor = await fetchInstructorByEmail(user.email);
         const groups = await fetchGroupsByInstructor(instructor.id);
         setInstructorGroups(groups);
+      }else{
+        const activeStudents = await fetchActiveStudents();
+        const scholarshipStudents = await fetchScholarshipStudents();
+        const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
+        const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
+        setActiveStudentsCount(nonScholarshipStudents.length);
+
+        const currentDate = new Date();
+        const month = currentDate.toLocaleString('es-ES', { month: 'long' });
+        const year = currentDate.getFullYear();
+        const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+        const receipts = await fetchReceiptsByMonth(monthYear);
+
+        const paymentsThisMonth = receipts.filter(receipt => 
+          nonScholarshipStudents.some(student => student.id === receipt.studentId)
+        );
+        setPaymentsThisMonthCount(paymentsThisMonth.length);
+
+        const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
+        setPendingPaymentsCount(pendingPayments);
       }
+      setLoading(false);
     };
 
     fetchData();
@@ -72,6 +76,10 @@ export default function Home() {
   }, {});
 
   const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <Wrapper>
