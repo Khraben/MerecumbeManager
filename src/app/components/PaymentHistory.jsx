@@ -1,132 +1,79 @@
-import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import {
-  fetchAttendances,
-  fetchStudentById,
-  fetchGroupById,
-  fetchGroups,
-} from "../firebase/firebaseFirestoreService";
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { fetchReceipts, fetchStudentById } from "../firebase/firebaseFirestoreService";
 import DatePicker from "react-datepicker";
-import { es } from "date-fns/locale/es";
+import { es } from "date-fns/locale/es"; 
 import "react-datepicker/dist/react-datepicker.css";
-import Loading from "./Loading";
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaSearch,
-  FaCalendarAlt,
-  FaTimes,
-} from "react-icons/fa";
+import Loading from "./Loading"; 
+import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt} from 'react-icons/fa';
 
-const AttendanceReport = ({ onBack }) => {
-  const [attendances, setAttendances] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState("");
-  const [groups, setGroups] = useState([]);
+const PaymentHistory = ({ onBack }) => {
+  const [payments, setPayments] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedDetail, setSelectedDetail] = useState(''); 
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
-  const [filteredAttendances, setFilteredAttendances] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredPayments, setFilteredPayments] = useState([]);
+  const [loading, setLoading] = useState(true); 
   const [currentPage, setCurrentPage] = useState(1);
-  const attendancesPerPage = 10;
+  const paymentsPerPage = 10;
   const maxPageButtons = 4;
 
   useEffect(() => {
-    const loadGroups = async () => {
+    const loadPayments = async () => {
+      setLoading(true); 
       try {
-        const groupsData = await fetchGroups();
-        setGroups(groupsData);
-      } catch (error) {
-        console.error("Error al cargar los grupos: ", error);
-      }
-    };
-
-    const loadAttendances = async () => {
-      setLoading(true);
-      try {
-        const allAttendances = await fetchAttendances();
-        const attendancesWithDetails = await Promise.all(
-          allAttendances.map(async (attendance) => {
-            let studentName = attendance.studentId;
-            let groupName = attendance.groupId;
-
-            try {
-              const studentData = await fetchStudentById(attendance.studentId);
-              studentName = studentData.name;
-            } catch (error) {
-              console.error(
-                `Error al cargar los detalles del estudiante: `,
-                error
-              );
-            }
-
-            try {
-              const groupData = await fetchGroupById(attendance.groupId);
-              groupName = groupData.name;
-            } catch (error) {
-              console.error(`Error al cargar los detalles del grupo: `, error);
-            }
-
+        const allPayments = await fetchReceipts();
+        const paymentsWithStudentNames = await Promise.all(allPayments.map(async (payment) => {
+          try {
+            const studentData = await fetchStudentById(payment.studentId);
             return {
-              ...attendance,
-              studentName,
-              groupName,
-              date:
-                attendance.date instanceof Date
-                  ? attendance.date
-                  : attendance.date.toDate(),
+              ...payment,
+              studentName: studentData.name
             };
-          })
-        );
-        attendancesWithDetails.sort((a, b) => a.date - b.date);
-        setAttendances(attendancesWithDetails);
-        setFilteredAttendances(attendancesWithDetails);
+          } catch (error) {
+            console.error(`Error al cargar el estudiante con ID ${payment.studentId}: `, error);
+            return {
+              ...payment,
+              studentName: payment.studentId 
+            };
+          }
+        }));
+        setPayments(paymentsWithStudentNames);
+        setFilteredPayments(paymentsWithStudentNames);
       } catch (error) {
-        console.error("Error al cargar las asistencias: ", error);
+        console.error("Error al cargar los pagos: ", error);
       } finally {
-        setLoading(false);
+        setLoading(false); 
       }
     };
-
-    loadGroups();
-    loadAttendances();
+  
+    loadPayments();
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [selectedStudent, selectedGroup, startDate, endDate]);
-
-  const applyFilters = () => {
-    let filtered = attendances;
+    let filtered = payments;
 
     if (selectedStudent) {
-      filtered = filtered.filter(
-        (attendance) =>
-          attendance.studentName &&
-          attendance.studentName
-            .toLowerCase()
-            .includes(selectedStudent.toLowerCase())
+      filtered = filtered.filter(payment => 
+        payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
       );
     }
-    if (selectedGroup) {
-      filtered = filtered.filter(
-        (attendance) => attendance.groupId === selectedGroup
+    if (selectedDetail) { 
+      filtered = filtered.filter(payment => 
+        payment.specification && payment.specification.toLowerCase().includes(selectedDetail.toLowerCase())
       );
     }
     if (startDate) {
-      filtered = filtered.filter((attendance) => {
-        const attendanceDate = attendance.date;
-        return (
-          attendanceDate >= startDate &&
-          (!endDate ||
-            attendanceDate <= new Date(endDate).setHours(23, 59, 59, 999))
-        );
+      filtered = filtered.filter(payment => {
+        const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
+        return paymentDate >= startDate && (!endDate || paymentDate <= new Date(endDate).setHours(23, 59, 59, 999));
       });
     }
-    setFilteredAttendances(filtered);
+    setFilteredPayments(filtered);
     setCurrentPage(1);
-  };
+  }, [selectedStudent, selectedDetail, startDate, endDate, payments]); 
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -135,32 +82,10 @@ const AttendanceReport = ({ onBack }) => {
       setEndDate(null);
     }
   };
-
-  const handleClearStartDate = () => {
-    setStartDate(null);
-    setIsEndDateDisabled(true);
-    setEndDate(null);
-  };
-
-  const handleClearEndDate = () => {
-    setEndDate(null);
-  };
-
-  const handleClearStudent = () => {
-    setSelectedStudent("");
-  };
-
-  const handleClearGroup = () => {
-    setSelectedGroup("");
-  };
-
-  const indexOfLastAttendance = currentPage * attendancesPerPage;
-  const indexOfFirstAttendance = indexOfLastAttendance - attendancesPerPage;
-  const currentAttendances = filteredAttendances.slice(
-    indexOfFirstAttendance,
-    indexOfLastAttendance
-  );
-  const totalPages = Math.ceil(filteredAttendances.length / attendancesPerPage);
+  const indexOfLastPayment = currentPage * paymentsPerPage;
+  const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
+  const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const getPageNumbers = () => {
@@ -173,14 +98,12 @@ const AttendanceReport = ({ onBack }) => {
     }
     return pages;
   };
-
   if (loading) {
     return <Loading />;
   }
-
   return (
     <Wrapper>
-      <Title>Informe de Asistencias</Title>
+      <Title>Historial de Pagos</Title>
       <FilterSection>
         <SearchContainer>
           <SearchInput
@@ -189,30 +112,16 @@ const AttendanceReport = ({ onBack }) => {
             onChange={(e) => setSelectedStudent(e.target.value)}
             placeholder="Filtrar por nombre..."
           />
-          {selectedStudent && (
-            <ClearButton onClick={handleClearStudent}>
-              <FaTimes />
-            </ClearButton>
-          )}
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
-          <SearchSelect
-            value={selectedGroup}
-            onChange={(e) => setSelectedGroup(e.target.value)}
-          >
-            <option value="">Filtrar por grupo...</option>
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
-            ))}
-          </SearchSelect>
-          {selectedGroup && (
-            <ClearButton onClick={handleClearGroup}>
-              <FaTimes />
-            </ClearButton>
-          )}
+          <SearchInput
+            type="text"
+            value={selectedDetail} 
+            onChange={(e) => setSelectedDetail(e.target.value)} 
+            placeholder="Filtrar por detalle..."
+          />
+          <SearchIcon />
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
@@ -222,11 +131,6 @@ const AttendanceReport = ({ onBack }) => {
             locale={es}
             placeholderText="Fecha de inicio"
           />
-          {startDate && (
-            <ClearButton onClick={handleClearStartDate}>
-              <FaTimes />
-            </ClearButton>
-          )}
           <CalendarIcon />
         </SearchContainer>
         {startDate && (
@@ -238,42 +142,39 @@ const AttendanceReport = ({ onBack }) => {
               locale={es}
               placeholderText="Fecha de fin"
               disabled={isEndDateDisabled}
-              minDate={startDate}
             />
-            {endDate && (
-              <ClearButton onClick={handleClearEndDate}>
-                <FaTimes />
-              </ClearButton>
-            )}
             <CalendarIcon />
           </SearchContainer>
         )}
       </FilterSection>
       <TableContainer>
-        {currentAttendances.length === 0 ? (
-          <NoDataMessage>
-            No hay asistencias registradas en el sistema
-          </NoDataMessage>
-        ) : (
-          <AttendanceTable>
-            <thead>
-              <tr>
-                <th>Alumno</th>
-                <th>Grupo</th>
-                <th>Fecha</th>
+        <PaymentTable>
+          <thead>
+            <tr>
+              <th># Recibo</th>
+              <th>Alumno</th>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Detalle</th>
+              <th>Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentPayments.map((payment, index) => (
+              <tr key={index}>
+                <td>{payment.receiptNumber}</td>
+                <td>{payment.studentName}</td>
+                <td>{payment.paymentDate && payment.paymentDate.toDate
+                      ? payment.paymentDate.toDate().toLocaleDateString("es-CR")
+                      : new Date(payment.paymentDate).toLocaleDateString("es-CR")}
+                </td>
+                <td>{payment.concept}</td>
+                <td>{payment.specification ? payment.specification : "Sin detalles"}</td>
+                <td>{payment.amount}</td>
               </tr>
-            </thead>
-            <tbody>
-              {currentAttendances.map((attendance, index) => (
-                <tr key={index}>
-                  <td>{attendance.studentName}</td>
-                  <td>{attendance.groupName}</td>
-                  <td>{attendance.date.toLocaleDateString("es-CR")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </AttendanceTable>
-        )}
+            ))}
+          </tbody>
+        </PaymentTable>
       </TableContainer>
       <Pagination>
         {currentPage > 1 && (
@@ -282,11 +183,7 @@ const AttendanceReport = ({ onBack }) => {
           </PageIcon>
         )}
         {getPageNumbers().map((page) => (
-          <PageButton
-            key={page}
-            onClick={() => paginate(page)}
-            active={page === currentPage}
-          >
+          <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
             {page}
           </PageButton>
         ))}
@@ -299,17 +196,7 @@ const AttendanceReport = ({ onBack }) => {
       <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
-};
-
-export default AttendanceReport;
-
-const NoDataMessage = styled.p`
-  font-size: 18px;
-  color: #333;
-  text-align: center;
-  margin-top: 20px;
-`;
-
+}
 const Wrapper = styled.div`
   width: 100%;
   display: flex;
@@ -321,7 +208,6 @@ const Wrapper = styled.div`
     padding: 1px;
   }
 `;
-
 const Title = styled.h1`
   font-size: 24px;
   color: #0b0f8b;
@@ -335,7 +221,6 @@ const Title = styled.h1`
     margin-bottom: 10px;
   }
 `;
-
 const FilterSection = styled.div`
   margin-bottom: 20px;
   display: flex;
@@ -347,27 +232,25 @@ const FilterSection = styled.div`
     align-items: center;
   }
 `;
-
 const TableContainer = styled.div`
   width: 100%;
+  padding: 0 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   background-color: rgba(221, 221, 221, 1);
-  overflow-x: auto;
 
   @media (max-width: 480px) {
     padding: 0 10px;
   }
 `;
-
-const AttendanceTable = styled.table`
+const PaymentTable = styled.table`
   width: 100%;
   max-width: 1200px;
   border-collapse: collapse;
   background-color: transparent;
   border-radius: 8px;
-
+ 
   thead {
     position: sticky;
     top: 0;
@@ -375,8 +258,7 @@ const AttendanceTable = styled.table`
     color: #dddddd;
   }
 
-  th,
-  td {
+  th, td {
     padding: 16px 20px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -399,22 +281,21 @@ const AttendanceTable = styled.table`
   }
 
   @media (max-width: 768px) {
-    th,
-    td {
+    th, td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
 
   @media (max-width: 480px) {
-    th,
-    td {
+    margin-left: 160px;
+    
+    th, td {
       font-size: 10px;
       padding: 10px 12px;
     }
   }
 `;
-
 const Pagination = styled.div`
   display: flex;
   justify-content: center;
@@ -424,14 +305,13 @@ const Pagination = styled.div`
     margin-top: 10px;
   }
 `;
-
 const PageButton = styled.button`
   padding: 10px 15px;
   margin: 0 5px;
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: ${(props) => (props.active ? "#073e8a" : "#0b0f8b")};
+  background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -450,7 +330,6 @@ const PageButton = styled.button`
     font-size: 12px;
   }
 `;
-
 const PageIcon = styled.div`
   padding: 10px 15px;
   margin: 0 5px;
@@ -473,7 +352,6 @@ const PageIcon = styled.div`
     font-size: 12px;
   }
 `;
-
 const BackButton = styled.button`
   padding: 10px 20px;
   margin-top: 20px;
@@ -500,7 +378,6 @@ const BackButton = styled.button`
     margin-top: 10px;
   }
 `;
-
 const StyledDatePicker = styled(DatePicker)`
   width: 100%;
   padding: 10px 15px;
@@ -509,13 +386,12 @@ const StyledDatePicker = styled(DatePicker)`
   border-radius: 5px;
   background-color: transparent;
   z-index: 5;
-  position: relative;
+  position: relative; 
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
   }
 `;
-
 const SearchContainer = styled.div`
   display: flex;
   align-items: center;
@@ -532,7 +408,6 @@ const SearchContainer = styled.div`
     margin-bottom: 10px;
   }
 `;
-
 const SearchInput = styled.input`
   width: 100%;
   padding: 10px 40px 10px 15px;
@@ -543,65 +418,32 @@ const SearchInput = styled.input`
   background-color: transparent;
 
   @media (max-width: 480px) {
-    padding: 8px 35px 8px 12px;
+    padding: 8px 35px 8px 12px; 
     font-size: 12px;
   }
 `;
-
-const SearchSelect = styled.select`
-  width: 100%;
-  padding: 10px 15px;
-  font-size: 14px;
-  border: 2px solid #0b0f8b;
-  border-radius: 5px;
-  outline: none;
-  background-color: transparent;
-
-  @media (max-width: 480px) {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-`;
-
 const SearchIcon = styled(FaSearch)`
   position: absolute;
-  right: 30px;
+  right: 30px; 
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px;
+    right: 25px; 
     font-size: 16px;
   }
 `;
-
 const CalendarIcon = styled(FaCalendarAlt)`
   position: absolute;
-  right: 30px;
+  right: 30px; 
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px;
+    right: 25px; 
     font-size: 16px;
   }
 `;
-
-const ClearButton = styled.button`
-  position: absolute;
-  right: 50px;
-  top: 10px;
-  background: none;
-  border: none;
-  color: #0b0f8b;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 1001;
-
-  @media (max-width: 480px) {
-    right: 45px;
-    font-size: 16px;
-  }
-`;
+export default PaymentHistory;
