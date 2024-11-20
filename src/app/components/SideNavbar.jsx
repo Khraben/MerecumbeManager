@@ -1,30 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import styled from "styled-components";
-import { FaBars, FaTimes, FaHome, FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar, FaSignOutAlt, FaCog } from "react-icons/fa";
+import {
+  FaBars,
+  FaTimes,
+  FaHome,
+  FaUsers,
+  FaUserGraduate,
+  FaFileInvoiceDollar,
+  FaChartBar,
+  FaSignOutAlt,
+  FaCog,
+} from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
-export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar }) {
+export default function SideNavbar({
+  onLogout: propOnLogout,
+  toggleSideNavbar,
+}) {
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter(); 
+  const router = useRouter();
   const { isOwnerUser, isInstructorUser, logout } = useAuth();
 
   const handleToggle = () => {
     setIsOpen(!isOpen);
-    toggleSideNavbar(); 
+    toggleSideNavbar();
   };
 
   const handleLogout_Hidden = () => {
     router.push("/");
     logout();
-    propOnLogout(); 
+    propOnLogout();
   };
 
   const handleLogout_Show = () => {
     setIsOpen(false);
-    toggleSideNavbar(); 
+    toggleSideNavbar();
     setTimeout(() => {
       router.push("/");
       logout();
@@ -35,7 +48,7 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
   const handleLinkClick_Show = (path) => {
     router.push(path);
     setIsOpen(false);
-    toggleSideNavbar(); 
+    toggleSideNavbar();
   };
 
   const handleLinkClick_Hidden = (path) => {
@@ -71,19 +84,25 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
             {isOwnerUser && (
               <>
                 <HiddenLinkContainer>
-                  <HiddenLink onClick={() => handleLinkClick_Hidden("/StudentList")}>
+                  <HiddenLink
+                    onClick={() => handleLinkClick_Hidden("/StudentList")}
+                  >
                     <FaUserGraduate />
                     <Tooltip>Alumnos</Tooltip>
                   </HiddenLink>
                 </HiddenLinkContainer>
                 <HiddenLinkContainer>
-                  <HiddenLink onClick={() => handleLinkClick_Hidden("/MakePayment")}>
+                  <HiddenLink
+                    onClick={() => handleLinkClick_Hidden("/MakePayment")}
+                  >
                     <FaFileInvoiceDollar />
                     <Tooltip>Facturar</Tooltip>
                   </HiddenLink>
                 </HiddenLinkContainer>
                 <HiddenLinkContainer>
-                  <HiddenLink onClick={() => handleLinkClick_Hidden("/Reports")}>
+                  <HiddenLink
+                    onClick={() => handleLinkClick_Hidden("/Reports")}
+                  >
                     <FaChartBar />
                     <Tooltip>Reportes</Tooltip>
                   </HiddenLink>
@@ -122,12 +141,16 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
           {isOwnerUser && (
             <>
               <NavItem>
-                <StyledLink onClick={() => handleLinkClick_Show("/StudentList")}>
+                <StyledLink
+                  onClick={() => handleLinkClick_Show("/StudentList")}
+                >
                   <FaUserGraduate /> Alumnos
                 </StyledLink>
               </NavItem>
               <NavItem>
-                <StyledLink onClick={() => handleLinkClick_Show("/MakePayment")}>
+                <StyledLink
+                  onClick={() => handleLinkClick_Show("/MakePayment")}
+                >
                   <FaFileInvoiceDollar /> Facturar
                 </StyledLink>
               </NavItem>
@@ -140,7 +163,8 @@ export default function SideNavbar({ onLogout: propOnLogout, toggleSideNavbar })
           )}
           <NavItem>
             <LogoutButton onClick={handleLogout_Show}>
-              <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} /> Salir
+              <FaSignOutAlt style={{ marginRight: "10px", color: "red" }} />{" "}
+              Salir
             </LogoutButton>
           </NavItem>
           {isOwnerUser && (
@@ -193,9 +217,9 @@ const Tooltip = styled.span`
   padding: 5px 0;
   position: absolute;
   z-index: 1001;
-  top: 50%; 
-  left: 110%; 
-  margin-top: -15px; 
+  top: 50%;
+  left: 110%;
+  margin-top: -15px;
   opacity: 0;
   transition: opacity 0.3s;
   font-size: 14px;
@@ -210,7 +234,7 @@ const Tooltip = styled.span`
     border-style: solid;
     border-color: #081075;
   }
-  
+
   @media (max-width: 480px) {
     width: 80px;
     font-size: 11px;
@@ -268,7 +292,7 @@ const HiddenLink = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1001; 
+  z-index: 1001;
 
   &:hover {
     background-color: #081075;
@@ -298,9 +322,9 @@ const SideNav = styled.nav`
   align-items: flex-start;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   transition: left 0.3s ease-in-out;
-  z-index: 1000; 
+  z-index: 1000;
   overflow: hidden;
-  
+
   @media (max-width: 480px) {
     width: 100vw;
     left: ${({ isOpen }) => (isOpen ? "0" : "-99.9vw")};
@@ -327,19 +351,19 @@ const StyledLink = styled.a`
   font-weight: bold;
   display: flex;
   align-items: center;
-  width: calc(100% - 40px); 
+  width: calc(100% - 40px);
   padding: 5px 20px;
   border-radius: 5px;
   transition: background-color 0.3s ease-in-out;
   cursor: pointer;
-  z-index: 1000; 
+  z-index: 1000;
 
   &:hover {
     background-color: rgba(221, 221, 221, 0.2);
   }
 
   @media (max-width: 480px) {
-    width: calc(100% - 80px); 
+    width: calc(100% - 80px);
     padding: 15px 20px;
   }
 
@@ -354,7 +378,7 @@ const LogoutButton = styled.button`
   color: #dddddd;
   cursor: pointer;
   font-weight: bold;
-  width: calc(100%); 
+  width: calc(100%);
   padding: 5px 20px;
   text-align: left;
   margin-top: auto;
@@ -370,7 +394,7 @@ const LogoutButton = styled.button`
   }
 
   @media (max-width: 480px) {
-    width: calc(100% - 40px); 
+    width: calc(100% - 40px);
     padding: 15px 20px;
   }
 `;

@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaPlus, FaTimes } from "react-icons/fa";
-import { fetchGroups, addStudent, fetchStudentById, updateStudent, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService";
-import { TextInput, ComboBox, NumberInput } from './Input';
+import {
+  fetchGroups,
+  addStudent,
+  fetchStudentById,
+  updateStudent,
+  fetchStudentGroupsByStudentId,
+} from "../firebase/firebaseFirestoreService";
+import { TextInput, ComboBox, NumberInput } from "./Input";
 import Loading from "./Loading";
 
-export default function StudentModal({ isOpen, onClose, onStudentAdded, studentId }) {
+export default function StudentModal({
+  isOpen,
+  onClose,
+  onStudentAdded,
+  studentId,
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [group, setGroup] = useState("");
+  const [group, setGroup] = useState("INACTIVO");
   const [additionalGroups, setAdditionalGroups] = useState([]);
   const [emergencyName, setEmergencyName] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
-  const [gender, setGender] = useState(""); 
-  const [paymentDate, setPaymentDate] = useState(""); 
+  const [gender, setGender] = useState("");
+  const [paymentDate, setPaymentDate] = useState("");
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
@@ -52,12 +63,12 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       setName(studentData.name);
       setPhone(studentData.phone);
       setEmail(studentData.email);
-      setGroup(studentGroups[0] || "");
+      setGroup(studentGroups[0] || "INACTIVO");
       setAdditionalGroups(studentGroups.slice(1));
       setEmergencyName(studentData.emergencyName);
       setEmergencyPhone(studentData.emergencyPhone);
-      setGender(studentData.gender || ""); 
-      setPaymentDate(studentData.paymentDate || ""); 
+      setGender(studentData.gender || "");
+      setPaymentDate(studentData.paymentDate || "");
       setBirthday(studentData.birthday || "");
     } catch (error) {
       console.error("Error fetching student data:", error);
@@ -65,7 +76,16 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   };
 
   const handleSave = async () => {
-    if (!name || !phone || !email || !emergencyName || !emergencyPhone || !gender || !paymentDate || additionalGroups.includes("")) {
+    if (
+      !name ||
+      !phone ||
+      !email ||
+      !emergencyName ||
+      !emergencyPhone ||
+      !gender ||
+      !paymentDate ||
+      additionalGroups.includes("")
+    ) {
       setError("Todos los campos son requeridos.");
       return;
     }
@@ -74,7 +94,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       return;
     }
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (email.includes(' ')) {
+    if (email.includes(" ")) {
       setError("El correo electrónico no debe contener espacios.");
       return;
     }
@@ -92,23 +112,18 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       return;
     }
     setError("");
-  
-    const allGroups = [group, ...additionalGroups].filter(g => g !== "INACTIVO");
-    if (allGroups.length === 0) {
-      setError("Debe seleccionar al menos un grupo.");
-      return;
-    }
-  
+    const allGroups = [group, ...additionalGroups].filter(
+      (g) => g !== "INACTIVO"
+    );
+
     const sortedGroups = allGroups.sort((a, b) => {
-      const groupA = groups.find(g => g.id === a);
-      const groupB = groups.find(g => g.id === b);
-      const dateA = new Date(groupA.startDate.split('/').reverse().join('-'));
-      const dateB = new Date(groupB.startDate.split('/').reverse().join('-'));
+      const groupA = groups.find((g) => g.id === a);
+      const groupB = groups.find((g) => g.id === b);
+      const dateA = new Date(groupA.startDate.split("/").reverse().join("-"));
+      const dateB = new Date(groupB.startDate.split("/").reverse().join("-"));
       return dateA - dateB;
     });
-  
-    const primaryGroup = sortedGroups[0];
-  
+
     const studentData = {
       name,
       phone,
@@ -116,11 +131,11 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
       emergencyName,
       emergencyPhone,
       gender,
-      paymentDate, 
+      paymentDate,
       birthday,
       groups: sortedGroups,
     };
-  
+
     setLoading(true);
     try {
       if (studentId) {
@@ -144,12 +159,12 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     setName("");
     setPhone("");
     setEmail("");
-    setGroup("");
+    setGroup("INACTIVO");
     setAdditionalGroups([]);
     setEmergencyName("");
     setEmergencyPhone("");
-    setGender(""); 
-    setPaymentDate(""); 
+    setGender("");
+    setPaymentDate("");
     setBirthday("");
     setError("");
   };
@@ -173,7 +188,9 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
     if (group && group !== "INACTIVO" && !additionalGroups.includes("")) {
       setAdditionalGroups([...additionalGroups, ""]);
     } else {
-      setError("Debe seleccionar un grupo en todos los campos antes de agregar uno nuevo.");
+      setError(
+        "Debe seleccionar un grupo en todos los campos antes de agregar uno nuevo."
+      );
     }
   };
 
@@ -194,7 +211,7 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   };
 
   const formatPhoneNumber = (value) => {
-    const cleaned = ('' + value).replace(/\D/g, '');
+    const cleaned = ("" + value).replace(/\D/g, "");
     const match = cleaned.match(/^(\d{4})(\d{4})$/);
     if (match) {
       return `${match[1]}-${match[2]}`;
@@ -209,12 +226,12 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
   };
 
   const handleBirthdayChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
+    let value = e.target.value.replace(/\D/g, "");
     if (value.length > 4) {
       value = value.slice(0, 4);
     }
     if (value.length > 2) {
-      value = value.slice(0, 2) + '/' + value.slice(2);
+      value = value.slice(0, 2) + "/" + value.slice(2);
     }
     setBirthday(value);
     setError("");
@@ -259,7 +276,12 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                   value={email}
                   onChange={handleInputChange(setEmail)}
                 />
-                <ComboBox id="gender" placeholder="Género" value={gender} onChange={handleInputChange(setGender)}>
+                <ComboBox
+                  id="gender"
+                  placeholder="Género"
+                  value={gender}
+                  onChange={handleInputChange(setGender)}
+                >
                   <option value="Hombre">Hombre</option>
                   <option value="Mujer">Mujer</option>
                 </ComboBox>
@@ -301,37 +323,80 @@ export default function StudentModal({ isOpen, onClose, onStudentAdded, studentI
                     }
                   }}
                   maxLength="9"
-                />            
+                />
                 <label>Grupos</label>
                 <GroupContainer>
-                  <ComboBox id="group" value={group} onChange={handleGroupChange}>
+                  <ComboBox
+                    id="group"
+                    value={group}
+                    onChange={handleGroupChange}
+                  >
                     <option value="INACTIVO">INACTIVO</option>
                     {groups.map((group) => (
-                      <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                        {group.level + ' - ' + group.name + ' - ' + group.instructor}
+                      <option
+                        key={group.id}
+                        value={group.id}
+                        disabled={isGroupSelected(group.id)}
+                      >
+                        {group.level +
+                          " - " +
+                          group.name +
+                          " - " +
+                          group.instructor}
                       </option>
                     ))}
                   </ComboBox>
-                  <AddGroupButton onClick={handleAddGroup} disabled={!group || group === "INACTIVO" || additionalGroups.includes("")}><FaPlus /></AddGroupButton>
+                  <AddGroupButton
+                    onClick={handleAddGroup}
+                    disabled={
+                      !group ||
+                      group === "INACTIVO" ||
+                      additionalGroups.includes("")
+                    }
+                  >
+                    <FaPlus />
+                  </AddGroupButton>
                 </GroupContainer>
                 {additionalGroups.map((additionalGroup, index) => (
                   <GroupContainer key={index}>
-                    <ComboBox id={`additionalGroup-${index}`} value={additionalGroup} onChange={(e) => handleAdditionalGroupChange(index, e.target.value)}>
+                    <ComboBox
+                      id={`additionalGroup-${index}`}
+                      value={additionalGroup}
+                      onChange={(e) =>
+                        handleAdditionalGroupChange(index, e.target.value)
+                      }
+                    >
                       <option value="">Seleccione un grupo</option>
                       {groups.map((group) => (
-                        <option key={group.id} value={group.id} disabled={isGroupSelected(group.id)}>
-                          {group.level + ' - '+ group.name}
+                        <option
+                          key={group.id}
+                          value={group.id}
+                          disabled={isGroupSelected(group.id)}
+                        >
+                          {group.level + " - " + group.name}
                         </option>
                       ))}
                     </ComboBox>
-                    <RemoveGroupButton onClick={() => handleRemoveGroup(index)} disabled={index !== additionalGroups.length - 1}><FaTimes /></RemoveGroupButton>
+                    <RemoveGroupButton
+                      onClick={() => handleRemoveGroup(index)}
+                      disabled={index !== additionalGroups.length - 1}
+                    >
+                      <FaTimes />
+                    </RemoveGroupButton>
                   </GroupContainer>
                 ))}
               </Form>
               {error && <ErrorMessage>{error}</ErrorMessage>}
             </ModalBody>
             <ModalFooter>
-              <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
+              <CancelButton
+                onClick={() => {
+                  resetFields();
+                  onClose();
+                }}
+              >
+                Cancelar
+              </CancelButton>
               <SaveButton onClick={handleSave}>Guardar</SaveButton>
             </ModalFooter>
           </>
@@ -362,7 +427,7 @@ const ModalContainer = styled.div`
   width: 400px;
   max-width: 90vw;
   max-height: 60vh;
-  overflow-y: auto; 
+  overflow-y: auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1003;
@@ -414,7 +479,7 @@ const GroupContainer = styled.div`
   align-items: center;
   width: 100%;
   gap: 10px;
-  min-height: 40px; 
+  min-height: 40px;
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -430,9 +495,9 @@ const AddGroupButton = styled.button`
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
-  margin-left: 10px; 
+  margin-left: 10px;
   margin-top: -11px;
-  height: 38px; 
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -454,7 +519,7 @@ const AddGroupButton = styled.button`
     padding: 8px;
     font-size: 12px;
     width: 100%;
-    margin-left: 0; 
+    margin-left: 0;
   }
 `;
 
@@ -467,7 +532,7 @@ const RemoveGroupButton = styled.button`
   cursor: pointer;
   font-weight: bold;
   margin-top: -11px;
-  height: 38px; 
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;

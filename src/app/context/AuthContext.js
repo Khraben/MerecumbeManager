@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -21,7 +27,7 @@ export function AuthProvider({ children }) {
         );
         const ownerSnapshot = await getDocs(ownerQuery);
         setIsOwnerUser(!ownerSnapshot.empty);
-  
+
         const instructorQuery = query(
           collection(db, "instructors"),
           where("email", "==", currentUser.email)
@@ -41,7 +47,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isOwnerUser, isInstructorUser, logout }}>
+    <AuthContext.Provider
+      value={{ user, isOwnerUser, isInstructorUser, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -2,10 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents, fetchGroupsByInstructor, fetchInstructorByEmail } from "./firebase/firebaseFirestoreService";
+import {
+  FaUsers,
+  FaUserGraduate,
+  FaFileInvoiceDollar,
+  FaChartBar,
+} from "react-icons/fa";
+import {
+  fetchActiveStudents,
+  fetchReceiptsByMonth,
+  fetchScholarshipStudents,
+  fetchGroupsByInstructor,
+  fetchInstructorByEmail,
+} from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
-import { useAuth } from "./context/AuthContext"; 
+import { useAuth } from "./context/AuthContext";
 import Loading from "./components/Loading";
 
 export default function Home() {
@@ -24,25 +35,34 @@ export default function Home() {
         const instructor = await fetchInstructorByEmail(user.email);
         const groups = await fetchGroupsByInstructor(instructor.id);
         setInstructorGroups(groups);
-      }else{
+      } else {
         const activeStudents = await fetchActiveStudents();
         const scholarshipStudents = await fetchScholarshipStudents();
-        const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
-        const nonScholarshipStudents = activeStudents.filter(student => !scholarshipStudentIds.has(student.id));
+        const scholarshipStudentIds = new Set(
+          scholarshipStudents.map((student) => student.studentId)
+        );
+        const nonScholarshipStudents = activeStudents.filter(
+          (student) => !scholarshipStudentIds.has(student.id)
+        );
         setActiveStudentsCount(nonScholarshipStudents.length);
 
         const currentDate = new Date();
-        const month = currentDate.toLocaleString('es-ES', { month: 'long' });
+        const month = currentDate.toLocaleString("es-ES", { month: "long" });
         const year = currentDate.getFullYear();
-        const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+        const monthYear = `${
+          month.charAt(0).toUpperCase() + month.slice(1)
+        } de ${year}`;
         const receipts = await fetchReceiptsByMonth(monthYear);
 
-        const paymentsThisMonth = receipts.filter(receipt => 
-          nonScholarshipStudents.some(student => student.id === receipt.studentId)
+        const paymentsThisMonth = receipts.filter((receipt) =>
+          nonScholarshipStudents.some(
+            (student) => student.id === receipt.studentId
+          )
         );
         setPaymentsThisMonthCount(paymentsThisMonth.length);
 
-        const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
+        const pendingPayments =
+          nonScholarshipStudents.length - paymentsThisMonth.length;
         setPendingPaymentsCount(pendingPayments);
       }
       setLoading(false);
@@ -57,14 +77,14 @@ export default function Home() {
 
   const parseTime = (timeStr) => {
     const [time, modifier] = timeStr.split(/(am|pm)/);
-    let [hours, minutes] = time.trim().split(':');
-    if (hours === '12') {
-      hours = '00';
+    let [hours, minutes] = time.trim().split(":");
+    if (hours === "12") {
+      hours = "00";
     }
-    if (modifier === 'pm' && hours !== '12') {
+    if (modifier === "pm" && hours !== "12") {
       hours = parseInt(hours, 10) + 12;
     }
-    return `${String(hours).padStart(2, '0')}:${minutes}`;
+    return `${String(hours).padStart(2, "0")}:${minutes}`;
   };
 
   const groupedByDay = instructorGroups.reduce((acc, group) => {
@@ -75,7 +95,15 @@ export default function Home() {
     return acc;
   }, {});
 
-  const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+  const daysOfWeek = [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+  ];
 
   if (loading) {
     return <Loading />;
@@ -122,20 +150,27 @@ export default function Home() {
       {isInstructorUser && (
         <DashboardSection>
           <DashboardTitle>Tus Grupos</DashboardTitle>
-          {daysOfWeek.map(day => (
-            groupedByDay[day] && (
-              <DaySection key={day}>
-                <DayLabel>{day}:</DayLabel>
-                <GroupList>
-                  {groupedByDay[day]
-                    .sort((a, b) => parseTime(a.startTime).localeCompare(parseTime(b.startTime)))
-                    .map((group, index) => (
-                      <GroupItem key={index}>{`${group.name} - ${group.level}`}</GroupItem>
-                    ))}
-                </GroupList>
-              </DaySection>
-            )
-          ))}
+          {daysOfWeek.map(
+            (day) =>
+              groupedByDay[day] && (
+                <DaySection key={day}>
+                  <DayLabel>{day}:</DayLabel>
+                  <GroupList>
+                    {groupedByDay[day]
+                      .sort((a, b) =>
+                        parseTime(a.startTime).localeCompare(
+                          parseTime(b.startTime)
+                        )
+                      )
+                      .map((group, index) => (
+                        <GroupItem
+                          key={index}
+                        >{`${group.name} - ${group.level}`}</GroupItem>
+                      ))}
+                  </GroupList>
+                </DaySection>
+              )
+          )}
         </DashboardSection>
       )}
     </Wrapper>

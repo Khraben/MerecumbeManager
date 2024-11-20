@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaTimes, FaUser, FaPhone, FaEnvelope, FaVenusMars, FaBirthdayCake,FaUsers, FaCalendarAlt, FaExclamationTriangle } from "react-icons/fa";
+import {
+  FaTimes,
+  FaUser,
+  FaPhone,
+  FaEnvelope,
+  FaVenusMars,
+  FaBirthdayCake,
+  FaUsers,
+  FaCalendarAlt,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import { fetchStudentDetails } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 
@@ -12,7 +22,9 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
     if (isOpen) {
       const fetchStudent = async () => {
         try {
-          const { studentData, groupDetails } = await fetchStudentDetails(studentId);
+          const { studentData, groupDetails } = await fetchStudentDetails(
+            studentId
+          );
           setStudent(studentData);
           setGroupDetails(groupDetails);
         } catch (error) {
@@ -34,29 +46,41 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <CloseButton onClick={onClose}><FaTimes /></CloseButton>
+          <CloseButton onClick={onClose}>
+            <FaTimes />
+          </CloseButton>
         </ModalHeader>
         <ModalBody>
           <Title>INFORMACIÓN DE ALUMNO</Title>
           <Card>
             <FaUser />
-            <DetailItem><strong>Nombre:</strong> {student.name}</DetailItem>
+            <DetailItem>
+              <strong>Nombre:</strong> {student.name}
+            </DetailItem>
           </Card>
           <Card>
             <FaPhone />
-            <DetailItem><strong>Celular:</strong> {student.phone}</DetailItem>
+            <DetailItem>
+              <strong>Celular:</strong> {student.phone}
+            </DetailItem>
           </Card>
           <Card>
             <FaEnvelope />
-            <DetailItem><strong>Correo:</strong> {student.email}</DetailItem>
+            <DetailItem>
+              <strong>Correo:</strong> {student.email}
+            </DetailItem>
           </Card>
           <Card>
             <FaVenusMars />
-            <DetailItem><strong>Género:</strong> {student.gender}</DetailItem>
+            <DetailItem>
+              <strong>Género:</strong> {student.gender}
+            </DetailItem>
           </Card>
           <Card>
-          <FaBirthdayCake />
-            <DetailItem><strong>Fecha de Cumpleaños:</strong> {student.birthday}</DetailItem>
+            <FaBirthdayCake />
+            <DetailItem>
+              <strong>Fecha de Cumpleaños:</strong> {student.birthday}
+            </DetailItem>
           </Card>
           <Card>
             <FaExclamationTriangle />
@@ -68,13 +92,18 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           </Card>
           <Card>
             <FaUsers />
-            <DetailItem><strong>Grupos:</strong></DetailItem>
+            <DetailItem>
+              <strong>Grupos:</strong>
+            </DetailItem>
             <GroupList>
               {groupDetails.length === 0 ? (
                 <li>INACTIVO</li>
               ) : (
                 groupDetails.map((group, index) => (
-                  <li key={index} style={{ fontWeight: group.isPrimary ? 'bold' : 'normal' }}>
+                  <li
+                    key={index}
+                    style={{ fontWeight: group.isPrimary ? "bold" : "normal" }}
+                  >
                     {group.name} ({group.level})
                   </li>
                 ))
@@ -83,7 +112,9 @@ const StudentDetails = ({ isOpen, onClose, studentId }) => {
           </Card>
           <Card>
             <FaCalendarAlt />
-            <DetailItem><strong>Fecha de Pago:</strong> {student.paymentDate}</DetailItem>
+            <DetailItem>
+              <strong>Fecha de Pago:</strong> {student.paymentDate}
+            </DetailItem>
           </Card>
         </ModalBody>
       </ModalContainer>
@@ -113,7 +144,7 @@ const ModalContainer = styled.div`
   height: 730px;
   max-width: 90vw;
   max-height: 90vh;
-  overflow-y: auto; 
+  overflow-y: auto;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 1003;

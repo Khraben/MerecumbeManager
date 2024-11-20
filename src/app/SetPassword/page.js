@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getAuth, confirmPasswordReset } from "firebase/auth";
 import styled from "styled-components";
-import { PasswordInput } from '../components/Input';
-import Image from 'next/image';
-import Loading from '../components/Loading';
+import { PasswordInput } from "../components/Input";
+import Image from "next/image";
+import Loading from "../components/Loading";
 
 const SetPassword = () => {
   const [password, setPassword] = useState("");
@@ -15,7 +15,7 @@ const SetPassword = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
-  const oobCode = searchParams.get('oobCode');
+  const oobCode = searchParams.get("oobCode");
   const router = useRouter();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ const SetPassword = () => {
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => {
-        router.push('/');
+        router.push("/");
       }, 2000);
       return () => clearTimeout(timer);
     }
@@ -84,7 +84,7 @@ const SetPassword = () => {
 
   const handleInputChange = (setter) => (e) => {
     setter(e.target.value);
-    setError(null); 
+    setError(null);
   };
 
   if (loading) {
@@ -108,7 +108,9 @@ const SetPassword = () => {
             </ul>
           </PasswordRequirements>
           {success ? (
-            <SuccessMessage>Contraseña restablecida con éxito. Ahora puedes iniciar sesión.</SuccessMessage>
+            <SuccessMessage>
+              Contraseña restablecida con éxito. Ahora puedes iniciar sesión.
+            </SuccessMessage>
           ) : (
             <>
               <PasswordInput
@@ -154,9 +156,9 @@ const Background = styled.div`
   color: #dddddd;
   margin: 0;
   padding: 0;
-  font-family: 'Quicksand', sans-serif;
+  font-family: "Quicksand", sans-serif;
   overflow: hidden;
-  position: fixed; 
+  position: fixed;
   top: 0;
   left: 0;
 `;

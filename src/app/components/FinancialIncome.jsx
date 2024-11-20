@@ -1,13 +1,13 @@
-import styled from 'styled-components';
-import Loading from "./Loading"; 
+import styled from "styled-components";
+import Loading from "./Loading";
 import DatePicker from "react-datepicker";
-import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaRegCalendarAlt, FaTimes } from 'react-icons/fa';
-import { es } from "date-fns/locale/es"; 
+import React, { useState, useEffect } from "react";
+import { FaCalendarAlt, FaRegCalendarAlt, FaTimes } from "react-icons/fa";
+import { es } from "date-fns/locale/es";
 import { fetchReceipts } from "../firebase/firebaseFirestoreService";
 
 const FinancialIncome = ({ onBack }) => {
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(null);
   const [isEndDateDisabled, setIsEndDateDisabled] = useState(false);
@@ -20,7 +20,7 @@ const FinancialIncome = ({ onBack }) => {
   const [paymentMethods, setPaymentMethods] = useState({
     SINPE: 0,
     Efectivo: 0,
-    Tarjeta: 0
+    Tarjeta: 0,
   });
 
   useEffect(() => {
@@ -41,17 +41,33 @@ const FinancialIncome = ({ onBack }) => {
     let filtered = payments;
 
     if (startDate) {
-      filtered = filtered.filter(payment => {
-        const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
+      filtered = filtered.filter((payment) => {
+        const paymentDate =
+          payment.paymentDate && payment.paymentDate.toDate
+            ? payment.paymentDate.toDate()
+            : new Date(payment.paymentDate);
         const startDateWithoutTime = new Date(startDate).setHours(0, 0, 0, 0);
-        const paymentDateWithoutTime = new Date(paymentDate).setHours(0, 0, 0, 0);
-        return paymentDateWithoutTime >= startDateWithoutTime && (!endDate || paymentDateWithoutTime <= new Date(endDate).setHours(23, 59, 59, 999));
+        const paymentDateWithoutTime = new Date(paymentDate).setHours(
+          0,
+          0,
+          0,
+          0
+        );
+        return (
+          paymentDateWithoutTime >= startDateWithoutTime &&
+          (!endDate ||
+            paymentDateWithoutTime <=
+              new Date(endDate).setHours(23, 59, 59, 999))
+        );
       });
     } else if (monthFilter) {
       const filterMonth = monthFilter.getMonth() + 1;
       const filterYear = monthFilter.getFullYear();
-      filtered = filtered.filter(payment => {
-        const paymentDate = payment.paymentDate && payment.paymentDate.toDate ? payment.paymentDate.toDate() : new Date(payment.paymentDate);
+      filtered = filtered.filter((payment) => {
+        const paymentDate =
+          payment.paymentDate && payment.paymentDate.toDate
+            ? payment.paymentDate.toDate()
+            : new Date(payment.paymentDate);
         const month = paymentDate.getMonth() + 1;
         const year = paymentDate.getFullYear();
         return month === filterMonth && year === filterYear;
@@ -59,25 +75,25 @@ const FinancialIncome = ({ onBack }) => {
     }
 
     const mensualidadTotal = filtered
-      .filter(payment => payment.concept === "Mensualidad")
+      .filter((payment) => payment.concept === "Mensualidad")
       .reduce((sum, payment) => {
-        const amountString = payment.amount.replace(/[₡,.]/g, '');
+        const amountString = payment.amount.replace(/[₡,.]/g, "");
         const amount = parseFloat(amountString);
         return sum + amount;
       }, 0);
 
     const tallerTotal = filtered
-      .filter(payment => payment.concept === "Taller")
+      .filter((payment) => payment.concept === "Taller")
       .reduce((sum, payment) => {
-        const amountString = payment.amount.replace(/[₡,.]/g, '');
+        const amountString = payment.amount.replace(/[₡,.]/g, "");
         const amount = parseFloat(amountString);
         return sum + amount;
       }, 0);
 
     const clasePrivadaTotal = filtered
-      .filter(payment => payment.concept === "Clases Privadas")
+      .filter((payment) => payment.concept === "Clases Privadas")
       .reduce((sum, payment) => {
-        const amountString = payment.amount.replace(/[₡,.]/g, '');
+        const amountString = payment.amount.replace(/[₡,.]/g, "");
         const amount = parseFloat(amountString);
         return sum + amount;
       }, 0);
@@ -88,22 +104,24 @@ const FinancialIncome = ({ onBack }) => {
     setClasePrivadaTotal(clasePrivadaTotal);
     setTotalAmount(total);
 
-    const methods = filtered.reduce((acc, payment) => {
-      const method = payment.paymentMethod || 'Desconocido';
-      if (!acc[method]) {
-        acc[method] = 0;
-      }
-      const amountString = payment.amount.replace(/[₡,.]/g, '');
-      const amount = parseFloat(amountString);
-      acc[method] += amount;
-      return acc;
-    }, { SINPE: 0, Efectivo: 0, Tarjeta: 0 });
+    const methods = filtered.reduce(
+      (acc, payment) => {
+        const method = payment.paymentMethod || "Desconocido";
+        if (!acc[method]) {
+          acc[method] = 0;
+        }
+        const amountString = payment.amount.replace(/[₡,.]/g, "");
+        const amount = parseFloat(amountString);
+        acc[method] += amount;
+        return acc;
+      },
+      { SINPE: 0, Efectivo: 0, Tarjeta: 0 }
+    );
     setPaymentMethods(methods);
-
   }, [startDate, endDate, monthFilter, payments]);
 
   const formatAmount = (value) => {
-    return `₡${value.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+    return `₡${value.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
   };
 
   const handleStartDateChange = (date) => {
@@ -151,7 +169,11 @@ const FinancialIncome = ({ onBack }) => {
             locale={es}
             placeholderText="Filtro por mes"
           />
-          {monthFilter && <ClearButton onClick={handleClearMonthFilter}><FaTimes /></ClearButton>}
+          {monthFilter && (
+            <ClearButton onClick={handleClearMonthFilter}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <MonthCalendarIcon />
         </SearchContainer>
         <SearchContainer>
@@ -162,7 +184,11 @@ const FinancialIncome = ({ onBack }) => {
             locale={es}
             placeholderText="Fecha de inicio"
           />
-          {startDate && <ClearButton onClick={handleClearStartDate}><FaTimes /></ClearButton>}
+          {startDate && (
+            <ClearButton onClick={handleClearStartDate}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <CalendarIcon />
         </SearchContainer>
         {startDate && (
@@ -176,64 +202,76 @@ const FinancialIncome = ({ onBack }) => {
               disabled={isEndDateDisabled}
               minDate={startDate}
             />
-            {endDate && <ClearButton onClick={handleClearEndDate}><FaTimes /></ClearButton>}
+            {endDate && (
+              <ClearButton onClick={handleClearEndDate}>
+                <FaTimes />
+              </ClearButton>
+            )}
             <CalendarIcon />
           </SearchContainer>
         )}
       </FilterSection>
       <TableContainer>
-      {totalAmount === 0 ? (
-          <NoDataMessage>No hay ingresos registrados en el sistema</NoDataMessage>
+        {totalAmount === 0 ? (
+          <NoDataMessage>
+            No hay ingresos registrados en el sistema
+          </NoDataMessage>
         ) : (
-        <>
-        <PaymentTable>
-          <thead>
-            <tr>
-              <th>Concepto</th>
-              <th>Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Mensualidad</td>
-              <td>{formatAmount(Number(mensualidadTotal).toFixed(0))}</td>
-            </tr>
-            <tr>
-              <td>Taller</td>
-              <td>{formatAmount(Number(tallerTotal).toFixed(0))}</td>
-            </tr>
-            <tr>
-              <td>Clase Privada</td>
-              <td>{formatAmount(Number(clasePrivadaTotal).toFixed(0))}</td>
-            </tr>
-          </tbody>
-        </PaymentTable>
-        <a>||</a>
-        <PaymentTable>
-          <thead>
-            <tr>
-              <th>Método de Pago</th>
-              <th>Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {['SINPE', 'Efectivo', 'Tarjeta'].map(method => (
-              <tr key={method}>
-                <td>{method}</td>
-                <td>{formatAmount(Number(paymentMethods[method]).toFixed(0))}</td>
-              </tr>
-            ))}
-          </tbody>
-        </PaymentTable>
-        </>
+          <>
+            <PaymentTable>
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mensualidad</td>
+                  <td>{formatAmount(Number(mensualidadTotal).toFixed(0))}</td>
+                </tr>
+                <tr>
+                  <td>Taller</td>
+                  <td>{formatAmount(Number(tallerTotal).toFixed(0))}</td>
+                </tr>
+                <tr>
+                  <td>Clase Privada</td>
+                  <td>{formatAmount(Number(clasePrivadaTotal).toFixed(0))}</td>
+                </tr>
+              </tbody>
+            </PaymentTable>
+            <a>||</a>
+            <PaymentTable>
+              <thead>
+                <tr>
+                  <th>Método de Pago</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {["SINPE", "Efectivo", "Tarjeta"].map((method) => (
+                  <tr key={method}>
+                    <td>{method}</td>
+                    <td>
+                      {formatAmount(Number(paymentMethods[method]).toFixed(0))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </PaymentTable>
+          </>
         )}
       </TableContainer>
       <TableContainer>
-      <TotalAmountRow>
-          <td colSpan="2"><strong>Total: {formatAmount(Number(totalAmount).toFixed(0))}</strong></td>
+        <TotalAmountRow>
+          <td colSpan="2">
+            <strong>
+              Total: {formatAmount(Number(totalAmount).toFixed(0))}
+            </strong>
+          </td>
         </TotalAmountRow>
       </TableContainer>
-      <BackButton onClick={onBack}>Volver</BackButton>   
+      <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
 };
@@ -321,7 +359,7 @@ const StyledDatePicker = styled(DatePicker)`
   border: 2px solid #0b0f8b;
   border-radius: 5px;
   background-color: transparent;
-  position: relative; 
+  position: relative;
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
@@ -347,26 +385,26 @@ const SearchContainer = styled.div`
 
 const CalendarIcon = styled(FaCalendarAlt)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;
 
 const MonthCalendarIcon = styled(FaRegCalendarAlt)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;
@@ -381,7 +419,7 @@ const TableContainer = styled.div`
   background-color: rgba(221, 221, 221, 1);
   margin: 0 auto;
 
-  a{
+  a {
     color: #ddd;
     user-select: none;
   }
@@ -404,9 +442,10 @@ const PaymentTable = styled.table`
     background-color: #0b0f8b;
     color: #dddddd;
   }
-  th, td {
+  th,
+  td {
     padding: 16px 20px;
-    text-align: center; 
+    text-align: center;
     vertical-align: middle;
     border-bottom: 1px solid #ddd;
   }
@@ -424,13 +463,15 @@ const PaymentTable = styled.table`
     background-color: rgba(0, 0, 0, 0.05);
   }
   @media (max-width: 768px) {
-    th, td {
+    th,
+    td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
   @media (max-width: 480px) {
-    th, td {
+    th,
+    td {
       font-size: 10px;
       padding: 10px 12px;
     }

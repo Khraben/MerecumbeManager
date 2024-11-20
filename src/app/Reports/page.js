@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React, { useState } from "react";
+import styled from "styled-components";
 import PaymentHistory from "../components/PaymentHistory";
 import FinancialIncome from "../components/FinancialIncome";
 import PendingPayments from "../components/PendingPayments";
@@ -11,7 +11,7 @@ const Reports = () => {
   const [showFinancialIncome, setShowFinancialIncome] = useState(false);
   const [showPendingPayments, setShowPendingPayments] = useState(false);
   const [showAttendanceReport, setShowAttendanceReport] = useState(false);
-  
+
   const handleShowPaymentHistory = () => {
     setShowPaymentHistory(true);
   };
@@ -20,9 +20,9 @@ const Reports = () => {
     setShowPendingPayments(true);
   };
 
-  const handleshowFinancialIncome= ()=> {
+  const handleshowFinancialIncome = () => {
     setShowFinancialIncome(true);
-  }
+  };
 
   const handleShowAttendanceReport = () => {
     setShowAttendanceReport(true);
@@ -39,20 +39,20 @@ const Reports = () => {
     <Wrapper>
       {showPaymentHistory ? (
         <PaymentHistory onBack={handleBackToReports} />
-      ): showFinancialIncome?(
+      ) : showFinancialIncome ? (
         <FinancialIncome onBack={handleBackToReports} />
-      ): showPendingPayments?(
+      ) : showPendingPayments ? (
         <PendingPayments onBack={handleBackToReports} />
-        ): showAttendanceReport?(
-          <AttendanceReport onBack={handleBackToReports} />
-        )  :(
+      ) : showAttendanceReport ? (
+        <AttendanceReport onBack={handleBackToReports} />
+      ) : (
         <>
           <Title>Reportes</Title>
           <ReportTypeSection onClick={handleShowPaymentHistory}>
             <Subtitle>Historial de Pagos</Subtitle>
             <p>Genera un reporte detallado de los pagos.</p>
           </ReportTypeSection>
-          
+
           <ReportTypeSection onClick={handleshowFinancialIncome}>
             <Subtitle>Informe de Ingresos </Subtitle>
             <p>Genera un reporte de los ingresos.</p>
@@ -60,14 +60,15 @@ const Reports = () => {
 
           <ReportTypeSection onClick={handleShowPendingPayments}>
             <Subtitle>Pagos Pendientes</Subtitle>
-            <p>Genera un reporte detallado de los alumnos con pagos pendientes.</p>
+            <p>
+              Genera un reporte detallado de los alumnos con pagos pendientes.
+            </p>
           </ReportTypeSection>
 
           <ReportTypeSection onClick={handleShowAttendanceReport}>
             <Subtitle>Informe de asistencias </Subtitle>
             <p>Genera un reporte de las asistencias.</p>
           </ReportTypeSection>
-
         </>
       )}
     </Wrapper>
@@ -110,7 +111,7 @@ const ReportTypeSection = styled.section`
 
   p {
     text-align: center;
-    word-wrap: break-word; 
+    word-wrap: break-word;
   }
 
   &:hover {
