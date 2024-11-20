@@ -1,9 +1,9 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useState, useEffect } from "react";
 import { FaUsers, FaUserGraduate, FaFileInvoiceDollar, FaChartBar } from "react-icons/fa";
-import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents } from "./firebase/firebaseFirestoreService";
+import { fetchActiveStudents, fetchReceiptsByMonth, fetchScholarshipStudents, fetchGroupsByInstructor, fetchInstructorByEmail } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./context/AuthContext"; 
 
@@ -11,8 +11,9 @@ export default function Home() {
   const [activeStudentsCount, setActiveStudentsCount] = useState(0);
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
+  const [instructorGroups, setInstructorGroups] = useState([]);
   const router = useRouter();
-  const { isInstructorUser } = useAuth();
+  const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,14 +36,42 @@ export default function Home() {
 
       const pendingPayments = nonScholarshipStudents.length - paymentsThisMonth.length;
       setPendingPaymentsCount(pendingPayments);
+
+      if (isInstructorUser) {
+        const instructor = await fetchInstructorByEmail(user.email);
+        const groups = await fetchGroupsByInstructor(instructor.id);
+        setInstructorGroups(groups);
+      }
     };
 
     fetchData();
-  }, []);
+  }, [isInstructorUser, user.email]);
 
   const handleLinkClick = (path) => {
     router.push(path);
   };
+
+  const parseTime = (timeStr) => {
+    const [time, modifier] = timeStr.split(/(am|pm)/);
+    let [hours, minutes] = time.trim().split(':');
+    if (hours === '12') {
+      hours = '00';
+    }
+    if (modifier === 'pm' && hours !== '12') {
+      hours = parseInt(hours, 10) + 12;
+    }
+    return `${String(hours).padStart(2, '0')}:${minutes}`;
+  };
+
+  const groupedByDay = instructorGroups.reduce((acc, group) => {
+    if (!acc[group.day]) {
+      acc[group.day] = [];
+    }
+    acc[group.day].push(group);
+    return acc;
+  }, {});
+
+  const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
   return (
     <Wrapper>
@@ -80,6 +109,25 @@ export default function Home() {
             <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
             <DashboardValue>{pendingPaymentsCount}</DashboardValue>
           </DashboardItem>
+        </DashboardSection>
+      )}
+      {isInstructorUser && (
+        <DashboardSection>
+          <DashboardTitle>Tus Grupos</DashboardTitle>
+          {daysOfWeek.map(day => (
+            groupedByDay[day] && (
+              <DaySection key={day}>
+                <DayLabel>{day}:</DayLabel>
+                <GroupList>
+                  {groupedByDay[day]
+                    .sort((a, b) => parseTime(a.startTime).localeCompare(parseTime(b.startTime)))
+                    .map((group, index) => (
+                      <GroupItem key={index}>{`${group.name} - ${group.level}`}</GroupItem>
+                    ))}
+                </GroupList>
+              </DaySection>
+            )
+          ))}
         </DashboardSection>
       )}
     </Wrapper>
@@ -216,5 +264,37 @@ const DashboardValue = styled.span`
 
   @media (max-width: 480px) {
     font-size: 16px;
+  }
+`;
+
+const DaySection = styled.div`
+  margin-bottom: 20px;
+`;
+
+const DayLabel = styled.span`
+  font-size: 18px;
+  color: #0b0f8b;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 10px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const GroupList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const GroupItem = styled.li`
+  font-size: 16px;
+  color: #333;
+  margin: 5px 0;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
   }
 `;

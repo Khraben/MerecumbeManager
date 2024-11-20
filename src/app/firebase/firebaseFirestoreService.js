@@ -346,6 +346,21 @@ export const fetchGroupsByDay = async (day) => {
   return groupsData;
 };
 
+export const fetchGroupsByInstructor = async (instructorId) => {
+  try {
+    const groupsQuery = query(collection(db, "groups"), where("instructor", "==", instructorId));
+    const querySnapshot = await getDocs(groupsQuery);
+    const groupsData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    return groupsData;
+  } catch (e) {
+    console.error("Error fetching groups by instructor: ", e);
+    throw e;
+  }
+};
+
 export const fetchGroupDetails = async (groupId) => {
   const groupDoc = await getDoc(doc(db, "groups", groupId));
   if (!groupDoc.exists()) {
