@@ -1,4 +1,17 @@
-import { collection, getDocs, getDoc, setDoc, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  setDoc,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
 //ADD
@@ -44,21 +57,21 @@ export const addSecretary = async (secretary) => {
 
 export const addGroup = async (newGroup) => {
   await addDoc(collection(db, "groups"), newGroup);
- };
+};
 
- export const addReceipt = async (receiptData) => {
-  const receiptsCollection = collection(db, 'receipts');
+export const addReceipt = async (receiptData) => {
+  const receiptsCollection = collection(db, "receipts");
   await addDoc(receiptsCollection, receiptData);
 
-  const metadataDoc = doc(db, 'metadata', 'receiptNumber');
+  const metadataDoc = doc(db, "metadata", "receiptNumber");
   const lastReceiptNumber = receiptData.receiptNumber;
   await setDoc(metadataDoc, { lastReceiptNumber });
 };
 
 export const addAttendance = async (date, groupId, studentId) => {
   try {
-    await addDoc(collection(db, 'attendance'), {
-      date: Timestamp.fromDate(date), 
+    await addDoc(collection(db, "attendance"), {
+      date: Timestamp.fromDate(date),
       groupId: groupId,
       studentId: studentId,
     });
@@ -67,9 +80,17 @@ export const addAttendance = async (date, groupId, studentId) => {
   }
 };
 
-export const addStudentGroupRelation = async (studentId, groupId, isPrimary = false) => {
+export const addStudentGroupRelation = async (
+  studentId,
+  groupId,
+  isPrimary = false
+) => {
   try {
-    await addDoc(collection(db, "studentGroups"), { studentId, groupId, isPrimary });
+    await addDoc(collection(db, "studentGroups"), {
+      studentId,
+      groupId,
+      isPrimary,
+    });
   } catch (e) {
     console.error("Error adding student-group relation: ", e);
     throw e;
@@ -79,8 +100,16 @@ export const addStudentGroupRelation = async (studentId, groupId, isPrimary = fa
 export const addScholarshipStudent = async (studentId) => {
   try {
     const currentDate = new Date();
-    const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
-    await addDoc(collection(db, "scholarshipStudents"), { studentId, dateAdded: formattedDate });
+    const formattedDate = `${currentDate
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${(currentDate.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}/${currentDate.getFullYear()}`;
+    await addDoc(collection(db, "scholarshipStudents"), {
+      studentId,
+      dateAdded: formattedDate,
+    });
     console.log("Scholarship student added with ID: ", studentId);
   } catch (e) {
     console.error("Error adding scholarship student: ", e);
@@ -88,10 +117,12 @@ export const addScholarshipStudent = async (studentId) => {
   }
 };
 
- //FETCH
- export const fetchStudents = async () => {
-  const querySnapshot = await getDocs(query(collection(db, "students"), orderBy("name")));
-  return querySnapshot.docs.map(doc => ({
+//FETCH
+export const fetchStudents = async () => {
+  const querySnapshot = await getDocs(
+    query(collection(db, "students"), orderBy("name"))
+  );
+  return querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
@@ -104,7 +135,10 @@ export const fetchStudentDetails = async (studentId) => {
   }
 
   const studentData = studentDoc.data();
-  const q = query(collection(db, "studentGroups"), where("studentId", "==", studentId));
+  const q = query(
+    collection(db, "studentGroups"),
+    where("studentId", "==", studentId)
+  );
   const querySnapshot = await getDocs(q);
 
   const groupDetailsPromises = querySnapshot.docs.map(async (docSnapshot) => {
@@ -113,7 +147,9 @@ export const fetchStudentDetails = async (studentId) => {
       return { name: "INACTIVO", level: "", isPrimary };
     }
     const groupDoc = await getDoc(doc(db, "groups", groupId));
-    return groupDoc.exists() ? { name: groupDoc.data().name, level: groupDoc.data().level, isPrimary } : { name: "Desconocido", level: "", isPrimary };
+    return groupDoc.exists()
+      ? { name: groupDoc.data().name, level: groupDoc.data().level, isPrimary }
+      : { name: "Desconocido", level: "", isPrimary };
   });
 
   const groupDetails = await Promise.all(groupDetailsPromises);
@@ -136,11 +172,11 @@ export const fetchStudentById = async (studentId) => {
 };
 
 export const fetchStudentEmail = async (studentId) => {
-  const studentRef = doc(db, 'students', studentId); 
+  const studentRef = doc(db, "students", studentId);
   const studentSnap = await getDoc(studentRef);
 
   if (studentSnap.exists()) {
-    return studentSnap.data().email; 
+    return studentSnap.data().email;
   } else {
     console.log("No se encontró el alumno con el ID proporcionado");
     return null;
@@ -152,9 +188,9 @@ export const fetchStudentsByGroup = async (groupId) => {
     const studentsRef = collection(db, "students");
     const q = query(studentsRef, where("groupId", "==", groupId));
     const querySnapshot = await getDocs(q);
-    const students = querySnapshot.docs.map(doc => ({
+    const students = querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
     return students;
   } catch (error) {
@@ -165,37 +201,39 @@ export const fetchStudentsByGroup = async (groupId) => {
 
 export const fetchActiveStudents = async () => {
   const studentGroupsSnapshot = await getDocs(collection(db, "studentGroups"));
-  const activeStudentIds = new Set(studentGroupsSnapshot.docs.map(doc => doc.data().studentId));
+  const activeStudentIds = new Set(
+    studentGroupsSnapshot.docs.map((doc) => doc.data().studentId)
+  );
 
   const studentsSnapshot = await getDocs(collection(db, "students"));
   const activeStudents = studentsSnapshot.docs
-    .filter(doc => activeStudentIds.has(doc.id))
-    .map(doc => ({
+    .filter((doc) => activeStudentIds.has(doc.id))
+    .map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
 
   return activeStudents;
 };
 
- export const fetchInstructors = async () => {
+export const fetchInstructors = async () => {
   const querySnapshot = await getDocs(collection(db, "instructors"));
-  const instructorsData = querySnapshot.docs.map(doc => ({
+  const instructorsData = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     name: doc.data().name,
     phone: doc.data().phone,
     user: doc.data().user,
-    email: doc.data().email
+    email: doc.data().email,
   }));
   return instructorsData;
 };
 
 export const fetchInstructorById = async (instructorId) => {
   try {
-    const instructorRef = doc(db, "instructors", instructorId); 
-    const instructorSnap = await getDoc(instructorRef); 
+    const instructorRef = doc(db, "instructors", instructorId);
+    const instructorSnap = await getDoc(instructorRef);
     if (instructorSnap.exists()) {
-      return instructorSnap.data(); 
+      return instructorSnap.data();
     } else {
       throw new Error("No se encontró el instructor!");
     }
@@ -206,10 +244,16 @@ export const fetchInstructorById = async (instructorId) => {
 };
 
 export const fetchInstructorByEmail = async (email) => {
-  const instructorsQuery = query(collection(db, "instructors"), where("email", "==", email));
+  const instructorsQuery = query(
+    collection(db, "instructors"),
+    where("email", "==", email)
+  );
   const instructorsSnapshot = await getDocs(instructorsQuery);
   if (!instructorsSnapshot.empty) {
-    return { id: instructorsSnapshot.docs[0].id, ...instructorsSnapshot.docs[0].data() };
+    return {
+      id: instructorsSnapshot.docs[0].id,
+      ...instructorsSnapshot.docs[0].data(),
+    };
   } else {
     throw new Error("Instructor no encontrado");
   }
@@ -217,11 +261,11 @@ export const fetchInstructorByEmail = async (email) => {
 
 export const fetchSecretaries = async () => {
   const querySnapshot = await getDocs(collection(db, "secretaries"));
-  const secretariesData = querySnapshot.docs.map(doc => ({
+  const secretariesData = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     name: doc.data().name,
     phone: doc.data().phone,
-    username: doc.data().username
+    username: doc.data().username,
   }));
   return secretariesData;
 };
@@ -243,7 +287,10 @@ export const fetchSecretaryById = async (secretaryId) => {
 
 export const fetchCountGroupsByInstructor = async (instructorId) => {
   try {
-    const groupsQuery = query(collection(db, "groups"), where("instructor", "==", instructorId));
+    const groupsQuery = query(
+      collection(db, "groups"),
+      where("instructor", "==", instructorId)
+    );
     const querySnapshot = await getDocs(groupsQuery);
     return querySnapshot.size;
   } catch (e) {
@@ -255,25 +302,43 @@ export const fetchCountGroupsByInstructor = async (instructorId) => {
 export const fetchGroups = async () => {
   const instructorsSnapshot = await getDocs(collection(db, "instructors"));
   const instructorsMap = {};
-  instructorsSnapshot.docs.forEach(doc => {
+  instructorsSnapshot.docs.forEach((doc) => {
     instructorsMap[doc.id] = doc.data().name;
   });
 
   const groupsSnapshot = await getDocs(collection(db, "groups"));
-  const groupsData = groupsSnapshot.docs.map(doc => {
+  const groupsData = groupsSnapshot.docs.map((doc) => {
     const group = doc.data();
     return {
       id: doc.id,
       ...group,
-      instructor: instructorsMap[group.instructor] || "Instructor no encontrado"
+      instructor:
+        instructorsMap[group.instructor] || "Instructor no encontrado",
     };
   });
 
   groupsData.sort((a, b) => {
-    const levelsOrder = ["Nivel I", "Nivel II-A", "Nivel II-B", "Nivel III-1", "Nivel III-2", "Nivel III-3", "Nivel IV", "Taller"];
-    const daysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const levelsOrder = [
+      "Nivel I",
+      "Nivel II-A",
+      "Nivel II-B",
+      "Nivel III-1",
+      "Nivel III-2",
+      "Nivel III-3",
+      "Nivel IV",
+      "Taller",
+    ];
+    const daysOrder = [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
 
-    const levelComparison = levelsOrder.indexOf(a.level) - levelsOrder.indexOf(b.level);
+    const levelComparison =
+      levelsOrder.indexOf(a.level) - levelsOrder.indexOf(b.level);
     if (levelComparison !== 0) return levelComparison;
 
     const dayComparison = daysOrder.indexOf(a.day) - daysOrder.indexOf(b.day);
@@ -285,10 +350,12 @@ export const fetchGroups = async () => {
       let hours24 = parseInt(hours, 10);
       if (period === "PM" && hours24 !== 12) hours24 += 12;
       if (period === "AM" && hours24 === 12) hours24 = 0;
-      return `${hours24.toString().padStart(2, '0')}:${minutes}`;
+      return `${hours24.toString().padStart(2, "0")}:${minutes}`;
     };
 
-    const timeComparison = convertTo24Hour(a.startTime).localeCompare(convertTo24Hour(b.startTime));
+    const timeComparison = convertTo24Hour(a.startTime).localeCompare(
+      convertTo24Hour(b.startTime)
+    );
     return timeComparison;
   });
 
@@ -313,7 +380,9 @@ export const fetchGroupById = async (groupId) => {
 export const fetchGroupsByIds = async (groupIds) => {
   const groupPromises = groupIds.map(async (groupId) => {
     const groupDoc = await getDoc(doc(db, "groups", groupId));
-    return groupDoc.exists() ? { id: groupId, ...groupDoc.data() } : { id: groupId, name: "Grupo no encontrado", level: "" };
+    return groupDoc.exists()
+      ? { id: groupId, ...groupDoc.data() }
+      : { id: groupId, name: "Grupo no encontrado", level: "" };
   });
   const groupData = await Promise.all(groupPromises);
   return groupData;
@@ -322,8 +391,10 @@ export const fetchGroupsByIds = async (groupIds) => {
 export const fetchGroupsByDay = async (day) => {
   const querySnapshot = await getDocs(collection(db, "groups"));
   const groupsData = querySnapshot.docs
-    .map(doc => doc.data())
-    .filter(group => group.day && group.day.toLowerCase() === day.toLowerCase());
+    .map((doc) => doc.data())
+    .filter(
+      (group) => group.day && group.day.toLowerCase() === day.toLowerCase()
+    );
 
   groupsData.sort((a, b) => {
     const convertTo24HourFormat = (time) => {
@@ -335,7 +406,7 @@ export const fetchGroupsByDay = async (day) => {
       if (period.toLowerCase() === "am" && hours === "12") {
         hours24 = 0;
       }
-      return `${hours24.toString().padStart(2, '0')}:${minutes}`;
+      return `${hours24.toString().padStart(2, "0")}:${minutes}`;
     };
 
     const startTimeA = convertTo24HourFormat(a.startTime);
@@ -348,11 +419,14 @@ export const fetchGroupsByDay = async (day) => {
 
 export const fetchGroupsByInstructor = async (instructorId) => {
   try {
-    const groupsQuery = query(collection(db, "groups"), where("instructor", "==", instructorId));
+    const groupsQuery = query(
+      collection(db, "groups"),
+      where("instructor", "==", instructorId)
+    );
     const querySnapshot = await getDocs(groupsQuery);
-    const groupsData = querySnapshot.docs.map(doc => ({
+    const groupsData = querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
     return groupsData;
   } catch (e) {
@@ -368,8 +442,12 @@ export const fetchGroupDetails = async (groupId) => {
   }
 
   const groupData = groupDoc.data();
-  const instructorDoc = await getDoc(doc(db, "instructors", groupData.instructor));
-  groupData.instructor = instructorDoc.exists() ? instructorDoc.data().name : "Instructor no encontrado";
+  const instructorDoc = await getDoc(
+    doc(db, "instructors", groupData.instructor)
+  );
+  groupData.instructor = instructorDoc.exists()
+    ? instructorDoc.data().name
+    : "Instructor no encontrado";
 
   const studentIds = await fetchStudentGroupsByGroupId(groupId);
   const studentPromises = studentIds.map(async (studentId) => {
@@ -378,30 +456,42 @@ export const fetchGroupDetails = async (groupId) => {
 
     const studentData = studentDoc.data();
     const studentGroups = await fetchStudentGroupsByStudentId(studentId);
-    const isPrimaryGroup = (await getDocs(query(collection(db, "studentGroups"), where("studentId", "==", studentId), where("groupId", "==", groupId), where("isPrimary", "==", true)))).size > 0;
+    const isPrimaryGroup =
+      (
+        await getDocs(
+          query(
+            collection(db, "studentGroups"),
+            where("studentId", "==", studentId),
+            where("groupId", "==", groupId),
+            where("isPrimary", "==", true)
+          )
+        )
+      ).size > 0;
 
     return {
       ...studentData,
       id: studentId,
       groups: studentGroups,
-      isPrimaryGroup: isPrimaryGroup
+      isPrimaryGroup: isPrimaryGroup,
     };
   });
 
-  const studentsData = (await Promise.all(studentPromises)).filter(student => student !== null);
+  const studentsData = (await Promise.all(studentPromises)).filter(
+    (student) => student !== null
+  );
   studentsData.sort((a, b) => a.name.localeCompare(b.name));
 
   return { groupData, studentsData };
 };
 
 export const fetchExistingGroups = async () => {
- const querySnapshot = await getDocs(collection(db, "groups"));
- const groupsData = querySnapshot.docs.map(doc => doc.data());
- return groupsData;
+  const querySnapshot = await getDocs(collection(db, "groups"));
+  const groupsData = querySnapshot.docs.map((doc) => doc.data());
+  return groupsData;
 };
 
 export const fetchLastReceiptNumber = async () => {
-  const metadataDoc = doc(db, 'metadata', 'receiptNumber');
+  const metadataDoc = doc(db, "metadata", "receiptNumber");
   const metadataSnapshot = await getDoc(metadataDoc);
 
   if (metadataSnapshot.exists()) {
@@ -418,12 +508,12 @@ export const fetchReceipts = async () => {
     const receiptsCollection = collection(db, "receipts");
     const receiptsQuery = query(receiptsCollection, orderBy("paymentDate"));
     const querySnapshot = await getDocs(receiptsQuery);
-    
-    const receiptsData = querySnapshot.docs.map(doc => ({
+
+    const receiptsData = querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
-    
+
     return receiptsData;
   } catch (e) {
     console.error("Error fetching receipts: ", e);
@@ -433,16 +523,16 @@ export const fetchReceipts = async () => {
 
 export const fetchReceiptsByMonth = async (monthYear) => {
   try {
-    const receiptsRef = collection(db, 'receipts');
+    const receiptsRef = collection(db, "receipts");
     const receiptsQuery = query(
       receiptsRef,
-      where('concept', '==', 'Mensualidad'),
-      where('specification', '==', monthYear)
+      where("concept", "==", "Mensualidad"),
+      where("specification", "==", monthYear)
     );
     const querySnapshot = await getDocs(receiptsQuery);
 
     const receipts = [];
-    querySnapshot.forEach(doc => {
+    querySnapshot.forEach((doc) => {
       receipts.push({ id: doc.id, ...doc.data() });
     });
 
@@ -461,7 +551,7 @@ export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
       where("concept", "==", concept)
     );
     const querySnapshot = await getDocs(receiptsQuery);
-    return querySnapshot.docs.map(doc => doc.data());
+    return querySnapshot.docs.map((doc) => doc.data());
   } catch (e) {
     console.error("Error fetching receipts by student and concept: ", e);
     throw e;
@@ -470,16 +560,16 @@ export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
 
 export const fetchReceiptsByStudentAndMonth = async (studentId, monthYear) => {
   try {
-    const receiptsRef = collection(db, 'receipts');
+    const receiptsRef = collection(db, "receipts");
     const receiptsQuery = query(
       receiptsRef,
-      where('concept', '==', 'Mensualidad'),
+      where("concept", "==", "Mensualidad"),
       where("studentId", "==", studentId),
-      where('specification', '==', monthYear)
+      where("specification", "==", monthYear)
     );
     const querySnapshot = await getDocs(receiptsQuery);
     const receipts = [];
-    querySnapshot.forEach(doc => {
+    querySnapshot.forEach((doc) => {
       receipts.push({ id: doc.id, ...doc.data() });
     });
     return receipts;
@@ -491,12 +581,15 @@ export const fetchReceiptsByStudentAndMonth = async (studentId, monthYear) => {
 
 export const fetchReceiptByNumber = async (receiptNumber) => {
   try {
-    const receiptsQuery = query(collection(db, "receipts"), where("receiptNumber", "==", receiptNumber));
+    const receiptsQuery = query(
+      collection(db, "receipts"),
+      where("receiptNumber", "==", receiptNumber)
+    );
     const querySnapshot = await getDocs(receiptsQuery);
     if (!querySnapshot.empty) {
       return querySnapshot.docs[0].data();
     } else {
-      throw new Error('Receipt not found');
+      throw new Error("Receipt not found");
     }
   } catch (e) {
     console.error("Error fetching receipt by number: ", e);
@@ -508,12 +601,12 @@ export const fetchAttendances = async () => {
   try {
     const attendancesCollection = collection(db, "attendance");
     const querySnapshot = await getDocs(attendancesCollection);
-    
-    const attendancesData = querySnapshot.docs.map(doc => ({
+
+    const attendancesData = querySnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
-    
+
     return attendancesData;
   } catch (e) {
     console.error("Error fetching attendances: ", e);
@@ -523,7 +616,12 @@ export const fetchAttendances = async () => {
 
 export const fetchSpecificAttendance = async (groupId, studentId, date) => {
   try {
-    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId), where('studentId', '==', studentId), where('date', '==', Timestamp.fromDate(date)));
+    const q = query(
+      collection(db, "attendance"),
+      where("groupId", "==", groupId),
+      where("studentId", "==", studentId),
+      where("date", "==", Timestamp.fromDate(date))
+    );
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
       return null;
@@ -537,7 +635,10 @@ export const fetchSpecificAttendance = async (groupId, studentId, date) => {
 
 export const fetchAttendancesByGroup = async (groupId) => {
   try {
-    const q = query(collection(db, 'attendance'), where('groupId', '==', groupId));
+    const q = query(
+      collection(db, "attendance"),
+      where("groupId", "==", groupId)
+    );
     const querySnapshot = await getDocs(q);
     const attendances = {};
     querySnapshot.forEach((doc) => {
@@ -545,7 +646,7 @@ export const fetchAttendancesByGroup = async (groupId) => {
       attendances[doc.id] = {
         groupId: data.groupId,
         studentId: data.studentId,
-        date: data.date.toDate() 
+        date: data.date.toDate(),
       };
     });
     return attendances;
@@ -555,7 +656,10 @@ export const fetchAttendancesByGroup = async (groupId) => {
   }
 };
 
-export const fetchAttendancesByStudentAndMonth = async (studentId, monthYear) => {
+export const fetchAttendancesByStudentAndMonth = async (
+  studentId,
+  monthYear
+) => {
   try {
     const attendances = [];
     const attendancesQuery = query(
@@ -566,9 +670,10 @@ export const fetchAttendancesByStudentAndMonth = async (studentId, monthYear) =>
 
     const snapshot = await getDocs(attendancesQuery);
 
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       const data = doc.data();
-      const attendanceDate = data.date instanceof Date ? data.date : data.date.toDate();
+      const attendanceDate =
+        data.date instanceof Date ? data.date : data.date.toDate();
       attendances.push({ ...data, date: attendanceDate });
     });
 
@@ -580,13 +685,22 @@ export const fetchAttendancesByStudentAndMonth = async (studentId, monthYear) =>
 };
 
 export const fetchEmailByUsername = async (username) => {
-  const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));
+  const secretariesQuery = query(
+    collection(db, "secretaries"),
+    where("username", "==", username)
+  );
   const secretariesSnapshot = await getDocs(secretariesQuery);
 
-  const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
+  const ownersQuery = query(
+    collection(db, "owners"),
+    where("username", "==", username)
+  );
   const ownersSnapshot = await getDocs(ownersQuery);
 
-  const instructorsQuery = query(collection(db, "instructors"), where("username", "==",username));
+  const instructorsQuery = query(
+    collection(db, "instructors"),
+    where("username", "==", username)
+  );
   const instructorsSnapshot = await getDocs(instructorsQuery);
 
   if (!secretariesSnapshot.empty) {
@@ -604,28 +718,101 @@ export const fetchEmailByUsername = async (username) => {
 };
 
 export const fetchStudentGroupsByStudentId = async (studentId) => {
-  const q = query(collection(db, "studentGroups"), where("studentId", "==", studentId));
+  const q = query(
+    collection(db, "studentGroups"),
+    where("studentId", "==", studentId)
+  );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => doc.data().groupId);
+  return querySnapshot.docs.map((doc) => doc.data().groupId);
 };
 
 export const fetchStudentGroupsByGroupId = async (groupId) => {
-  const q = query(collection(db, "studentGroups"), where("groupId", "==", groupId));
+  const q = query(
+    collection(db, "studentGroups"),
+    where("groupId", "==", groupId)
+  );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => doc.data().studentId);
+  return querySnapshot.docs.map((doc) => doc.data().studentId);
 };
 
 export const fetchScholarshipStudents = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, "scholarshipStudents"));
-    return querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map((doc) => ({
       studentId: doc.data().studentId,
-      dateAdded: doc.data().dateAdded
+      dateAdded: doc.data().dateAdded,
     }));
   } catch (e) {
     console.error("Error fetching scholarship students: ", e);
     throw e;
   }
+};
+
+export const fetchEligibleStudentsForGroup = async (groupId) => {
+  const levelsOrder = [
+    "Nivel I",
+    "Nivel II-A",
+    "Nivel II-B",
+    "Nivel III-1",
+    "Nivel III-2",
+    "Nivel III-3",
+    "Nivel IV",
+  ];
+
+  const groupRef = doc(db, "groups", groupId);
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) {
+    throw new Error("Grupo no encontrado.");
+  }
+  const currentGroupLevel = groupSnap.data().level;
+  const currentGroupLevelIndex = levelsOrder.indexOf(currentGroupLevel);
+
+  const studentsSnapshot = await getDocs(collection(db, "students"));
+  const studentGroupsSnapshot = await getDocs(collection(db, "studentGroups"));
+
+  const studentGroupsMap = {};
+  studentGroupsSnapshot.docs.forEach((doc) => {
+    const { studentId, groupId, isPrimary } = doc.data();
+    if (!studentGroupsMap[studentId]) {
+      studentGroupsMap[studentId] = [];
+    }
+    studentGroupsMap[studentId].push({ groupId, isPrimary });
+  });
+
+  const eligibleStudents = [];
+  for (const studentDoc of studentsSnapshot.docs) {
+    const studentId = studentDoc.id;
+    const studentData = studentDoc.data();
+    const groups = studentGroupsMap[studentId] || [];
+
+    if (groups.some((group) => group.groupId === groupId)) {
+      continue;
+    }
+
+    let hasEligibleGroup = false;
+    for (const group of groups) {
+      const groupRef = doc(db, "groups", group.groupId);
+      const groupSnap = await getDoc(groupRef);
+      if (!groupSnap.exists()) {
+        continue;
+      }
+      const groupLevel = groupSnap.data().level;
+      const groupLevelIndex = levelsOrder.indexOf(groupLevel);
+      if (
+        groupLevelIndex >= currentGroupLevelIndex &&
+        groupLevel !== "Taller"
+      ) {
+        hasEligibleGroup = true;
+        break;
+      }
+    }
+
+    if (hasEligibleGroup) {
+      eligibleStudents.push({ id: studentId, ...studentData });
+    }
+  }
+
+  return eligibleStudents;
 };
 
 //UPDATE
@@ -698,16 +885,22 @@ export const deleteStudent = async (studentId) => {
       await deleteStudentGroupRelation(studentId, groupId);
     }
 
-    const attendanceQuery = query(collection(db, "attendance"), where("studentId", "==", studentId));
+    const attendanceQuery = query(
+      collection(db, "attendance"),
+      where("studentId", "==", studentId)
+    );
     const attendanceSnapshot = await getDocs(attendanceQuery);
     for (const attendanceDoc of attendanceSnapshot.docs) {
-      await updateDoc(attendanceDoc.ref, { studentId: studentName + "*"});
+      await updateDoc(attendanceDoc.ref, { studentId: studentName + "*" });
     }
 
-    const receiptQuery = query(collection(db, "receipts"), where("studentId", "==", studentId));
+    const receiptQuery = query(
+      collection(db, "receipts"),
+      where("studentId", "==", studentId)
+    );
     const receiptSnapshot = await getDocs(receiptQuery);
     for (const receiptDoc of receiptSnapshot.docs) {
-      await updateDoc(receiptDoc.ref, { studentId: studentName + "*"});
+      await updateDoc(receiptDoc.ref, { studentId: studentName + "*" });
     }
 
     await deleteDoc(studentRef);
@@ -754,8 +947,11 @@ export const deleteGroup = async (groupId) => {
     for (const studentId of studentsInGroup) {
       await deleteStudentGroupRelation(studentId, groupId);
     }
-    
-    const attendanceQuery = query(collection(db, "attendance"), where("groupId", "==", groupId));
+
+    const attendanceQuery = query(
+      collection(db, "attendance"),
+      where("groupId", "==", groupId)
+    );
     const attendanceSnapshot = await getDocs(attendanceQuery);
     for (const attendanceDoc of attendanceSnapshot.docs) {
       await updateDoc(attendanceDoc.ref, { groupId: groupName + "*" });
@@ -781,7 +977,11 @@ export const deleteAttendance = async (attendanceId) => {
 
 export const deleteStudentGroupRelation = async (studentId, groupId) => {
   try {
-    const q = query(collection(db, "studentGroups"), where("studentId", "==", studentId), where("groupId", "==", groupId));
+    const q = query(
+      collection(db, "studentGroups"),
+      where("studentId", "==", studentId),
+      where("groupId", "==", groupId)
+    );
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach(async (doc) => {
       await deleteDoc(doc.ref);
@@ -794,7 +994,10 @@ export const deleteStudentGroupRelation = async (studentId, groupId) => {
 
 export const deleteScholarshipStudent = async (studentId) => {
   try {
-    const q = query(collection(db, "scholarshipStudents"), where("studentId", "==", studentId));
+    const q = query(
+      collection(db, "scholarshipStudents"),
+      where("studentId", "==", studentId)
+    );
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach(async (doc) => {
       await deleteDoc(doc.ref);
@@ -808,27 +1011,53 @@ export const deleteScholarshipStudent = async (studentId) => {
 
 //CHECK
 export const isEmailRegistered = async (email) => {
-  const secretariesQuery = query(collection(db, "secretaries"), where("email", "==", email));
+  const secretariesQuery = query(
+    collection(db, "secretaries"),
+    where("email", "==", email)
+  );
   const secretariesSnapshot = await getDocs(secretariesQuery);
 
-  const ownersQuery = query(collection(db, "owners"), where("email", "==", email));
+  const ownersQuery = query(
+    collection(db, "owners"),
+    where("email", "==", email)
+  );
   const ownersSnapshot = await getDocs(ownersQuery);
 
-  const instructorsQuery = query(collection(db, "instructors"), where("email", "==", email));
+  const instructorsQuery = query(
+    collection(db, "instructors"),
+    where("email", "==", email)
+  );
   const instructorsSnapshot = await getDocs(instructorsQuery);
 
-  return !secretariesSnapshot.empty || !ownersSnapshot.empty || !instructorsSnapshot.empty;
+  return (
+    !secretariesSnapshot.empty ||
+    !ownersSnapshot.empty ||
+    !instructorsSnapshot.empty
+  );
 };
 
 export const isUsernameRegistered = async (username) => {
-  const secretariesQuery = query(collection(db, "secretaries"), where("username", "==", username));
+  const secretariesQuery = query(
+    collection(db, "secretaries"),
+    where("username", "==", username)
+  );
   const secretariesSnapshot = await getDocs(secretariesQuery);
-  
-  const ownersQuery = query(collection(db, "owners"), where("username", "==", username));
+
+  const ownersQuery = query(
+    collection(db, "owners"),
+    where("username", "==", username)
+  );
   const ownersSnapshot = await getDocs(ownersQuery);
 
-  const instructorsQuery = query(collection(db, "instructors"), where("username", "==", username));
+  const instructorsQuery = query(
+    collection(db, "instructors"),
+    where("username", "==", username)
+  );
   const instructorsSnapshot = await getDocs(instructorsQuery);
 
-  return !secretariesSnapshot.empty || !ownersSnapshot.empty || !instructorsSnapshot.empty;
+  return (
+    !secretariesSnapshot.empty ||
+    !ownersSnapshot.empty ||
+    !instructorsSnapshot.empty
+  );
 };

@@ -1,22 +1,22 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import styled, { keyframes } from "styled-components";
 import Image from "next/image";
 import { signInUser } from "../firebase/firebaseAuthService";
 import { fetchEmailByUsername } from "../firebase/firebaseFirestoreService";
-import { UserInput, PasswordInput } from './Input';
-import Loading from './Loading'; 
+import { UserInput, PasswordInput } from "./Input";
+import Loading from "./Loading";
 
 export default function Login({ onLogin }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [loading, setloading] = useState(false); 
+  const [loading, setloading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const loginButtonRef = useRef(null); 
-  const router = useRouter(); 
+  const loginButtonRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,11 +32,13 @@ export default function Login({ onLogin }) {
       setError("Por favor, ingrese usuario y contraseña.");
       return;
     }
-    setloading(true); 
+    setloading(true);
     try {
       const email = await fetchEmailByUsername(username);
       if (!email) {
-        setError("Usuario no encontrado. Por favor, verifica si el usuario existe.");
+        setError(
+          "Usuario no encontrado. Por favor, verifica si el usuario existe."
+        );
         setloading(false);
         return;
       }
@@ -44,7 +46,10 @@ export default function Login({ onLogin }) {
       onLogin();
       router.push("/");
     } catch (error) {
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/invalid-credential"
+      ) {
         setError("Contraseña incorrecta. Por favor, verifica tu contraseña.");
       } else {
         setError("Error al iniciar sesión: " + error.message);
@@ -52,14 +57,14 @@ export default function Login({ onLogin }) {
       setloading(false);
     }
   };
-  
+
   return (
     <Background>
       {isLoading ? (
         <AnimationContainer>
           <Logo src="/logo.svg" alt="Loading Logo" width={180} height={180} />
         </AnimationContainer>
-      ) : loading ? ( 
+      ) : loading ? (
         <Loading />
       ) : (
         <LoginContainer>
@@ -73,7 +78,7 @@ export default function Login({ onLogin }) {
                 setUsername(e.target.value);
                 setError(null);
               }}
-              style={{ marginBottom: '10px', color: "#dddddd" }}
+              style={{ marginBottom: "10px", color: "#dddddd" }}
               labelStyle={{ color: "#dddddd" }}
             />
             <PasswordInput
@@ -82,13 +87,15 @@ export default function Login({ onLogin }) {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                setError(null); 
+                setError(null);
               }}
               style={{ color: "#dddddd" }}
               labelStyle={{ color: "#dddddd" }}
               loginButtonRef={loginButtonRef}
             />
-            <Button ref={loginButtonRef} type="submit">Ingresar</Button>
+            <Button ref={loginButtonRef} type="submit">
+              Ingresar
+            </Button>
             {error && <ErrorMessage>{error}</ErrorMessage>}
           </Form>
         </LoginContainer>
@@ -107,9 +114,9 @@ const Background = styled.div`
   color: #dddddd;
   margin: 0;
   padding: 0;
-  font-family: 'Quicksand', sans-serif;
+  font-family: "Quicksand", sans-serif;
   overflow: hidden;
-  position: fixed; 
+  position: fixed;
   top: 0;
   left: 0;
 `;

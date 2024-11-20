@@ -1,140 +1,170 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { fetchStudents, fetchStudentById, fetchScholarshipStudents, addScholarshipStudent, deleteScholarshipStudent } from "../firebase/firebaseFirestoreService";
-import { TextInput } from './Input';
-import { FaUserPlus, FaUserTimes, FaTimes } from 'react-icons/fa';
-import ConfirmationModal from './ConfirmationModal';
-import Loading from './Loading'; 
+import {
+  fetchStudents,
+  fetchStudentById,
+  fetchScholarshipStudents,
+  addScholarshipStudent,
+  deleteScholarshipStudent,
+} from "../firebase/firebaseFirestoreService";
+import { TextInput } from "./Input";
+import { FaUserPlus, FaUserTimes, FaTimes } from "react-icons/fa";
+import ConfirmationModal from "./ConfirmationModal";
+import Loading from "./Loading";
 
 const ScholarshipModal = ({ isOpen, onClose }) => {
- const [students, setStudents] = useState([]);
- const [scholarshipStudents, setScholarshipStudents] = useState([]);
- const [selectedStudentId, setSelectedStudentId] = useState("");
- const [error, setError] = useState("");
- const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
- const [studentToDelete, setStudentToDelete] = useState(null);
- const [isLoading, setIsLoading] = useState(false); 
+  const [students, setStudents] = useState([]);
+  const [scholarshipStudents, setScholarshipStudents] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [error, setError] = useState("");
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
- useEffect(() => {
-   const loadStudents = async () => {
-     setIsLoading(true);
-     const studentsData = await fetchStudents();
-     setStudents(studentsData);
-     setIsLoading(false); 
-   };
+  useEffect(() => {
+    const loadStudents = async () => {
+      setIsLoading(true);
+      const studentsData = await fetchStudents();
+      setStudents(studentsData);
+      setIsLoading(false);
+    };
 
-   const loadScholarshipStudents = async () => {
-     setIsLoading(true); 
-     const scholarshipStudentsData = await fetchScholarshipStudents();
-     const detailedScholarshipStudentsData = await Promise.all(
-       scholarshipStudentsData.map(async ({ studentId, dateAdded }) => {
-         const student = await fetchStudentById(studentId);
-         return { id: studentId, name: student.name, dateAdded };
-       })
-     );
-     setScholarshipStudents(detailedScholarshipStudentsData);
-     setIsLoading(false); 
-   };
+    const loadScholarshipStudents = async () => {
+      setIsLoading(true);
+      const scholarshipStudentsData = await fetchScholarshipStudents();
+      const detailedScholarshipStudentsData = await Promise.all(
+        scholarshipStudentsData.map(async ({ studentId, dateAdded }) => {
+          const student = await fetchStudentById(studentId);
+          return { id: studentId, name: student.name, dateAdded };
+        })
+      );
+      setScholarshipStudents(detailedScholarshipStudentsData);
+      setIsLoading(false);
+    };
 
-   if (isOpen) {
-     loadStudents();
-     loadScholarshipStudents();
-     setSelectedStudentId("");
-   }
- }, [isOpen]);
+    if (isOpen) {
+      loadStudents();
+      loadScholarshipStudents();
+      setSelectedStudentId("");
+    }
+  }, [isOpen]);
 
- const handleAddScholarshipStudent = async (e) => {
-   e.preventDefault();
-   if (!selectedStudentId) {
-     setError("Por favor, seleccione un alumno.");
-     return;
-   }
-   try {
-     setIsLoading(true); 
-     await addScholarshipStudent(selectedStudentId);
-     const student = await fetchStudentById(selectedStudentId);
-     const currentDate = new Date();
-     const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
-     setScholarshipStudents([...scholarshipStudents, { id: selectedStudentId, name: student.name, dateAdded: formattedDate }]);
-     setSelectedStudentId("");
-     setError("");
-   } catch (error) {
-     setError("Error al agregar alumno a la lista de becados.");
-   } finally {
-     setIsLoading(false); 
-   }
- };
+  const handleAddScholarshipStudent = async (e) => {
+    e.preventDefault();
+    if (!selectedStudentId) {
+      setError("Por favor, seleccione un alumno.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await addScholarshipStudent(selectedStudentId);
+      const student = await fetchStudentById(selectedStudentId);
+      const currentDate = new Date();
+      const formattedDate = `${currentDate
+        .getDate()
+        .toString()
+        .padStart(2, "0")}/${(currentDate.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}/${currentDate.getFullYear()}`;
+      setScholarshipStudents([
+        ...scholarshipStudents,
+        { id: selectedStudentId, name: student.name, dateAdded: formattedDate },
+      ]);
+      setSelectedStudentId("");
+      setError("");
+    } catch (error) {
+      setError("Error al agregar alumno a la lista de becados.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
- const handleDeleteScholarshipStudent = async () => {
-   try {
-     await deleteScholarshipStudent(studentToDelete.id);
-     setScholarshipStudents(scholarshipStudents.filter(student => student.id !== studentToDelete.id));
-     setStudentToDelete(null);
-     setIsConfirmModalOpen(false);
-   } catch (error) {
-     setError("Error al eliminar alumno de la lista de becados.");
-   }
- };
+  const handleDeleteScholarshipStudent = async () => {
+    try {
+      await deleteScholarshipStudent(studentToDelete.id);
+      setScholarshipStudents(
+        scholarshipStudents.filter(
+          (student) => student.id !== studentToDelete.id
+        )
+      );
+      setStudentToDelete(null);
+      setIsConfirmModalOpen(false);
+    } catch (error) {
+      setError("Error al eliminar alumno de la lista de becados.");
+    }
+  };
 
- const handleInputChange = (e) => {
-   setSelectedStudentId(e.target.value);
-   setError("");
- };
+  const handleInputChange = (e) => {
+    setSelectedStudentId(e.target.value);
+    setError("");
+  };
 
- const availableStudents = students.filter(student => !scholarshipStudents.some(scholarshipStudent => scholarshipStudent.id === student.id));
+  const availableStudents = students.filter(
+    (student) =>
+      !scholarshipStudents.some(
+        (scholarshipStudent) => scholarshipStudent.id === student.id
+      )
+  );
 
- if (!isOpen) return null;
+  if (!isOpen) return null;
 
- return (
-   <>
-     {isLoading && <Loading />} {/* Conditionally render Loading component */}
-     <Overlay isOpen={isOpen}>
-       <ModalContainer>
-         <ModalHeader>
-           <Title>Administrar Alumnos Becados</Title>
-           <CloseButton onClick={onClose}>
-             <FaTimes />
-           </CloseButton>
-         </ModalHeader>
-         <ModalBody>
-           <Form onSubmit={handleAddScholarshipStudent}>
-             <TextInput
-               as="select"
-               value={selectedStudentId}
-               onChange={handleInputChange}
-               placeholder="Seleccionar Alumno"
-             >
-               <option value="">Seleccionar Alumno</option>
-               {availableStudents.map(student => (
-                 <option key={student.id} value={student.id}>{student.name}</option>
-               ))}
-             </TextInput>
-             <AddButton type="submit">
-               <FaUserPlus />
-             </AddButton>
-           </Form>
-           {error && <ErrorMessage>{error}</ErrorMessage>}
-           <ScholarshipList>
-             {scholarshipStudents.map(student => (
-               <ScholarshipItem key={student.id}>
-                 {student.name} (Desde: {student.dateAdded})
-                 <DeleteButton onClick={() => { setStudentToDelete(student); setIsConfirmModalOpen(true); }}>
-                   <FaUserTimes />
-                 </DeleteButton>
-               </ScholarshipItem>
-             ))}
-           </ScholarshipList>
-         </ModalBody>
-       </ModalContainer>
-     </Overlay>
-     <ConfirmationModal
-       isOpen={isConfirmModalOpen}
-       onClose={() => setIsConfirmModalOpen(false)}
-       onConfirm={handleDeleteScholarshipStudent}
-       message={`¿Estás seguro de que deseas eliminar a "${studentToDelete?.name}" como alumno becado?`}
-     />
-   </>
- );
+  return (
+    <>
+      {isLoading && <Loading />} {/* Conditionally render Loading component */}
+      <Overlay isOpen={isOpen}>
+        <ModalContainer>
+          <ModalHeader>
+            <Title>Administrar Alumnos Becados</Title>
+            <CloseButton onClick={onClose}>
+              <FaTimes />
+            </CloseButton>
+          </ModalHeader>
+          <ModalBody>
+            <Form onSubmit={handleAddScholarshipStudent}>
+              <TextInput
+                as="select"
+                value={selectedStudentId}
+                onChange={handleInputChange}
+                placeholder="Seleccionar Alumno"
+              >
+                <option value="">Seleccionar Alumno</option>
+                {availableStudents.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.name}
+                  </option>
+                ))}
+              </TextInput>
+              <AddButton type="submit">
+                <FaUserPlus />
+              </AddButton>
+            </Form>
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+            <ScholarshipList>
+              {scholarshipStudents.map((student) => (
+                <ScholarshipItem key={student.id}>
+                  {student.name} (Desde: {student.dateAdded})
+                  <DeleteButton
+                    onClick={() => {
+                      setStudentToDelete(student);
+                      setIsConfirmModalOpen(true);
+                    }}
+                  >
+                    <FaUserTimes />
+                  </DeleteButton>
+                </ScholarshipItem>
+              ))}
+            </ScholarshipList>
+          </ModalBody>
+        </ModalContainer>
+      </Overlay>
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleDeleteScholarshipStudent}
+        message={`¿Estás seguro de que deseas eliminar a "${studentToDelete?.name}" como alumno becado?`}
+      />
+    </>
+  );
 };
 
 const Overlay = styled.div`

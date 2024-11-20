@@ -1,22 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { fetchAttendances, fetchStudentById, fetchGroupById, fetchGroups } from "../firebase/firebaseFirestoreService";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import {
+  fetchAttendances,
+  fetchStudentById,
+  fetchGroupById,
+  fetchGroups,
+} from "../firebase/firebaseFirestoreService";
 import DatePicker from "react-datepicker";
-import { es } from "date-fns/locale/es"; 
+import { es } from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
-import Loading from "./Loading"; 
-import { FaArrowLeft, FaArrowRight, FaSearch, FaCalendarAlt, FaTimes } from 'react-icons/fa';
+import Loading from "./Loading";
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaSearch,
+  FaCalendarAlt,
+  FaTimes,
+} from "react-icons/fa";
 
 const AttendanceReport = ({ onBack }) => {
   const [attendances, setAttendances] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [groups, setGroups] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [isEndDateDisabled, setIsEndDateDisabled] = useState(true);
   const [filteredAttendances, setFilteredAttendances] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const attendancesPerPage = 10;
   const maxPageButtons = 4;
@@ -32,44 +43,52 @@ const AttendanceReport = ({ onBack }) => {
     };
 
     const loadAttendances = async () => {
-      setLoading(true); 
+      setLoading(true);
       try {
         const allAttendances = await fetchAttendances();
-        const attendancesWithDetails = await Promise.all(allAttendances.map(async (attendance) => {
-          let studentName = attendance.studentId;
-          let groupName = attendance.groupId;
+        const attendancesWithDetails = await Promise.all(
+          allAttendances.map(async (attendance) => {
+            let studentName = attendance.studentId;
+            let groupName = attendance.groupId;
 
-          try {
-            const studentData = await fetchStudentById(attendance.studentId);
-            studentName = studentData.name;
-          } catch (error) {
-            console.error(`Error al cargar los detalles del estudiante: `, error);
-          }
+            try {
+              const studentData = await fetchStudentById(attendance.studentId);
+              studentName = studentData.name;
+            } catch (error) {
+              console.error(
+                `Error al cargar los detalles del estudiante: `,
+                error
+              );
+            }
 
-          try {
-            const groupData = await fetchGroupById(attendance.groupId);
-            groupName = groupData.name;
-          } catch (error) {
-            console.error(`Error al cargar los detalles del grupo: `, error);
-          }
+            try {
+              const groupData = await fetchGroupById(attendance.groupId);
+              groupName = groupData.name;
+            } catch (error) {
+              console.error(`Error al cargar los detalles del grupo: `, error);
+            }
 
-          return {
-            ...attendance,
-            studentName,
-            groupName,
-            date: attendance.date instanceof Date ? attendance.date : attendance.date.toDate()
-          };
-        }));
+            return {
+              ...attendance,
+              studentName,
+              groupName,
+              date:
+                attendance.date instanceof Date
+                  ? attendance.date
+                  : attendance.date.toDate(),
+            };
+          })
+        );
         attendancesWithDetails.sort((a, b) => a.date - b.date);
         setAttendances(attendancesWithDetails);
         setFilteredAttendances(attendancesWithDetails);
       } catch (error) {
         console.error("Error al cargar las asistencias: ", error);
       } finally {
-        setLoading(false); 
+        setLoading(false);
       }
     };
-  
+
     loadGroups();
     loadAttendances();
   }, []);
@@ -82,17 +101,27 @@ const AttendanceReport = ({ onBack }) => {
     let filtered = attendances;
 
     if (selectedStudent) {
-      filtered = filtered.filter(attendance => 
-        attendance.studentName && attendance.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
+      filtered = filtered.filter(
+        (attendance) =>
+          attendance.studentName &&
+          attendance.studentName
+            .toLowerCase()
+            .includes(selectedStudent.toLowerCase())
       );
     }
     if (selectedGroup) {
-      filtered = filtered.filter(attendance => attendance.groupId === selectedGroup);
+      filtered = filtered.filter(
+        (attendance) => attendance.groupId === selectedGroup
+      );
     }
     if (startDate) {
-      filtered = filtered.filter(attendance => {
+      filtered = filtered.filter((attendance) => {
         const attendanceDate = attendance.date;
-        return attendanceDate >= startDate && (!endDate || attendanceDate <= new Date(endDate).setHours(23, 59, 59, 999));
+        return (
+          attendanceDate >= startDate &&
+          (!endDate ||
+            attendanceDate <= new Date(endDate).setHours(23, 59, 59, 999))
+        );
       });
     }
     setFilteredAttendances(filtered);
@@ -118,16 +147,19 @@ const AttendanceReport = ({ onBack }) => {
   };
 
   const handleClearStudent = () => {
-    setSelectedStudent('');
+    setSelectedStudent("");
   };
 
   const handleClearGroup = () => {
-    setSelectedGroup('');
+    setSelectedGroup("");
   };
 
   const indexOfLastAttendance = currentPage * attendancesPerPage;
   const indexOfFirstAttendance = indexOfLastAttendance - attendancesPerPage;
-  const currentAttendances = filteredAttendances.slice(indexOfFirstAttendance, indexOfLastAttendance);
+  const currentAttendances = filteredAttendances.slice(
+    indexOfFirstAttendance,
+    indexOfLastAttendance
+  );
   const totalPages = Math.ceil(filteredAttendances.length / attendancesPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -157,7 +189,11 @@ const AttendanceReport = ({ onBack }) => {
             onChange={(e) => setSelectedStudent(e.target.value)}
             placeholder="Filtrar por nombre..."
           />
-          {selectedStudent && <ClearButton onClick={handleClearStudent}><FaTimes /></ClearButton>}
+          {selectedStudent && (
+            <ClearButton onClick={handleClearStudent}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
@@ -167,10 +203,16 @@ const AttendanceReport = ({ onBack }) => {
           >
             <option value="">Filtrar por grupo...</option>
             {groups.map((group) => (
-              <option key={group.id} value={group.id}>{group.name}</option>
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
             ))}
           </SearchSelect>
-          {selectedGroup && <ClearButton onClick={handleClearGroup}><FaTimes /></ClearButton>}
+          {selectedGroup && (
+            <ClearButton onClick={handleClearGroup}>
+              <FaTimes />
+            </ClearButton>
+          )}
         </SearchContainer>
         <SearchContainer>
           <StyledDatePicker
@@ -180,7 +222,11 @@ const AttendanceReport = ({ onBack }) => {
             locale={es}
             placeholderText="Fecha de inicio"
           />
-          {startDate && <ClearButton onClick={handleClearStartDate}><FaTimes /></ClearButton>}
+          {startDate && (
+            <ClearButton onClick={handleClearStartDate}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <CalendarIcon />
         </SearchContainer>
         {startDate && (
@@ -194,33 +240,39 @@ const AttendanceReport = ({ onBack }) => {
               disabled={isEndDateDisabled}
               minDate={startDate}
             />
-            {endDate && <ClearButton onClick={handleClearEndDate}><FaTimes /></ClearButton>}
+            {endDate && (
+              <ClearButton onClick={handleClearEndDate}>
+                <FaTimes />
+              </ClearButton>
+            )}
             <CalendarIcon />
           </SearchContainer>
         )}
       </FilterSection>
       <TableContainer>
-      {currentAttendances.length === 0 ? (
-          <NoDataMessage>No hay asistencias registradas en el sistema</NoDataMessage>
+        {currentAttendances.length === 0 ? (
+          <NoDataMessage>
+            No hay asistencias registradas en el sistema
+          </NoDataMessage>
         ) : (
-        <AttendanceTable>
-          <thead>
-            <tr>
-              <th>Alumno</th>
-              <th>Grupo</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentAttendances.map((attendance, index) => (
-              <tr key={index}>
-                <td>{attendance.studentName}</td>
-                <td>{attendance.groupName}</td>
-                <td>{attendance.date.toLocaleDateString("es-CR")}</td>
+          <AttendanceTable>
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Grupo</th>
+                <th>Fecha</th>
               </tr>
-            ))}
-          </tbody>
-        </AttendanceTable>
+            </thead>
+            <tbody>
+              {currentAttendances.map((attendance, index) => (
+                <tr key={index}>
+                  <td>{attendance.studentName}</td>
+                  <td>{attendance.groupName}</td>
+                  <td>{attendance.date.toLocaleDateString("es-CR")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </AttendanceTable>
         )}
       </TableContainer>
       <Pagination>
@@ -230,7 +282,11 @@ const AttendanceReport = ({ onBack }) => {
           </PageIcon>
         )}
         {getPageNumbers().map((page) => (
-          <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
+          <PageButton
+            key={page}
+            onClick={() => paginate(page)}
+            active={page === currentPage}
+          >
             {page}
           </PageButton>
         ))}
@@ -243,7 +299,7 @@ const AttendanceReport = ({ onBack }) => {
       <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
-}
+};
 
 export default AttendanceReport;
 
@@ -311,7 +367,7 @@ const AttendanceTable = styled.table`
   border-collapse: collapse;
   background-color: transparent;
   border-radius: 8px;
- 
+
   thead {
     position: sticky;
     top: 0;
@@ -319,7 +375,8 @@ const AttendanceTable = styled.table`
     color: #dddddd;
   }
 
-  th, td {
+  th,
+  td {
     padding: 16px 20px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -342,14 +399,16 @@ const AttendanceTable = styled.table`
   }
 
   @media (max-width: 768px) {
-    th, td {
+    th,
+    td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
 
   @media (max-width: 480px) {
-    th, td {
+    th,
+    td {
       font-size: 10px;
       padding: 10px 12px;
     }
@@ -372,7 +431,7 @@ const PageButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
+  background-color: ${(props) => (props.active ? "#073e8a" : "#0b0f8b")};
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -450,7 +509,7 @@ const StyledDatePicker = styled(DatePicker)`
   border-radius: 5px;
   background-color: transparent;
   z-index: 5;
-  position: relative; 
+  position: relative;
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
@@ -484,7 +543,7 @@ const SearchInput = styled.input`
   background-color: transparent;
 
   @media (max-width: 480px) {
-    padding: 8px 35px 8px 12px; 
+    padding: 8px 35px 8px 12px;
     font-size: 12px;
   }
 `;
@@ -506,26 +565,26 @@ const SearchSelect = styled.select`
 
 const SearchIcon = styled(FaSearch)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;
 
 const CalendarIcon = styled(FaCalendarAlt)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { fetchInstructors, fetchExistingGroups, addGroup, fetchGroupById, updateGroup } from "../firebase/firebaseFirestoreService";
-import { TextInput, Select } from './Input';
+import {
+  fetchInstructors,
+  fetchExistingGroups,
+  addGroup,
+  fetchGroupById,
+  updateGroup,
+} from "../firebase/firebaseFirestoreService";
+import { TextInput, Select } from "./Input";
 import Loading from "./Loading";
 
 const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
@@ -75,8 +81,11 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
   const handleStartTimeChange = (e) => {
     const selectedTime = e.target.value;
     setStartTime(selectedTime);
-    const [hours, minutes, period] = selectedTime.match(/(\d+):(\d+)(\w+)/).slice(1);
-    let endHours = parseInt(hours) + (period === "pm" && hours !== "12" ? 12 : 0);
+    const [hours, minutes, period] = selectedTime
+      .match(/(\d+):(\d+)(\w+)/)
+      .slice(1);
+    let endHours =
+      parseInt(hours) + (period === "pm" && hours !== "12" ? 12 : 0);
     endHours += 1;
     let endMinutes = parseInt(minutes) + 30;
     if (endMinutes >= 60) {
@@ -85,27 +94,35 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
     }
     const endPeriod = endHours >= 12 ? "pm" : "am";
     endHours = endHours > 12 ? endHours - 12 : endHours;
-    setEndTime(`${endHours}:${endMinutes < 10 ? "0" : ""}${endMinutes}${endPeriod}`);
+    setEndTime(
+      `${endHours}:${endMinutes < 10 ? "0" : ""}${endMinutes}${endPeriod}`
+    );
   };
 
   const handleDayChange = (e) => {
     setDay(e.target.value);
     setStartTime("");
-    setEndTime(""); 
+    setEndTime("");
     setStartDate("");
   };
 
   const handleSave = async () => {
-    if (!instructor || !day || !startTime || !startDate || (level === "Taller" && !workshopName)) {
+    if (
+      !instructor ||
+      !day ||
+      !startTime ||
+      !startDate ||
+      (level === "Taller" && !workshopName)
+    ) {
       setError("Todos los campos son obligatorios");
       return;
     }
-  
+
     setError("");
     setLoading(true);
-  
+
     const name = level === "Taller" ? `${workshopName}` : `${day} ${startTime}`;
-  
+
     const newGroup = {
       instructor,
       day,
@@ -115,7 +132,7 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
       name,
       startDate,
     };
-  
+
     try {
       if (groupId) {
         await updateGroup(groupId, newGroup);
@@ -180,19 +197,25 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
 
   const isTimeDisabled = (time) => {
     const selectedTime24 = convertTo24HourFormat(time);
-    const [selectedHours, selectedMinutes] = selectedTime24.split(":").map(Number);
+    const [selectedHours, selectedMinutes] = selectedTime24
+      .split(":")
+      .map(Number);
     const selectedTimeInMinutes = selectedHours * 60 + selectedMinutes;
-  
-    return existingGroups.some(group => {
+
+    return existingGroups.some((group) => {
       if (group.day !== day) return false;
-  
+
       const groupStart24 = convertTo24HourFormat(group.startTime);
       const groupEnd24 = convertTo24HourFormat(group.endTime);
-      const [groupStartHours, groupStartMinutes] = groupStart24.split(":").map(Number);
-      const [groupEndHours, groupEndMinutes] = groupEnd24.split(":").map(Number);
+      const [groupStartHours, groupStartMinutes] = groupStart24
+        .split(":")
+        .map(Number);
+      const [groupEndHours, groupEndMinutes] = groupEnd24
+        .split(":")
+        .map(Number);
       const groupStartTimeInMinutes = groupStartHours * 60 + groupStartMinutes;
       const groupEndTimeInMinutes = groupEndHours * 60 + groupEndMinutes;
-  
+
       return (
         selectedTimeInMinutes >= groupStartTimeInMinutes - 60 &&
         selectedTimeInMinutes < groupEndTimeInMinutes
@@ -202,17 +225,27 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
 
   const generateDateOptions = () => {
     if (!day) return [];
-    const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const daysOfWeek = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
     const dayIndex = daysOfWeek.indexOf(day);
     if (dayIndex === -1) return [];
 
     const dates = [];
     const today = new Date();
-    let currentDate = new Date(today.setDate(today.getDate() + ((dayIndex - today.getDay() + 7) % 7)));
+    let currentDate = new Date(
+      today.setDate(today.getDate() + ((dayIndex - today.getDay() + 7) % 7))
+    );
 
     for (let i = 0; i < 8; i++) {
-      const day = String(currentDate.getDate()).padStart(2, '0');
-      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(currentDate.getDate()).padStart(2, "0");
+      const month = String(currentDate.getMonth() + 1).padStart(2, "0");
       const year = currentDate.getFullYear();
       dates.push(`${day}/${month}/${year}`);
       currentDate.setDate(currentDate.getDate() + 7);
@@ -235,12 +268,22 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
             </ModalHeader>
             <ModalBody>
               <Form>
-                <Select value={instructor} onChange={handleInputChange(setInstructor)} placeholder="Seleccione un instructor">
+                <Select
+                  value={instructor}
+                  onChange={handleInputChange(setInstructor)}
+                  placeholder="Seleccione un instructor"
+                >
                   {instructors.map((inst, index) => (
-                    <option key={index} value={inst.id}>{inst.name}</option>
+                    <option key={index} value={inst.id}>
+                      {inst.name}
+                    </option>
                   ))}
                 </Select>
-                <Select value={day} onChange={handleDayChange} placeholder="Seleccione un día">
+                <Select
+                  value={day}
+                  onChange={handleDayChange}
+                  placeholder="Seleccione un día"
+                >
                   <option value="Lunes">Lunes</option>
                   <option value="Martes">Martes</option>
                   <option value="Miércoles">Miércoles</option>
@@ -248,18 +291,45 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
                   <option value="Viernes">Viernes</option>
                   <option value="Sábado">Sábado</option>
                 </Select>
-                <Select value={startDate} onChange={handleInputChange(setStartDate)} disabled={!day || isStartDateDisabled} placeholder="Fecha de inicio">
+                <Select
+                  value={startDate}
+                  onChange={handleInputChange(setStartDate)}
+                  disabled={!day || isStartDateDisabled}
+                  placeholder="Fecha de inicio"
+                >
                   {generateDateOptions().map((date, index) => (
-                    <option key={index} value={date}>{date}</option>
+                    <option key={index} value={date}>
+                      {date}
+                    </option>
                   ))}
                 </Select>
-                <Select value={startTime} onChange={handleStartTimeChange} disabled={!day} placeholder="Hora de inicio">
+                <Select
+                  value={startTime}
+                  onChange={handleStartTimeChange}
+                  disabled={!day}
+                  placeholder="Hora de inicio"
+                >
                   {generateTimeOptions().map((time, index) => (
-                    <option key={index} value={time} disabled={isTimeDisabled(time)}>{time}</option>
+                    <option
+                      key={index}
+                      value={time}
+                      disabled={isTimeDisabled(time)}
+                    >
+                      {time}
+                    </option>
                   ))}
                 </Select>
-                <TextInput type="text" value={endTime || " "} placeholder="Hora de finalización" readOnly />
-                <Select value={level} onChange={handleInputChange(setLevel)} placeholder="Seleccione un nivel">
+                <TextInput
+                  type="text"
+                  value={endTime || " "}
+                  placeholder="Hora de finalización"
+                  readOnly
+                />
+                <Select
+                  value={level}
+                  onChange={handleInputChange(setLevel)}
+                  placeholder="Seleccione un nivel"
+                >
                   <option value="Nivel I">Nivel I</option>
                   <option value="Nivel II-A">Nivel II-A</option>
                   <option value="Nivel II-B">Nivel II-B</option>
@@ -281,7 +351,14 @@ const GroupModal = ({ isOpen, onClose, onGroupAdded, groupId }) => {
               {error && <ErrorMessage>{error}</ErrorMessage>}
             </ModalBody>
             <ModalFooter>
-              <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
+              <CancelButton
+                onClick={() => {
+                  resetFields();
+                  onClose();
+                }}
+              >
+                Cancelar
+              </CancelButton>
               <SaveButton onClick={handleSave}>Guardar</SaveButton>
             </ModalFooter>
           </>

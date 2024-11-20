@@ -1,9 +1,26 @@
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
-import { FaTimes, FaCheckCircle, FaTimesCircle, FaInfo, FaExclamationTriangle } from "react-icons/fa";
+import {
+  FaTimes,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaInfo,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import { FaSackDollar, FaSackXmark } from "react-icons/fa6";
-import { fetchGroupDetails, fetchAttendancesByGroup, addAttendance, fetchSpecificAttendance, deleteAttendance, fetchGroupsByIds, fetchReceiptsByMonth, fetchScholarshipStudents } from "../firebase/firebaseFirestoreService";
+import {
+  fetchGroupDetails,
+  fetchAttendancesByGroup,
+  addAttendance,
+  fetchSpecificAttendance,
+  deleteAttendance,
+  fetchGroupsByIds,
+  fetchReceiptsByMonth,
+  fetchScholarshipStudents,
+} from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
+import HelpModal from "./HelpModal";
+import { useAuth } from "../context/AuthContext";
 
 export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [group, setGroup] = useState(null);
@@ -18,6 +35,8 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [groupDetails, setGroupDetails] = useState({});
   const [error, setError] = useState(null);
   const [paymentStatuses, setPaymentStatuses] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isInstructorUser } = useAuth();
 
   const fetchData = useCallback(async () => {
     if (!isOpen) return;
@@ -28,7 +47,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     try {
       const [groupDetailsResult, attendancesResult] = await Promise.all([
         fetchGroupDetails(groupId),
-        fetchAttendancesByGroup(groupId)
+        fetchAttendancesByGroup(groupId),
       ]);
 
       const { groupData, studentsData } = groupDetailsResult;
@@ -37,8 +56,11 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
       setAttendance(attendancesResult);
       setOriginalAttendance(attendancesResult);
 
-      const otherGroupIds = studentsData.reduce((acc, student) => 
-        acc.concat(student.groups.filter(id => id !== groupId)), []);
+      const otherGroupIds = studentsData.reduce(
+        (acc, student) =>
+          acc.concat(student.groups.filter((id) => id !== groupId)),
+        []
+      );
       const groupDetailsArray = await fetchGroupsByIds(otherGroupIds);
       const groupDetailsMap = groupDetailsArray.reduce((acc, group) => {
         acc[group.id] = group;
@@ -63,34 +85,42 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
 
   const setCurrentMonth = () => {
     const currentDate = new Date();
-    const monthName = currentDate.toLocaleString('es-ES', { month: 'long' });
+    const monthName = currentDate.toLocaleString("es-ES", { month: "long" });
     const year = currentDate.getFullYear();
-    setSelectedMonth(`${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`);
-  }
+    setSelectedMonth(
+      `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`
+    );
+  };
 
   const fetchPaymentStatuses = async (studentsData) => {
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
-    const month = currentDate.toLocaleString('es-ES', { month: 'long' });
+    const month = currentDate.toLocaleString("es-ES", { month: "long" });
     const year = currentDate.getFullYear();
-    const monthYear = `${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+    const monthYear = `${
+      month.charAt(0).toUpperCase() + month.slice(1)
+    } de ${year}`;
     const receipts = await fetchReceiptsByMonth(monthYear);
     const scholarshipStudents = await fetchScholarshipStudents();
-    const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
+    const scholarshipStudentIds = new Set(
+      scholarshipStudents.map((student) => student.studentId)
+    );
 
     const statuses = studentsData.reduce((acc, student) => {
       if (scholarshipStudentIds.has(student.id)) {
-        acc[student.id] = 'paid';
+        acc[student.id] = "paid";
       } else {
-        const hasPaid = receipts.some(receipt => receipt.studentId === student.id);
+        const hasPaid = receipts.some(
+          (receipt) => receipt.studentId === student.id
+        );
         const paymentDate = parseInt(student.paymentDate, 10);
 
         if (hasPaid) {
-          acc[student.id] = 'paid';
+          acc[student.id] = "paid";
         } else if (currentDay <= paymentDate) {
-          acc[student.id] = 'pending';
+          acc[student.id] = "pending";
         } else {
-          acc[student.id] = 'overdue';
+          acc[student.id] = "overdue";
         }
       }
       return acc;
@@ -99,33 +129,43 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     setPaymentStatuses(statuses);
   };
 
-  const handleAttendanceClick = useCallback((studentId, date) => {
-    if (!isEditing) return;
+  const handleAttendanceClick = useCallback(
+    (studentId, date) => {
+      if (!isEditing) return;
 
-    setPendingChanges((prevChanges) => {
-      const updatedChanges = { ...prevChanges };
-      const attendanceId = Object.keys(attendance).find(
-        (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
-      );
-      const tempId = `temp-${studentId}-${date.getTime()}`;
+      setPendingChanges((prevChanges) => {
+        const updatedChanges = { ...prevChanges };
+        const attendanceId = Object.keys(attendance).find(
+          (id) =>
+            attendance[id].studentId === studentId &&
+            attendance[id].date.getTime() === date.getTime()
+        );
+        const tempId = `temp-${studentId}-${date.getTime()}`;
 
-      if (attendanceId) {
-        if (updatedChanges[attendanceId]?.action === 'delete') {
-          delete updatedChanges[attendanceId];
+        if (attendanceId) {
+          if (updatedChanges[attendanceId]?.action === "delete") {
+            delete updatedChanges[attendanceId];
+          } else {
+            updatedChanges[attendanceId] = { action: "delete" };
+          }
         } else {
-          updatedChanges[attendanceId] = { action: 'delete' };
+          if (updatedChanges[tempId]?.action === "add") {
+            delete updatedChanges[tempId];
+          } else {
+            updatedChanges[tempId] = {
+              action: "add",
+              groupId,
+              studentId,
+              date,
+            };
+          }
         }
-      } else {
-        if (updatedChanges[tempId]?.action === 'add') {
-          delete updatedChanges[tempId];
-        } else {
-          updatedChanges[tempId] = { action: 'add', groupId, studentId, date };
-        }
-      }
 
-      return updatedChanges;
-    });
-  }, [isEditing, attendance, groupId]);
+        return updatedChanges;
+      });
+    },
+    [isEditing, attendance, groupId]
+  );
 
   const handleSave = async () => {
     setIsEditing(false);
@@ -134,13 +174,17 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
 
     try {
       for (const [id, change] of Object.entries(pendingChanges)) {
-        if (change.action === 'delete') {
+        if (change.action === "delete") {
           delete newAttendance[id];
           await deleteAttendance(id);
-        } else if (change.action === 'add') {
+        } else if (change.action === "add") {
           const { date, groupId, studentId } = change;
           await addAttendance(date, groupId, studentId);
-          const newAttendanceId = await fetchSpecificAttendance(groupId, studentId, date);
+          const newAttendanceId = await fetchSpecificAttendance(
+            groupId,
+            studentId,
+            date
+          );
           if (newAttendanceId) {
             newAttendance[newAttendanceId] = { groupId, studentId, date };
           }
@@ -162,22 +206,42 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     setIsEditing(false);
   };
 
-  const getAttendanceCellComponent = useCallback((studentId, date) => {
-    const attendanceId = Object.keys(attendance).find(
-      (id) => attendance[id].studentId === studentId && attendance[id].date.getTime() === date.getTime()
-    );
-    const tempId = `temp-${studentId}-${date.getTime()}`;
-    const pendingAdd = pendingChanges[tempId]?.action === 'add';
-    const pendingDelete = pendingChanges[attendanceId]?.action === 'delete';
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
 
-    if (pendingAdd) return <PresentIcon className="pending-change" />;
-    if (pendingDelete) return <AbsentIcon className="pending-change" />;
-    if (attendanceId) return <PresentIcon />;
-    return isEditing ? <AbsentIcon /> : null;
-  }, [attendance, pendingChanges, isEditing]);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+  const getAttendanceCellComponent = useCallback(
+    (studentId, date) => {
+      const attendanceId = Object.keys(attendance).find(
+        (id) =>
+          attendance[id].studentId === studentId &&
+          attendance[id].date.getTime() === date.getTime()
+      );
+      const tempId = `temp-${studentId}-${date.getTime()}`;
+      const pendingAdd = pendingChanges[tempId]?.action === "add";
+      const pendingDelete = pendingChanges[attendanceId]?.action === "delete";
+
+      if (pendingAdd) return <PresentIcon className="pending-change" />;
+      if (pendingDelete) return <AbsentIcon className="pending-change" />;
+      if (attendanceId) return <PresentIcon />;
+      return isEditing ? <AbsentIcon /> : null;
+    },
+    [attendance, pendingChanges, isEditing]
+  );
 
   const getDayOfWeekIndex = (day) => {
-    const daysOfWeek = { Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 0 };
+    const daysOfWeek = {
+      Lunes: 1,
+      Martes: 2,
+      Miércoles: 3,
+      Jueves: 4,
+      Viernes: 5,
+      Sábado: 6,
+      Domingo: 0,
+    };
     return daysOfWeek[day] ?? 1;
   };
 
@@ -186,10 +250,10 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     const month = new Date(`${monthName} 1, ${year}`).getMonth();
     const selectedYear = parseInt(year, 10);
     const dayOfWeekIndex = getDayOfWeekIndex(groupDay);
-  
+
     let dates = [];
     let date = new Date(selectedYear, month, 1);
-  
+
     while (date.getMonth() === month) {
       if (date.getDay() === dayOfWeekIndex) {
         dates.push(new Date(date));
@@ -204,18 +268,20 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   if (error) return <ErrorMessage>{error}</ErrorMessage>;
 
   const femaleStudents = students
-    .filter(student => student.gender === "Mujer")
+    .filter((student) => student.gender === "Mujer")
     .sort((a, b) => b.isPrimaryGroup - a.isPrimaryGroup);
 
   const maleStudents = students
-    .filter(student => student.gender === "Hombre")
+    .filter((student) => student.gender === "Hombre")
     .sort((a, b) => b.isPrimaryGroup - a.isPrimaryGroup);
 
   return (
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <CloseButton onClick={() => !isEditing && onClose()}><FaTimes /></CloseButton>
+          <CloseButton onClick={() => !isEditing && onClose()}>
+            <FaTimes />
+          </CloseButton>
         </ModalHeader>
         <ModalBody>
           <DetailsWrapper>
@@ -223,12 +289,20 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
             <GroupName>{group.name.toUpperCase()}</GroupName>
             <GroupInfo>
               <Column>
-                <p><strong>Instructor:</strong> {group.instructor}</p>
-                <p><strong>Nivel:</strong> {group.level}</p>
+                <p>
+                  <strong>Instructor:</strong> {group.instructor}
+                </p>
+                <p>
+                  <strong>Nivel:</strong> {group.level}
+                </p>
               </Column>
               <Column>
-                <p><strong>Día/Hora:</strong> {group.day} {group.startTime}</p>
-                <p><strong>Fecha Inicio:</strong> {group.startDate}</p>
+                <p>
+                  <strong>Día/Hora:</strong> {group.day} {group.startTime}
+                </p>
+                <p>
+                  <strong>Fecha Inicio:</strong> {group.startDate}
+                </p>
               </Column>
             </GroupInfo>
             <AttendanceControl>
@@ -238,79 +312,138 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                 <thead>
                   <tr>
                     <th>Nombre Alumno</th>
-                    {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                      <th key={date.toString()} style={{ width: "20px" }}>
-                        {date.getDate()}
-                      </th>
-                    ))}
+                    {getAttendanceDates(selectedMonth, group.day).map(
+                      (date) => (
+                        <th key={date.toString()} style={{ width: "20px" }}>
+                          {date.getDate()}
+                        </th>
+                      )
+                    )}
                     <th>D. Pago</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...femaleStudents, ...maleStudents].map((student, index) => (
-                    <React.Fragment key={student.id}>
-                      {index === femaleStudents.length && maleStudents.length > 0 && (
-                        <tr className="divider-row">
-                          <td colSpan={getAttendanceDates(selectedMonth, group.day).length + 2}></td>
-                        </tr>
-                      )}
-                      <tr style={{ color: student.isPrimaryGroup ? "#0b0f8b" : "#323232" }}>
-                        <StudentName isPrimaryGroup={student.isPrimaryGroup}>
-                          {student.name}
-                          {student.groups.length > 1 && (
-                            <>
-                              <BulletPoint isPrimaryGroup={student.isPrimaryGroup} />
-                              <Tooltip>
-                                <strong>OTROS GRUPOS:</strong>
-                                <ul>
-                                  {student.groups.filter(id => id !== groupId).map((id, index) => (
-                                    <li key={index}>
-                                      {groupDetails[id] ? `${groupDetails[id].level} - ${groupDetails[id].name}` : id}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Tooltip>
-                            </>
+                  {[...femaleStudents, ...maleStudents].map(
+                    (student, index) => (
+                      <React.Fragment key={student.id}>
+                        {index === femaleStudents.length &&
+                          maleStudents.length > 0 && (
+                            <tr className="divider-row">
+                              <td
+                                colSpan={
+                                  getAttendanceDates(selectedMonth, group.day)
+                                    .length + 2
+                                }
+                              ></td>
+                            </tr>
                           )}
-                        </StudentName>
-                        {getAttendanceDates(selectedMonth, group.day).map((date) => (
-                          <AttendanceCell
-                            key={date.toString()}
-                            onClick={() => handleAttendanceClick(student.id, date)}
-                            className={pendingChanges[`temp-${student.id}-${date.getTime()}`] || pendingChanges[Object.keys(attendance).find(
-                              (id) => attendance[id].studentId === student.id && attendance[id].date.getTime() === date.getTime()
-                            )] ? "pending-change" : ""}
-                            isPrimaryGroup={student.isPrimaryGroup}
-                          >
-                            {getAttendanceCellComponent(student.id, date)}
-                          </AttendanceCell>
-                        ))}
-                        <td>
-                          {student.paymentDate}
-                          {paymentStatuses[student.id] === 'paid' && <PaidIcon />}
-                          {paymentStatuses[student.id] === 'pending' && <PendingIcon />}
-                          {paymentStatuses[student.id] === 'overdue' && <OverdueIcon />}
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
+                        <tr
+                          style={{
+                            color: student.isPrimaryGroup
+                              ? "#0b0f8b"
+                              : "#323232",
+                          }}
+                        >
+                          <StudentName isPrimaryGroup={student.isPrimaryGroup}>
+                            {student.name}
+                            {student.groups.length > 1 && (
+                              <>
+                                <BulletPoint
+                                  isPrimaryGroup={student.isPrimaryGroup}
+                                />
+                                <Tooltip>
+                                  <strong>OTROS GRUPOS:</strong>
+                                  <ul>
+                                    {student.groups
+                                      .filter((id) => id !== groupId)
+                                      .map((id, index) => (
+                                        <li key={index}>
+                                          {groupDetails[id]
+                                            ? `${groupDetails[id].level} - ${groupDetails[id].name}`
+                                            : id}
+                                        </li>
+                                      ))}
+                                  </ul>
+                                </Tooltip>
+                              </>
+                            )}
+                          </StudentName>
+                          {getAttendanceDates(selectedMonth, group.day).map(
+                            (date) => (
+                              <AttendanceCell
+                                key={date.toString()}
+                                onClick={() =>
+                                  handleAttendanceClick(student.id, date)
+                                }
+                                className={
+                                  pendingChanges[
+                                    `temp-${student.id}-${date.getTime()}`
+                                  ] ||
+                                  pendingChanges[
+                                    Object.keys(attendance).find(
+                                      (id) =>
+                                        attendance[id].studentId ===
+                                          student.id &&
+                                        attendance[id].date.getTime() ===
+                                          date.getTime()
+                                    )
+                                  ]
+                                    ? "pending-change"
+                                    : ""
+                                }
+                                isPrimaryGroup={student.isPrimaryGroup}
+                              >
+                                {getAttendanceCellComponent(student.id, date)}
+                              </AttendanceCell>
+                            )
+                          )}
+                          <td>
+                            {student.paymentDate}
+                            {paymentStatuses[student.id] === "paid" && (
+                              <PaidIcon />
+                            )}
+                            {paymentStatuses[student.id] === "pending" && (
+                              <PendingIcon />
+                            )}
+                            {paymentStatuses[student.id] === "overdue" && (
+                              <OverdueIcon />
+                            )}
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    )
+                  )}
                 </tbody>
               </Table>
               <Summary>
-                <p><strong>Total Mujeres:</strong> {femaleStudents.length}</p>
-                <p><strong>Total Hombres:</strong> {maleStudents.length}</p>
+                <p>
+                  <strong>Total Mujeres:</strong> {femaleStudents.length}
+                </p>
+                <p>
+                  <strong>Total Hombres:</strong> {maleStudents.length}
+                </p>
               </Summary>
             </AttendanceControl>
             <ButtonContainer>
               {isEditing ? (
-                <CancelButton onClick={handleCancel}>
-                  Cancelar
-                </CancelButton>
+                <CancelButton onClick={handleCancel}>Cancelar</CancelButton>
               ) : null}
-              <ActionButton onClick={isEditing ? handleSave : () => setIsEditing(true)}>
-                {isEditing ? 'Guardar Asistencia' : 'Pasar Asistencia'}
+              <ActionButton
+                onClick={isEditing ? handleSave : () => setIsEditing(true)}
+              >
+                {isEditing ? "Guardar Asistencia" : "Pasar Asistencia"}
               </ActionButton>
             </ButtonContainer>
+            {!(group.level === "Taller" || isInstructorUser) && (
+              <ButtonContainer>
+                <ActionButton onClick={handleOpenModal}>
+                  Alumnos Ayuda
+                </ActionButton>
+                {isModalOpen && (
+                  <HelpModal groupId={groupId} onClose={handleCloseModal} />
+                )}
+              </ButtonContainer>
+            )}
           </DetailsWrapper>
         </ModalBody>
       </ModalContainer>
@@ -326,7 +459,7 @@ const Overlay = styled.div`
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;  
+  justify-content: center;
   align-items: center;
   z-index: 1002;
 `;
@@ -479,7 +612,8 @@ const Table = styled.table`
   border-collapse: collapse;
   margin-bottom: 20px;
 
-  th, td {
+  th,
+  td {
     padding: 8px;
     border: 1px solid #ccc;
     text-align: center;
@@ -531,21 +665,21 @@ const Tooltip = styled.div`
   top: 50%;
   left: 100%;
   transform: translateY(-50%);
-  background-color: #dddddd; 
+  background-color: #dddddd;
   color: #000;
-  padding: 10px; 
+  padding: 10px;
   border-radius: 5px;
-  font-size: 14px; 
+  font-size: 14px;
   white-space: nowrap;
   z-index: 1004;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-  max-width: 200px; 
-  overflow-wrap: break-word; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+  overflow-wrap: break-word;
 
   @media (max-width: 768px) {
-    font-size: 12px; 
-    padding: 8px; 
-    max-width: 150px; 
+    font-size: 12px;
+    padding: 8px;
+    max-width: 150px;
   }
 
   ul {
@@ -554,7 +688,7 @@ const Tooltip = styled.div`
     margin: 0;
 
     li {
-      margin-bottom: 5px; 
+      margin-bottom: 5px;
     }
   }
 `;
@@ -619,7 +753,7 @@ const PendingIcon = styled(FaExclamationTriangle)`
 `;
 
 const PaidIcon = styled(FaSackDollar)`
-  color: #0b8b4d; 
+  color: #0b8b4d;
   font-size: 18px;
   margin-left: 8px;
 
@@ -654,6 +788,7 @@ const ActionButton = styled.button`
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  margin-bottom: 20px;
 
   &:hover {
     background-color: #073e8a;

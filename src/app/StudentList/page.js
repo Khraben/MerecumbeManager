@@ -2,12 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
+import {
+  FaSearch,
+  FaInfoCircle,
+  FaEdit,
+  FaTrash,
+  FaTimes,
+} from "react-icons/fa";
 import StudentModal from "../components/StudentModal";
-import StudentDetails from "../components/StudentDetails"; 
-import Loading from "../components/Loading"; 
+import StudentDetails from "../components/StudentDetails";
+import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchStudents, deleteStudent, fetchGroupsByIds, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService"; 
+import {
+  fetchStudents,
+  deleteStudent,
+  fetchGroupsByIds,
+  fetchStudentGroupsByStudentId,
+} from "../firebase/firebaseFirestoreService";
 
 export default function StudentList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,8 +26,8 @@ export default function StudentList() {
   const [students, setStudents] = useState([]);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [editingStudentId, setEditingStudentId] = useState(null);
-  const [loading, setLoading] = useState(true); 
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false); 
+  const [loading, setLoading] = useState(true);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
 
   useEffect(() => {
@@ -26,25 +37,27 @@ export default function StudentList() {
   const fetchStudentsData = async () => {
     setLoading(true);
     try {
-      const studentsData = await fetchStudents(); 
-      const studentsWithLevels = await Promise.all(studentsData.map(async student => {
-        const groupIds = await fetchStudentGroupsByStudentId(student.id);
-        const groups = await fetchGroupsByIds(groupIds);
-        const highestLevel = getHighestLevel(groups);
-        return { ...student, highestLevel };
-      }));
+      const studentsData = await fetchStudents();
+      const studentsWithLevels = await Promise.all(
+        studentsData.map(async (student) => {
+          const groupIds = await fetchStudentGroupsByStudentId(student.id);
+          const groups = await fetchGroupsByIds(groupIds);
+          const highestLevel = getHighestLevel(groups);
+          return { ...student, highestLevel };
+        })
+      );
       setStudents(studentsWithLevels);
     } catch (error) {
       console.error("Error fetching students: ", error);
     }
-    setLoading(false); 
+    setLoading(false);
   };
 
   const handleOpenModal = (studentId = null) => {
     setEditingStudentId(studentId);
     setIsModalOpen(true);
   };
-  
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     fetchStudentsData();
@@ -62,7 +75,7 @@ export default function StudentList() {
     try {
       await deleteStudent(studentToDelete.id);
       fetchStudentsData();
-      setIsConfirmationOpen(false); 
+      setIsConfirmationOpen(false);
     } catch (error) {
       console.error("Error deleting student: ", error);
     }
@@ -82,21 +95,32 @@ export default function StudentList() {
     setSearchTerm("");
   };
 
-  const filteredStudents = students.filter(student =>
+  const filteredStudents = students.filter((student) =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const levelsOrder = ["Nivel I", "Nivel II-A", "Nivel II-B", "Nivel III-1", "Nivel III-2", "Nivel III-3", "Nivel IV", "Taller"];
+  const levelsOrder = [
+    "Nivel I",
+    "Nivel II-A",
+    "Nivel II-B",
+    "Nivel III-1",
+    "Nivel III-2",
+    "Nivel III-3",
+    "Nivel IV",
+    "Taller",
+  ];
 
   const getHighestLevel = (groups) => {
     let highestLevelIndex = -1;
-    groups.forEach(group => {
+    groups.forEach((group) => {
       const levelIndex = levelsOrder.indexOf(group.level);
       if (levelIndex > highestLevelIndex) {
         highestLevelIndex = levelIndex;
       }
     });
-    return highestLevelIndex !== -1 ? levelsOrder[highestLevelIndex] : "INACTIVO";
+    return highestLevelIndex !== -1
+      ? levelsOrder[highestLevelIndex]
+      : "INACTIVO";
   };
 
   if (loading) {
@@ -113,12 +137,18 @@ export default function StudentList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
+        {searchTerm && (
+          <ClearButton onClick={handleClearSearch}>
+            <FaTimes />
+          </ClearButton>
+        )}
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
         {filteredStudents.length === 0 ? (
-          <NoDataMessage>No hay alumnos registrados en el sistema</NoDataMessage>
+          <NoDataMessage>
+            No hay alumnos registrados en el sistema
+          </NoDataMessage>
         ) : (
           <Table>
             <thead>
@@ -136,9 +166,13 @@ export default function StudentList() {
                   <td>{student.phone}</td>
                   <td>{student.highestLevel}</td>
                   <td>
-                    <InfoIcon onClick={() => handleViewStudentDetails(student.id)} />
+                    <InfoIcon
+                      onClick={() => handleViewStudentDetails(student.id)}
+                    />
                     <EditIcon onClick={() => handleOpenModal(student.id)} />
-                    <DeleteIcon onClick={() => handleOpenConfirmation(student)} />
+                    <DeleteIcon
+                      onClick={() => handleOpenConfirmation(student)}
+                    />
                   </td>
                 </tr>
               ))}
@@ -147,7 +181,11 @@ export default function StudentList() {
         )}
       </TableContainer>
       <AddButton onClick={() => handleOpenModal()}>Agregar Alumno</AddButton>
-      <StudentModal isOpen={isModalOpen} onClose={handleCloseModal} studentId={editingStudentId} />
+      <StudentModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        studentId={editingStudentId}
+      />
       <StudentDetails
         isOpen={!!selectedStudentId}
         onClose={handleCloseDetailsModal}
@@ -176,7 +214,7 @@ const Wrapper = styled.div`
   flex-direction: column;
   align-items: center;
   margin: 0 20px;
-  
+
   @media (max-width: 480px) {
     padding: 30px;
   }
@@ -252,7 +290,8 @@ const Table = styled.table`
     z-index: 1;
   }
 
-  th, td {
+  th,
+  td {
     padding: 16px 20px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -271,18 +310,20 @@ const Table = styled.table`
   }
 
   tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.05); 
+    background-color: rgba(0, 0, 0, 0.05);
   }
 
   @media (max-width: 768px) {
-    th, td {
+    th,
+    td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
 
   @media (max-width: 480px) {
-    th, td {
+    th,
+    td {
       font-size: 10px;
       padding: 10px 12px;
     }

@@ -2,13 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaSearch, FaInfoCircle, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
+import {
+  FaSearch,
+  FaInfoCircle,
+  FaEdit,
+  FaTrash,
+  FaTimes,
+} from "react-icons/fa";
 import GroupModal from "../components/GroupModal";
-import GroupDetails from "../components/GroupDetails"; 
+import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { fetchGroups, deleteGroup, fetchInstructorByEmail } from "../firebase/firebaseFirestoreService";
-import { useAuth } from "../context/AuthContext"; 
+import {
+  fetchGroups,
+  deleteGroup,
+  fetchInstructorByEmail,
+} from "../firebase/firebaseFirestoreService";
+import { useAuth } from "../context/AuthContext";
 
 export default function GroupList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,12 +41,12 @@ export default function GroupList() {
       const groupsData = await fetchGroups();
       if (!isInstructorUser) {
         setGroups(groupsData);
-      }else{
+      } else {
         const instructor = await fetchInstructorByEmail(user.email);
         const filteredGroups = isInstructorUser
-        ? groupsData.filter(group => group.instructor === instructor.name)
-        : groupsData;
-      setGroups(filteredGroups);
+          ? groupsData.filter((group) => group.instructor === instructor.name)
+          : groupsData;
+        setGroups(filteredGroups);
       }
     } catch (error) {
       console.error("Error fetching groups: ", error);
@@ -86,7 +96,7 @@ export default function GroupList() {
     setSearchTerm("");
   };
 
-  const filteredGroups = groups.filter(group =>
+  const filteredGroups = groups.filter((group) =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -104,53 +114,67 @@ export default function GroupList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        {searchTerm && <ClearButton onClick={handleClearSearch}><FaTimes /></ClearButton>}
+        {searchTerm && (
+          <ClearButton onClick={handleClearSearch}>
+            <FaTimes />
+          </ClearButton>
+        )}
         <SearchIcon />
       </SearchContainer>
       <TableContainer>
-      {filteredGroups.length === 0 ? (
+        {filteredGroups.length === 0 ? (
           <NoDataMessage>No hay grupos registrados en el sistema</NoDataMessage>
         ) : (
-        <Table>
-          <thead>
-            <tr>
-              <th>Grupo</th>
-              <th>Instructor</th>
-              <th>Nivel</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredGroups.map((group, index) => (
-              <tr key={index}>
-                <td>{group.name}</td>
-                <td>{group.instructor}</td>
-                <td>{group.level}</td>
-                <td>
-                {!isInstructorUser && (
-                  <IconContainer>
-                    <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                    <EditIcon onClick={() => handleOpenModal(group.id)} />
-                    <DeleteIcon onClick={() => handleOpenConfirmation(group)} />
-                </IconContainer>
-                )}
-                
-                {isInstructorUser && (
-                  <IconContainer>
-                    <InfoIcon onClick={() => handleViewGroupDetails(group.id)} />
-                </IconContainer>
-                )}
-                </td>
+          <Table>
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Instructor</th>
+                <th>Nivel</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {filteredGroups.map((group, index) => (
+                <tr key={index}>
+                  <td>{group.name}</td>
+                  <td>{group.instructor}</td>
+                  <td>{group.level}</td>
+                  <td>
+                    {!isInstructorUser && (
+                      <IconContainer>
+                        <InfoIcon
+                          onClick={() => handleViewGroupDetails(group.id)}
+                        />
+                        <EditIcon onClick={() => handleOpenModal(group.id)} />
+                        <DeleteIcon
+                          onClick={() => handleOpenConfirmation(group)}
+                        />
+                      </IconContainer>
+                    )}
+
+                    {isInstructorUser && (
+                      <IconContainer>
+                        <InfoIcon
+                          onClick={() => handleViewGroupDetails(group.id)}
+                        />
+                      </IconContainer>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
         )}
       </TableContainer>
       {!isInstructorUser && (
         <AddButton onClick={() => handleOpenModal()}>Agregar Grupo</AddButton>
       )}
-      <GroupModal isOpen={isModalOpen} onClose={handleCloseModal} groupId={editingGroupId} />
+      <GroupModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        groupId={editingGroupId}
+      />
       <GroupDetails
         isOpen={!!selectedGroupId}
         onClose={handleCloseGroupDetails}
@@ -256,7 +280,8 @@ const Table = styled.table`
     z-index: 1;
   }
 
-  th, td {
+  th,
+  td {
     padding: 16px 20px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -275,18 +300,20 @@ const Table = styled.table`
   }
 
   tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.05); 
+    background-color: rgba(0, 0, 0, 0.05);
   }
 
   @media (max-width: 768px) {
-    th, td {
+    th,
+    td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
 
   @media (max-width: 480px) {
-    th, td {
+    th,
+    td {
       font-size: 10px;
       padding: 10px 12px;
     }

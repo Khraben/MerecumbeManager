@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import React, { useState } from "react";
+import styled from "styled-components";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const InputContainer = styled.div`
   position: relative;
@@ -84,7 +84,9 @@ const StyledLabel = styled.label`
   transition: all 0.3s ease-in-out;
   pointer-events: none;
 
-  ${({ hasValue }) => hasValue && `
+  ${({ hasValue }) =>
+    hasValue &&
+    `
     transform: translateY(-1.8rem);
     font-size: 0.75rem;
     color: #0b0f8b;
@@ -97,18 +99,45 @@ const ComboBoxComponent = ({ placeholder, value, ...props }) => (
       <option value="" disabled hidden></option>
       {props.children}
     </StyledSelect>
-    <StyledLabel htmlFor={props.id} $hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={props.id} $hasValue={value}>
+      {placeholder}
+    </StyledLabel>
   </InputContainer>
 );
 
-const Input = ({ type, id, className, placeholder, style, labelStyle, ...props }) => (
+const Input = ({
+  type,
+  id,
+  className,
+  placeholder,
+  style,
+  labelStyle,
+  ...props
+}) => (
   <InputContainer className={className}>
-    <StyledInput type={type} id={id} placeholder=" " style={style} autoComplete="off" {...props} />
-    <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>{placeholder}</StyledLabel>
+    <StyledInput
+      type={type}
+      id={id}
+      placeholder=" "
+      style={style}
+      autoComplete="off"
+      {...props}
+    />
+    <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>
+      {placeholder}
+    </StyledLabel>
   </InputContainer>
 );
 
-const PasswordInputComponent = ({ id, className, placeholder, style, labelStyle, loginButtonRef, ...props }) => {
+const PasswordInputComponent = ({
+  id,
+  className,
+  placeholder,
+  style,
+  labelStyle,
+  loginButtonRef,
+  ...props
+}) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const toggleShowPassword = (e) => {
@@ -118,12 +147,12 @@ const PasswordInputComponent = ({ id, className, placeholder, style, labelStyle,
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       if (loginButtonRef && loginButtonRef.current) {
         loginButtonRef.current.click();
       } else {
-        console.error('Login button not found');
+        console.error("Login button not found");
       }
     }
   };
@@ -139,7 +168,9 @@ const PasswordInputComponent = ({ id, className, placeholder, style, labelStyle,
         autoComplete="off"
         {...props}
       />
-      <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>{placeholder}</StyledLabel>
+      <StyledLabel htmlFor={id} style={labelStyle} $hasValue={props.value}>
+        {placeholder}
+      </StyledLabel>
       <TogglePasswordButton onClick={(e) => toggleShowPassword(e)}>
         {showPassword ? <FaEyeSlash /> : <FaEye />}
       </TogglePasswordButton>
@@ -158,13 +189,22 @@ const TogglePasswordButton = styled.button`
   color: #dddddd;
 `;
 
-const SelectInput = ({ id, className, children, placeholder, value, ...props }) => (
+const SelectInput = ({
+  id,
+  className,
+  children,
+  placeholder,
+  value,
+  ...props
+}) => (
   <InputContainer className={className}>
     <StyledSelect id={id} value={value} {...props}>
       <option value="" disabled hidden></option>
       {children}
     </StyledSelect>
-    <StyledLabel htmlFor={id} $hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={id} $hasValue={value}>
+      {placeholder}
+    </StyledLabel>
   </InputContainer>
 );
 
@@ -184,15 +224,26 @@ const generateTimeOptions = (startHour, endHour, interval) => {
   return times;
 };
 
-const TimeRangeInputComponent = ({ startHour, endHour, interval, value, onChange, placeholder }) => (
+const TimeRangeInputComponent = ({
+  startHour,
+  endHour,
+  interval,
+  value,
+  onChange,
+  placeholder,
+}) => (
   <InputContainer>
     <StyledSelect value={value} onChange={onChange}>
       <option value="" disabled hidden></option>
       {generateTimeOptions(startHour, endHour, interval).map((time, index) => (
-        <option key={index} value={time}>{time}</option>
+        <option key={index} value={time}>
+          {time}
+        </option>
       ))}
     </StyledSelect>
-    <StyledLabel htmlFor={placeholder} $hasValue={value}>{placeholder}</StyledLabel>
+    <StyledLabel htmlFor={placeholder} $hasValue={value}>
+      {placeholder}
+    </StyledLabel>
   </InputContainer>
 );
 

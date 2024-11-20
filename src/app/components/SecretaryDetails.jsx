@@ -39,20 +39,28 @@ const SecretaryDetails = ({ isOpen, onClose, secretaryId }) => {
           <Title>INFORMACIÓN DE LA SECRETARIA</Title>
           <Card>
             <FaUser />
-            <DetailItem><strong>Nombre:</strong> {secretary.name}</DetailItem>
+            <DetailItem>
+              <strong>Nombre:</strong> {secretary.name}
+            </DetailItem>
           </Card>
           <Card>
             <FaPhone />
-            <DetailItem><strong>Celular:</strong> {secretary.phone}</DetailItem>
+            <DetailItem>
+              <strong>Celular:</strong> {secretary.phone}
+            </DetailItem>
           </Card>
           <Card>
             <FaUser />
-            <DetailItem><strong>Usuario:</strong> {secretary.username}</DetailItem>
+            <DetailItem>
+              <strong>Usuario:</strong> {secretary.username}
+            </DetailItem>
           </Card>
           {secretary.email && (
             <Card>
               <FaEnvelope />
-              <DetailItem><strong>Correo:</strong> {secretary.email}</DetailItem>
+              <DetailItem>
+                <strong>Correo:</strong> {secretary.email}
+              </DetailItem>
             </Card>
           )}
         </ModalBody>

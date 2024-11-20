@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { addInstructor, fetchInstructorById, updateInstructor, isEmailRegistered, isUsernameRegistered } from "../firebase/firebaseFirestoreService";
-import { TextInput } from './Input';
+import {
+  addInstructor,
+  fetchInstructorById,
+  updateInstructor,
+  isEmailRegistered,
+  isUsernameRegistered,
+} from "../firebase/firebaseFirestoreService";
+import { TextInput } from "./Input";
 import { createUser } from "../firebase/firebaseAuthService";
 import Loading from "./Loading";
 
-export default function InstructorModal({ isOpen, onClose, onInstructorAdded, instructorId }) {
+export default function InstructorModal({
+  isOpen,
+  onClose,
+  onInstructorAdded,
+  instructorId,
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [username, setUsername] = useState("");
@@ -44,7 +55,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
       return;
     }
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!instructorId && email.includes(' ')) {
+    if (!instructorId && email.includes(" ")) {
       setError("El correo electrónico no debe contener espacios.");
       return;
     }
@@ -89,7 +100,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
         try {
           await createUser(email);
         } catch (error) {
-          if (error.code === 'auth/email-already-in-use') {
+          if (error.code === "auth/email-already-in-use") {
             await sendPasswordResetEmail(auth, email);
           } else {
             throw error;
@@ -123,7 +134,7 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
   };
 
   const formatPhoneNumber = (value) => {
-    const cleaned = ('' + value).replace(/\D/g, '');
+    const cleaned = ("" + value).replace(/\D/g, "");
     const match = cleaned.match(/^(\d{4})(\d{4})$/);
     if (match) {
       return `${match[1]}-${match[2]}`;
@@ -144,7 +155,9 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
     <Overlay>
       <ModalContainer>
         <ModalHeader>
-          <h2>{instructorId ? "Editar Instructor" : "Agregar Nuevo Instructor"}</h2>
+          <h2>
+            {instructorId ? "Editar Instructor" : "Agregar Nuevo Instructor"}
+          </h2>
         </ModalHeader>
         <ModalBody>
           <Form>
@@ -184,7 +197,14 @@ export default function InstructorModal({ isOpen, onClose, onInstructorAdded, in
           {error && <ErrorMessage>{error}</ErrorMessage>}
         </ModalBody>
         <ModalFooter>
-          <CancelButton onClick={() => { resetFields(); onClose(); }}>Cancelar</CancelButton>
+          <CancelButton
+            onClick={() => {
+              resetFields();
+              onClose();
+            }}
+          >
+            Cancelar
+          </CancelButton>
           <SaveButton onClick={handleSave}>Guardar</SaveButton>
         </ModalFooter>
       </ModalContainer>
@@ -213,7 +233,7 @@ const ModalContainer = styled.div`
   width: 400px;
   max-width: 90vw;
   max-height: 60vh;
-  overflow-y: auto; 
+  overflow-y: auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1003;

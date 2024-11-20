@@ -24,7 +24,7 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
   }, [isOpen, instructorId]);
 
   if (!isOpen) return null;
-  if (error) return <ErrorMessage>{error}</ErrorMessage>; 
+  if (error) return <ErrorMessage>{error}</ErrorMessage>;
   if (!instructor) return <Loading />;
 
   return (
@@ -39,20 +39,28 @@ const InstructorDetails = ({ isOpen, onClose, instructorId }) => {
           <Title>INFORMACIÓN DEL INSTRUCTOR</Title>
           <Card>
             <FaUser />
-            <DetailItem><strong>Nombre:</strong> {instructor.name}</DetailItem>
+            <DetailItem>
+              <strong>Nombre:</strong> {instructor.name}
+            </DetailItem>
           </Card>
           <Card>
             <FaPhone />
-            <DetailItem><strong>Celular:</strong> {instructor.phone}</DetailItem>
+            <DetailItem>
+              <strong>Celular:</strong> {instructor.phone}
+            </DetailItem>
           </Card>
           <Card>
             <FaUser />
-            <DetailItem><strong>Usuario:</strong> {instructor.username}</DetailItem>
+            <DetailItem>
+              <strong>Usuario:</strong> {instructor.username}
+            </DetailItem>
           </Card>
           {instructor.email && (
             <Card>
               <FaEnvelope />
-              <DetailItem><strong>Correo:</strong> {instructor.email}</DetailItem>
+              <DetailItem>
+                <strong>Correo:</strong> {instructor.email}
+              </DetailItem>
             </Card>
           )}
         </ModalBody>

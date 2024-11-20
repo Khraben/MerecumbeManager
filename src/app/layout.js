@@ -1,13 +1,13 @@
 "use client";
 
 import "@/styles/globals.css";
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider } from "./context/AuthContext";
 import SideNavbar from "./components/SideNavbar";
 import Login from "./components/Login";
-import Image from 'next/image';
-import styled from 'styled-components';
+import Image from "next/image";
+import styled from "styled-components";
 
 export default function RootLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    router.push("/"); 
+    router.push("/");
   };
 
   const handleLogout = () => {
@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
     setIsSideNavbarOpen(!isSideNavbarOpen);
   };
 
-  const noLayoutRoutes = ['/SetPassword'];
+  const noLayoutRoutes = ["/SetPassword"];
 
   const shouldShowLayout = !noLayoutRoutes.includes(pathname);
 
@@ -43,7 +43,10 @@ export default function RootLayout({ children }) {
           {shouldShowLayout ? (
             isLoggedIn ? (
               <>
-                <SideNavbar onLogout={handleLogout} toggleSideNavbar={toggleSideNavbar} />
+                <SideNavbar
+                  onLogout={handleLogout}
+                  toggleSideNavbar={toggleSideNavbar}
+                />
                 <MainContent>
                   <Watermark>
                     <Image

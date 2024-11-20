@@ -1,17 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { fetchStudents, fetchReceipts, fetchAttendances, fetchScholarshipStudents } from "../firebase/firebaseFirestoreService";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import {
+  fetchStudents,
+  fetchReceipts,
+  fetchAttendances,
+  fetchScholarshipStudents,
+} from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
-import { FaArrowLeft, FaArrowRight, FaSearch, FaRegCalendarAlt, FaTimes } from 'react-icons/fa';
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaSearch,
+  FaRegCalendarAlt,
+  FaTimes,
+} from "react-icons/fa";
 import DatePicker from "react-datepicker";
-import { es } from "date-fns/locale/es"; 
+import { es } from "date-fns/locale/es";
 
 const PendingPayments = ({ onBack }) => {
   const [pendingPayments, setPendingPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState("");
   const [monthFilter, setMonthFilter] = useState(null);
   const paymentsPerPage = 8;
   const maxPageButtons = 4;
@@ -24,57 +35,70 @@ const PendingPayments = ({ onBack }) => {
         const receipts = await fetchReceipts();
         const attendances = await fetchAttendances();
         const scholarshipStudents = await fetchScholarshipStudents();
-        const scholarshipStudentIds = new Set(scholarshipStudents.map(student => student.studentId));
-  
+        const scholarshipStudentIds = new Set(
+          scholarshipStudents.map((student) => student.studentId)
+        );
+
         const monthOrder = {
-          'enero': 0,
-          'febrero': 1,
-          'marzo': 2,
-          'abril': 3,
-          'mayo': 4,
-          'junio': 5,
-          'julio': 6,
-          'agosto': 7,
-          'septiembre': 8,
-          'octubre': 9,
-          'noviembre': 10,
-          'diciembre': 11
+          enero: 0,
+          febrero: 1,
+          marzo: 2,
+          abril: 3,
+          mayo: 4,
+          junio: 5,
+          julio: 6,
+          agosto: 7,
+          septiembre: 8,
+          octubre: 9,
+          noviembre: 10,
+          diciembre: 11,
         };
-  
+
         const pendingPayments = students
-          .filter(student => !scholarshipStudentIds.has(student.id))
-          .map(student => {
-            const studentAttendances = attendances.filter(att => att.studentId === student.id);
-            const studentReceipts = receipts.filter(rec => rec.studentId === student.id && rec.concept === "Mensualidad");
-  
+          .filter((student) => !scholarshipStudentIds.has(student.id))
+          .map((student) => {
+            const studentAttendances = attendances.filter(
+              (att) => att.studentId === student.id
+            );
+            const studentReceipts = receipts.filter(
+              (rec) =>
+                rec.studentId === student.id && rec.concept === "Mensualidad"
+            );
+
             const pendingMonths = studentAttendances.reduce((acc, att) => {
               const attDate = new Date(att.date.seconds * 1000);
-              let monthName = attDate.toLocaleString('es-ES', { month: 'long' });
-              monthName = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+              let monthName = attDate.toLocaleString("es-ES", {
+                month: "long",
+              });
+              monthName =
+                monthName.charAt(0).toUpperCase() + monthName.slice(1);
               const monthYear = `${monthName} de ${attDate.getFullYear()}`;
-              const hasReceipt = studentReceipts.some(rec => rec.specification === monthYear);
+              const hasReceipt = studentReceipts.some(
+                (rec) => rec.specification === monthYear
+              );
               if (!hasReceipt) {
                 acc.add(monthYear);
               }
               return acc;
             }, new Set());
-  
-            return Array.from(pendingMonths).map(month => ({
+
+            return Array.from(pendingMonths).map((month) => ({
               studentName: student.name,
               studentPhone: student.phone,
               month,
-              paymentDate: student.paymentDate || "Pendiente"
+              paymentDate: student.paymentDate || "Pendiente",
             }));
-          }).flat();
-  
+          })
+          .flat();
+
         pendingPayments.sort((a, b) => {
-          const [monthA, yearA] = a.month.split(' de ');
-          const [monthB, yearB] = b.month.split(' de ');
+          const [monthA, yearA] = a.month.split(" de ");
+          const [monthB, yearB] = b.month.split(" de ");
           const dateA = new Date(yearA, monthOrder[monthA.toLowerCase()]);
           const dateB = new Date(yearB, monthOrder[monthB.toLowerCase()]);
           return dateA - dateB;
         });
-  
+
         setPendingPayments(pendingPayments);
         setFilteredPayments(pendingPayments);
       } catch (error) {
@@ -83,7 +107,7 @@ const PendingPayments = ({ onBack }) => {
         setLoading(false);
       }
     };
-  
+
     loadPendingPayments();
   }, []);
 
@@ -95,18 +119,25 @@ const PendingPayments = ({ onBack }) => {
     let filtered = pendingPayments;
 
     if (selectedStudent) {
-      filtered = filtered.filter(payment =>
-        payment.studentName && payment.studentName.toLowerCase().includes(selectedStudent.toLowerCase())
+      filtered = filtered.filter(
+        (payment) =>
+          payment.studentName &&
+          payment.studentName
+            .toLowerCase()
+            .includes(selectedStudent.toLowerCase())
       );
     }
 
     if (monthFilter) {
       const filterMonth = monthFilter.getMonth() + 1;
       const filterYear = monthFilter.getFullYear();
-      filtered = filtered.filter(payment => {
-        const [month, year] = payment.month.split(' de ');
-        const monthNumber = new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
-        return parseInt(monthNumber) === filterMonth && parseInt(year) === filterYear;
+      filtered = filtered.filter((payment) => {
+        const [month, year] = payment.month.split(" de ");
+        const monthNumber =
+          new Date(Date.parse(month + " 1, 2021")).getMonth() + 1;
+        return (
+          parseInt(monthNumber) === filterMonth && parseInt(year) === filterYear
+        );
       });
     }
 
@@ -127,12 +158,15 @@ const PendingPayments = ({ onBack }) => {
   };
 
   const handleClearStudent = () => {
-    setSelectedStudent('');
+    setSelectedStudent("");
   };
 
   const indexOfLastPayment = currentPage * paymentsPerPage;
   const indexOfFirstPayment = indexOfLastPayment - paymentsPerPage;
-  const currentPayments = filteredPayments.slice(indexOfFirstPayment, indexOfLastPayment);
+  const currentPayments = filteredPayments.slice(
+    indexOfFirstPayment,
+    indexOfLastPayment
+  );
   const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -162,7 +196,11 @@ const PendingPayments = ({ onBack }) => {
             onChange={handleStudentChange}
             placeholder="Filtrar por nombre..."
           />
-          {selectedStudent && <ClearButton onClick={handleClearStudent}><FaTimes /></ClearButton>}
+          {selectedStudent && (
+            <ClearButton onClick={handleClearStudent}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <SearchIcon />
         </SearchContainer>
         <SearchContainer>
@@ -174,13 +212,19 @@ const PendingPayments = ({ onBack }) => {
             locale={es}
             placeholderText="Filtro por mes"
           />
-          {monthFilter && <ClearButton onClick={handleClearMonthFilter}><FaTimes /></ClearButton>}
+          {monthFilter && (
+            <ClearButton onClick={handleClearMonthFilter}>
+              <FaTimes />
+            </ClearButton>
+          )}
           <MonthCalendarIcon />
         </SearchContainer>
       </FilterSection>
       <TableContainer>
         {currentPayments.length === 0 ? (
-          <NoDataMessage>No hay pagos pendientes registrados en el sistema</NoDataMessage>
+          <NoDataMessage>
+            No hay pagos pendientes registrados en el sistema
+          </NoDataMessage>
         ) : (
           <PaymentTable>
             <thead>
@@ -211,7 +255,11 @@ const PendingPayments = ({ onBack }) => {
           </PageIcon>
         )}
         {getPageNumbers().map((page) => (
-          <PageButton key={page} onClick={() => paginate(page)} active={page === currentPage}>
+          <PageButton
+            key={page}
+            onClick={() => paginate(page)}
+            active={page === currentPage}
+          >
             {page}
           </PageButton>
         ))}
@@ -221,7 +269,9 @@ const PendingPayments = ({ onBack }) => {
           </PageIcon>
         )}
       </Pagination>
-      <TotalPaymentsMessage>Total de Pagos Pendientes Encontrados: {filteredPayments.length}</TotalPaymentsMessage>
+      <TotalPaymentsMessage>
+        Total de Pagos Pendientes Encontrados: {filteredPayments.length}
+      </TotalPaymentsMessage>
       <BackButton onClick={onBack}>Volver</BackButton>
     </Wrapper>
   );
@@ -293,7 +343,7 @@ const PaymentTable = styled.table`
   border-collapse: collapse;
   background-color: transparent;
   border-radius: 8px;
- 
+
   thead {
     position: sticky;
     top: 0;
@@ -301,7 +351,8 @@ const PaymentTable = styled.table`
     color: #dddddd;
   }
 
-  th, td {
+  th,
+  td {
     padding: 16px 20px;
     text-align: left;
     border-bottom: 1px solid #ddd;
@@ -324,14 +375,16 @@ const PaymentTable = styled.table`
   }
 
   @media (max-width: 768px) {
-    th, td {
+    th,
+    td {
       font-size: 12px;
       padding: 12px 15px;
     }
   }
 
   @media (max-width: 480px) {
-    th, td {
+    th,
+    td {
       font-size: 10px;
       padding: 10px 12px;
     }
@@ -354,7 +407,7 @@ const PageButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: ${props => props.active ? '#073e8a' : '#0b0f8b'};
+  background-color: ${(props) => (props.active ? "#073e8a" : "#0b0f8b")};
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -445,7 +498,7 @@ const StyledDatePicker = styled(DatePicker)`
   border-radius: 5px;
   background-color: transparent;
   z-index: 5;
-  position: relative; 
+  position: relative;
   @media (max-width: 480px) {
     padding: 8px 12px;
     font-size: 12px;
@@ -479,33 +532,33 @@ const SearchInput = styled.input`
   background-color: transparent;
 
   @media (max-width: 480px) {
-    padding: 8px 35px 8px 12px; 
+    padding: 8px 35px 8px 12px;
     font-size: 12px;
   }
 `;
 
 const SearchIcon = styled(FaSearch)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;
 
 const MonthCalendarIcon = styled(FaRegCalendarAlt)`
   position: absolute;
-  right: 30px; 
+  right: 30px;
   color: #0b0f8b;
   font-size: 18px;
   cursor: pointer;
 
   @media (max-width: 480px) {
-    right: 25px; 
+    right: 25px;
     font-size: 16px;
   }
 `;

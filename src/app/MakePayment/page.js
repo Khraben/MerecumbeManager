@@ -8,10 +8,18 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale, setDefaultLocale } from "react-datepicker";
 import es from "date-fns/locale/es";
-import { fetchStudents, fetchStudentEmail, fetchGroupsByIds, fetchLastReceiptNumber, addReceipt, fetchReceiptsByStudentAndConcept, fetchStudentGroupsByStudentId } from "../firebase/firebaseFirestoreService";
-import axios from 'axios';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import {
+  fetchStudents,
+  fetchStudentEmail,
+  fetchGroupsByIds,
+  fetchLastReceiptNumber,
+  addReceipt,
+  fetchReceiptsByStudentAndConcept,
+  fetchStudentGroupsByStudentId,
+} from "../firebase/firebaseFirestoreService";
+import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 registerLocale("es", es);
 setDefaultLocale("es");
@@ -51,7 +59,7 @@ export default function MakePayment() {
 
   useEffect(() => {
     if (selectedStudent) {
-      const student = students.find(s => s.name === selectedStudent);
+      const student = students.find((s) => s.name === selectedStudent);
       if (student) {
         loadGroups(student.id);
       }
@@ -65,13 +73,16 @@ export default function MakePayment() {
   const loadGroups = async (studentId) => {
     const groupIds = await fetchStudentGroupsByStudentId(studentId);
     const groupData = await fetchGroupsByIds(groupIds);
-    const validGroups = groupData.filter(group => group.level !== "Taller");
-    const tallerGroups = groupData.filter(group => group.level === "Taller");
-    setGroups(validGroups.map(group => group.name));
-    setTallerGroups(tallerGroups.map(group => group.name));
+    const validGroups = groupData.filter((group) => group.level !== "Taller");
+    const tallerGroups = groupData.filter((group) => group.level === "Taller");
+    setGroups(validGroups.map((group) => group.name));
+    setTallerGroups(tallerGroups.map((group) => group.name));
 
-    const receipts = await fetchReceiptsByStudentAndConcept(studentId, "Mensualidad");
-    const paidMonths = receipts.map(receipt => {
+    const receipts = await fetchReceiptsByStudentAndConcept(
+      studentId,
+      "Mensualidad"
+    );
+    const paidMonths = receipts.map((receipt) => {
       const date = new Date(receipt.specification);
       return { month: date.getMonth(), year: date.getFullYear() };
     });
@@ -107,63 +118,68 @@ export default function MakePayment() {
       if (receiptRef.current) {
         const canvas = await html2canvas(receiptRef.current, {
           scale: 2,
-          useCORS: true, 
-          logging: true, 
-          backgroundColor: null, 
-          windowWidth: receiptRef.current.scrollWidth, 
-          windowHeight: receiptRef.current.scrollHeight 
+          useCORS: true,
+          logging: true,
+          backgroundColor: null,
+          windowWidth: receiptRef.current.scrollWidth,
+          windowHeight: receiptRef.current.scrollHeight,
         });
-        const imgData = canvas.toDataURL('image/png');
+        const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
+          orientation: "portrait",
+          unit: "px",
+          format: [canvas.width, canvas.height],
         });
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        const pdfBlob = pdf.output('blob');
-  
+        pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+        const pdfBlob = pdf.output("blob");
+
         const reader = new FileReader();
         reader.readAsDataURL(pdfBlob);
         reader.onloadend = async () => {
-          const pdfBase64 = reader.result.split(',')[1];
-  
-          const student = students.find(s => s.name === selectedStudent);
+          const pdfBase64 = reader.result.split(",")[1];
+
+          const student = students.find((s) => s.name === selectedStudent);
           if (!student) {
             setErrorMessage("No se pudo encontrar el alumno.");
             setLoading(false);
             return;
           }
-  
+
           const studentEmail = await fetchStudentEmail(student.id);
           if (!studentEmail) {
             setErrorMessage("No se pudo obtener el correo del alumno.");
             setLoading(false);
             return;
           }
-  
-          const studentName = student.name.replace(/\s+/g, '');
-  
-          await axios.post('/api/send-email', {
+
+          const studentName = student.name.replace(/\s+/g, "");
+
+          await axios.post("/api/send-email", {
             email: studentEmail,
             pdf: pdfBase64,
             studentName: studentName,
             receiptNumber: receiptNumber,
           });
-  
-          console.log('Correo enviado con éxito');
-  
+
+          console.log("Correo enviado con éxito");
+
           const receiptData = {
             studentId: student.id,
             paymentDate: new Date(),
             specification: specifiedMonth
-              ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" }))
+              ? capitalizeFirstLetter(
+                  specifiedMonth.toLocaleDateString("es-CR", {
+                    month: "long",
+                    year: "numeric",
+                  })
+                )
               : selectedTaller,
             concept: selectedConcept,
             amount: `₡${amount}`,
             receiptNumber,
             paymentMethod,
           };
-  
+
           await addReceipt(receiptData);
           setLoading(false);
           setShowPreview(false);
@@ -176,15 +192,15 @@ export default function MakePayment() {
           setAmount("");
           setPaymentMethod("");
         };
-  
+
         reader.onerror = (error) => {
-          console.error('Error al leer el PDF como base64:', error);
+          console.error("Error al leer el PDF como base64:", error);
           setErrorMessage("Error al procesar el PDF para el correo.");
           setLoading(false);
         };
       }
     } catch (error) {
-      console.error('Error al confirmar y enviar el recibo:', error);
+      console.error("Error al confirmar y enviar el recibo:", error);
       setErrorMessage("Error al confirmar y enviar el recibo.");
       setLoading(false);
     }
@@ -199,11 +215,11 @@ export default function MakePayment() {
   };
 
   const formatAmount = (value) => {
-    return value.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const handleAmountChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
+    const value = e.target.value.replace(/[^0-9]/g, "");
     if (value.length <= 5) {
       setAmount(formatAmount(value));
     }
@@ -220,8 +236,10 @@ export default function MakePayment() {
   };
 
   const isMonthDisabled = (date) => {
-    return paidMonths.some(paidMonth =>
-      paidMonth.month === date.getMonth() && paidMonth.year === date.getFullYear()
+    return paidMonths.some(
+      (paidMonth) =>
+        paidMonth.month === date.getMonth() &&
+        paidMonth.year === date.getFullYear()
     );
   };
 
@@ -240,9 +258,15 @@ export default function MakePayment() {
         <Receipt ref={receiptRef}>
           <ReceiptHeader>
             <LogoContainer>
-              <Image src={"/receiptLogo.svg"} alt="Logo" width={100} height={100} draggable="false" />
+              <Image
+                src={"/receiptLogo.svg"}
+                alt="Logo"
+                width={100}
+                height={100}
+                draggable="false"
+              />
             </LogoContainer>
-            <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
+            <h2>Recibo de Pago Provisional #{receiptNumber}</h2>
             <p>Fecha: {date}</p>
           </ReceiptHeader>
           <ReceiptBody>
@@ -250,15 +274,25 @@ export default function MakePayment() {
             <Select value={selectedStudent} onChange={handleStudentChange}>
               <option value="">Seleccione un alumno</option>
               {students.map((student, index) => (
-                <option key={index} value={student.name}>{student.name}</option>
+                <option key={index} value={student.name}>
+                  {student.name}
+                </option>
               ))}
             </Select>
             <Label>Por concepto de</Label>
-            <Select value={selectedConcept} onChange={handleMonthChange} disabled={!selectedStudent}>
+            <Select
+              value={selectedConcept}
+              onChange={handleMonthChange}
+              disabled={!selectedStudent}
+            >
               <option value="">Seleccione una opción...</option>
-              {groups.length > 0 && groups[0] !== "Grupo no encontrado" && <option value="Mensualidad">Mensualidad</option>}
+              {groups.length > 0 && groups[0] !== "Grupo no encontrado" && (
+                <option value="Mensualidad">Mensualidad</option>
+              )}
               <option value="Clases Privadas">Clases Privadas</option>
-              {tallerGroups.length > 0 && <option value="Taller">Taller</option>}
+              {tallerGroups.length > 0 && (
+                <option value="Taller">Taller</option>
+              )}
             </Select>
 
             {selectedConcept === "Mensualidad" && (
@@ -285,10 +319,15 @@ export default function MakePayment() {
             {selectedConcept === "Taller" && (
               <>
                 <Label>Detalle</Label>
-                <Select value={selectedTaller} onChange={(e) => setSelectedTaller(e.target.value)}>
+                <Select
+                  value={selectedTaller}
+                  onChange={(e) => setSelectedTaller(e.target.value)}
+                >
                   <option value="">Seleccione un taller...</option>
                   {tallerGroups.map((taller, index) => (
-                    <option key={index} value={taller}>{taller}</option>
+                    <option key={index} value={taller}>
+                      {taller}
+                    </option>
                   ))}
                 </Select>
               </>
@@ -314,7 +353,13 @@ export default function MakePayment() {
             />
 
             <Label>Forma de Pago</Label>
-            <Select value={paymentMethod} onChange={(e) => { setPaymentMethod(e.target.value); handleInputChange(); }}>
+            <Select
+              value={paymentMethod}
+              onChange={(e) => {
+                setPaymentMethod(e.target.value);
+                handleInputChange();
+              }}
+            >
               <option value="">Seleccione una forma de pago</option>
               <option value="SINPE">SINPE</option>
               <option value="Efectivo">Efectivo</option>
@@ -327,7 +372,9 @@ export default function MakePayment() {
         </Receipt>
         {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
         <ButtonContainer>
-          <GenerateButton onClick={handleGenerateImage}>Generar Recibo</GenerateButton>
+          <GenerateButton onClick={handleGenerateImage}>
+            Generar Recibo
+          </GenerateButton>
         </ButtonContainer>
 
         {showPreview && (
@@ -336,9 +383,15 @@ export default function MakePayment() {
               <Receipt ref={receiptRef}>
                 <ReceiptHeader>
                   <LogoContainer>
-                    <Image src={"/receiptLogo.svg"} alt="Logo" width={100} height={100} draggable="false" />
+                    <Image
+                      src={"/receiptLogo.svg"}
+                      alt="Logo"
+                      width={100}
+                      height={100}
+                      draggable="false"
+                    />
                   </LogoContainer>
-                  <h2>Recibo de Pago Provisional  #{receiptNumber}</h2>
+                  <h2>Recibo de Pago Provisional #{receiptNumber}</h2>
                   <p>Fecha: {date}</p>
                 </ReceiptHeader>
                 <ReceiptBody>
@@ -357,7 +410,16 @@ export default function MakePayment() {
                         ))}
                       </GroupList>
                       <Label>Detalle</Label>
-                      <p>{specifiedMonth ? capitalizeFirstLetter(specifiedMonth.toLocaleDateString("es-CR", { month: "long", year: "numeric" })) : ""}</p>
+                      <p>
+                        {specifiedMonth
+                          ? capitalizeFirstLetter(
+                              specifiedMonth.toLocaleDateString("es-CR", {
+                                month: "long",
+                                year: "numeric",
+                              })
+                            )
+                          : ""}
+                      </p>
                     </>
                   )}
 
@@ -382,12 +444,17 @@ export default function MakePayment() {
                   <p>{paymentMethod}</p>
                 </ReceiptBody>
                 <Description>
-                  ❖ La factura electronica será enviado luego a su Email o WhatsApp
+                  ❖ La factura electronica será enviado luego a su Email o
+                  WhatsApp
                 </Description>
               </Receipt>
               <ButtonContainer>
-                <CancelButton onClick={handleCancelReceipt}>Cancelar</CancelButton>
-                <GenerateButton onClick={handleConfirmReceipt}>Confirmar</GenerateButton>
+                <CancelButton onClick={handleCancelReceipt}>
+                  Cancelar
+                </CancelButton>
+                <GenerateButton onClick={handleConfirmReceipt}>
+                  Confirmar
+                </GenerateButton>
               </ButtonContainer>
             </ModalContent>
           </Modal>
@@ -430,7 +497,7 @@ const Receipt = styled.div`
   padding: 20px;
   background-color: #dddddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: 0 20px; 
+  margin: 0 20px;
 `;
 
 const ReceiptHeader = styled.div`
@@ -518,7 +585,7 @@ const Select = styled.select`
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  width: ${props => props.halfWidth ? '50%' : '100%'};
+  width: ${(props) => (props.halfWidth ? "50%" : "100%")};
   outline: none;
 
   &:focus {
@@ -658,7 +725,7 @@ const ModalContent = styled.div`
   max-width: 390px;
   width: 100%;
   max-height: 85vh;
-  overflow-y: auto; 
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
