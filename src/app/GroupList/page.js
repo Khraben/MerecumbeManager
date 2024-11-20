@@ -29,11 +29,15 @@ export default function GroupList() {
     setLoading(true);
     try {
       const groupsData = await fetchGroups();
-      const instructor = await fetchInstructorByEmail(user.email);
-      const filteredGroups = isInstructorUser
+      if (!isInstructorUser) {
+        setGroups(groupsData);
+      }else{
+        const instructor = await fetchInstructorByEmail(user.email);
+        const filteredGroups = isInstructorUser
         ? groupsData.filter(group => group.instructor === instructor.name)
         : groupsData;
       setGroups(filteredGroups);
+      }
     } catch (error) {
       console.error("Error fetching groups: ", error);
     }
