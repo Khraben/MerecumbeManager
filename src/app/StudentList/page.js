@@ -100,6 +100,7 @@ export default function StudentList() {
   );
 
   const levelsOrder = [
+    "Taller",
     "Nivel I",
     "Nivel II-A",
     "Nivel II-B",
@@ -107,7 +108,6 @@ export default function StudentList() {
     "Nivel III-2",
     "Nivel III-3",
     "Nivel IV",
-    "Taller",
   ];
 
   const getHighestLevel = (groups) => {
