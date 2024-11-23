@@ -16,11 +16,13 @@ const FinancialIncome = ({ onBack }) => {
   const [mensualidadTotal, setMensualidadTotal] = useState(0);
   const [tallerTotal, setTallerTotal] = useState(0);
   const [clasePrivadaTotal, setClasePrivadaTotal] = useState(0);
+  const [otroTotal, setOtroTotal] = useState(0);
   const [monthFilter, setMonthFilter] = useState(new Date());
   const [paymentMethods, setPaymentMethods] = useState({
     SINPE: 0,
     Efectivo: 0,
     Tarjeta: 0,
+    Transferencia: 0,
   });
 
   useEffect(() => {
@@ -98,10 +100,20 @@ const FinancialIncome = ({ onBack }) => {
         return sum + amount;
       }, 0);
 
-    const total = mensualidadTotal + tallerTotal + clasePrivadaTotal;
+    const otroTotal = filtered
+      .filter((payment) => payment.concept === "Otro")
+      .reduce((sum, payment) => {
+        const amountString = payment.amount.replace(/[₡,.]/g, "");
+        const amount = parseFloat(amountString);
+        return sum + amount;
+      }, 0);
+
+    const total =
+      mensualidadTotal + tallerTotal + clasePrivadaTotal + otroTotal;
     setMensualidadTotal(mensualidadTotal);
     setTallerTotal(tallerTotal);
     setClasePrivadaTotal(clasePrivadaTotal);
+    setOtroTotal(otroTotal);
     setTotalAmount(total);
 
     const methods = filtered.reduce(
@@ -115,7 +127,7 @@ const FinancialIncome = ({ onBack }) => {
         acc[method] += amount;
         return acc;
       },
-      { SINPE: 0, Efectivo: 0, Tarjeta: 0 }
+      { SINPE: 0, Efectivo: 0, Tarjeta: 0, Transferencia: 0 }
     );
     setPaymentMethods(methods);
   }, [startDate, endDate, monthFilter, payments]);
@@ -238,6 +250,10 @@ const FinancialIncome = ({ onBack }) => {
                   <td>Clase Privada</td>
                   <td>{formatAmount(Number(clasePrivadaTotal).toFixed(0))}</td>
                 </tr>
+                <tr>
+                  <td>Otro</td>
+                  <td>{formatAmount(Number(otroTotal).toFixed(0))}</td>
+                </tr>
               </tbody>
             </PaymentTable>
             <a>||</a>
@@ -249,14 +265,18 @@ const FinancialIncome = ({ onBack }) => {
                 </tr>
               </thead>
               <tbody>
-                {["SINPE", "Efectivo", "Tarjeta"].map((method) => (
-                  <tr key={method}>
-                    <td>{method}</td>
-                    <td>
-                      {formatAmount(Number(paymentMethods[method]).toFixed(0))}
-                    </td>
-                  </tr>
-                ))}
+                {["SINPE", "Efectivo", "Tarjeta", "Transferencia"].map(
+                  (method) => (
+                    <tr key={method}>
+                      <td>{method}</td>
+                      <td>
+                        {formatAmount(
+                          Number(paymentMethods[method]).toFixed(0)
+                        )}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </PaymentTable>
           </>
@@ -489,7 +509,10 @@ const TotalAmountRow = styled.tr`
 
   td {
     padding: 16px 20px;
+    display: flex;
+    justify-content: center;
   }
+
   @media (max-width: 768px) {
     font-size: 14px;
     td {

@@ -543,6 +543,29 @@ export const fetchReceiptsByMonth = async (monthYear) => {
   }
 };
 
+export const fetchReceiptsByWorkshop = async (workshop) => {
+  try {
+    const receiptsRef = collection(db, "receipts");
+    const receiptsQuery = query(
+      receiptsRef,
+      where("concept", "==", "Taller"),
+      where("specification", "==", workshop)
+    );
+    const querySnapshot = await getDocs(receiptsQuery);
+
+    const receipts = [];
+    querySnapshot.forEach((doc) => {
+      receipts.push({ id: doc.id, ...doc.data() });
+    });
+    console.log("Receipts by workshop: ", receipts);
+
+    return receipts;
+  } catch (error) {
+    console.error("Error fetching receipts by workshop: ", error);
+    throw error;
+  }
+};
+
 export const fetchReceiptsByStudentAndConcept = async (studentId, concept) => {
   try {
     const receiptsQuery = query(

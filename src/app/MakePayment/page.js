@@ -35,11 +35,13 @@ export default function MakePayment() {
   const [selectedTaller, setSelectedTaller] = useState("");
   const [specifiedMonth, setSpecifiedMonth] = useState(null);
   const [privateClassDetail, setPrivateClassDetail] = useState("");
+  const [otherDetail, setOtherDetail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [receiptNumber, setReceiptNumber] = useState(null);
   const [paidMonths, setPaidMonths] = useState([]);
+  const [paidTallerGroups, setPaidTallerGroups] = useState([]);
   const receiptRef = useRef(null);
 
   const date = new Date().toLocaleDateString("es-CR");
@@ -87,6 +89,15 @@ export default function MakePayment() {
       return { month: date.getMonth(), year: date.getFullYear() };
     });
     setPaidMonths(paidMonths);
+
+    const tallerReceipts = await fetchReceiptsByStudentAndConcept(
+      studentId,
+      "Taller"
+    );
+    const paidTallerGroups = tallerReceipts.map(
+      (receipt) => receipt.specification
+    );
+    setPaidTallerGroups(paidTallerGroups);
   };
 
   const handleStudentChange = (e) => {
@@ -95,6 +106,7 @@ export default function MakePayment() {
     setSpecifiedMonth(null);
     setSelectedTaller("");
     setPrivateClassDetail("");
+    setOtherDetail("");
     setAmount("");
     setPaymentMethod("");
     handleInputChange();
@@ -106,7 +118,15 @@ export default function MakePayment() {
       return;
     }
     if (selectedConcept === "Mensualidad" && !specifiedMonth) {
-      setErrorMessage("Por favor complete todos los campos.");
+      setErrorMessage("Por favor seleccione un mes a cancelar.");
+      return;
+    }
+    if (selectedConcept === "Taller" && !selectedTaller) {
+      setErrorMessage("Por favor seleccione un taller a cancelar.");
+      return;
+    }
+    if (selectedConcept === "Otro" && !otherDetail) {
+      setErrorMessage("Por favor seleccione un detalle para el recibo.");
       return;
     }
     setShowPreview(true);
@@ -173,7 +193,11 @@ export default function MakePayment() {
                     year: "numeric",
                   })
                 )
-              : selectedTaller,
+              : selectedTaller
+              ? selectedTaller
+              : otherDetail
+              ? otherDetail
+              : privateClassDetail,
             concept: selectedConcept,
             amount: `₡${amount}`,
             receiptNumber,
@@ -189,6 +213,7 @@ export default function MakePayment() {
           setSpecifiedMonth(null);
           setSelectedTaller("");
           setPrivateClassDetail("");
+          setOtherDetail("");
           setAmount("");
           setPaymentMethod("");
         };
@@ -293,6 +318,7 @@ export default function MakePayment() {
               {tallerGroups.length > 0 && (
                 <option value="Taller">Taller</option>
               )}
+              <option value="Otro">Otro</option>
             </Select>
 
             {selectedConcept === "Mensualidad" && (
@@ -325,7 +351,11 @@ export default function MakePayment() {
                 >
                   <option value="">Seleccione un taller...</option>
                   {tallerGroups.map((taller, index) => (
-                    <option key={index} value={taller}>
+                    <option
+                      key={index}
+                      value={taller}
+                      disabled={paidTallerGroups.includes(taller)}
+                    >
                       {taller}
                     </option>
                   ))}
@@ -340,6 +370,18 @@ export default function MakePayment() {
                   type="text"
                   value={privateClassDetail}
                   onChange={(e) => setPrivateClassDetail(e.target.value)}
+                  placeholder="Ingrese detalles adicionales"
+                />
+              </>
+            )}
+
+            {selectedConcept === "Otro" && (
+              <>
+                <Label>Detalle</Label>
+                <Input
+                  type="text"
+                  value={otherDetail}
+                  onChange={(e) => setOtherDetail(e.target.value)}
                   placeholder="Ingrese detalles adicionales"
                 />
               </>
@@ -364,6 +406,7 @@ export default function MakePayment() {
               <option value="SINPE">SINPE</option>
               <option value="Efectivo">Efectivo</option>
               <option value="Tarjeta">Tarjeta</option>
+              <option value="Transferencia">Transferencia</option>
             </Select>
           </ReceiptBody>
           <Description>
@@ -434,6 +477,13 @@ export default function MakePayment() {
                     <>
                       <Label>Detalle</Label>
                       <p>{privateClassDetail || "Sin Detalles"}</p>
+                    </>
+                  )}
+
+                  {selectedConcept === "Otro" && (
+                    <>
+                      <Label>Detalle</Label>
+                      <p>{otherDetail}</p>
                     </>
                   )}
 

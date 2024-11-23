@@ -16,6 +16,7 @@ import {
   deleteAttendance,
   fetchGroupsByIds,
   fetchReceiptsByMonth,
+  fetchReceiptsByWorkshop,
   fetchScholarshipStudents,
 } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
@@ -35,6 +36,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   const [groupDetails, setGroupDetails] = useState({});
   const [error, setError] = useState(null);
   const [paymentStatuses, setPaymentStatuses] = useState({});
+  const [tallerPaymentStatuses, setTallerPaymentStatuses] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { isInstructorUser } = useAuth();
 
@@ -69,7 +71,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
       setGroupDetails(groupDetailsMap);
 
       setCurrentMonth();
-      await fetchPaymentStatuses(studentsData);
+      await fetchPaymentStatuses(studentsData, groupData.level, groupData.name);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Error al cargar los datos. Por favor, intente de nuevo.");
@@ -92,7 +94,8 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     );
   };
 
-  const fetchPaymentStatuses = async (studentsData) => {
+  const fetchPaymentStatuses = async (studentsData, groupLevel, groupName) => {
+    console.log("groupName:", groupName);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const month = currentDate.toLocaleString("es-ES", { month: "long" });
@@ -100,16 +103,21 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
     const monthYear = `${
       month.charAt(0).toUpperCase() + month.slice(1)
     } de ${year}`;
-    const receipts = await fetchReceiptsByMonth(monthYear);
+
+    let receipts = [];
+    if (groupLevel === "Taller") {
+      receipts = await fetchReceiptsByWorkshop(groupName);
+    } else {
+      receipts = await fetchReceiptsByMonth(monthYear);
+    }
+
     const scholarshipStudents = await fetchScholarshipStudents();
     const scholarshipStudentIds = new Set(
       scholarshipStudents.map((student) => student.studentId)
     );
 
     const statuses = studentsData.reduce((acc, student) => {
-      if (scholarshipStudentIds.has(student.id)) {
-        acc[student.id] = "paid";
-      } else {
+      if (groupLevel === "Taller") {
         const hasPaid = receipts.some(
           (receipt) => receipt.studentId === student.id
         );
@@ -122,11 +130,32 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
         } else {
           acc[student.id] = "overdue";
         }
+      } else {
+        if (scholarshipStudentIds.has(student.id)) {
+          acc[student.id] = "paid";
+        } else {
+          const hasPaid = receipts.some(
+            (receipt) => receipt.studentId === student.id
+          );
+          const paymentDate = parseInt(student.paymentDate, 10);
+
+          if (hasPaid) {
+            acc[student.id] = "paid";
+          } else if (currentDay <= paymentDate) {
+            acc[student.id] = "pending";
+          } else {
+            acc[student.id] = "overdue";
+          }
+        }
       }
       return acc;
     }, {});
 
-    setPaymentStatuses(statuses);
+    if (groupLevel === "Taller") {
+      setTallerPaymentStatuses(statuses);
+    } else {
+      setPaymentStatuses(statuses);
+    }
   };
 
   const handleAttendanceClick = useCallback(
@@ -397,18 +426,31 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                               </AttendanceCell>
                             )
                           )}
-                          <td>
-                            {student.paymentDate}
-                            {paymentStatuses[student.id] === "paid" && (
-                              <PaidIcon />
-                            )}
-                            {paymentStatuses[student.id] === "pending" && (
-                              <PendingIcon />
-                            )}
-                            {paymentStatuses[student.id] === "overdue" && (
-                              <OverdueIcon />
-                            )}
-                          </td>
+                          {group.level !== "Taller" && (
+                            <td>
+                              {student.paymentDate}
+                              {paymentStatuses[student.id] === "paid" && (
+                                <PaidIcon />
+                              )}
+                              {paymentStatuses[student.id] === "pending" && (
+                                <PendingIcon />
+                              )}
+                              {paymentStatuses[student.id] === "overdue" && (
+                                <OverdueIcon />
+                              )}
+                            </td>
+                          )}
+                          {group.level === "Taller" && (
+                            <td>
+                              {tallerPaymentStatuses[student.id] === "paid" && (
+                                <PaidIcon />
+                              )}
+                              {tallerPaymentStatuses[student.id] ===
+                                "pending" && <PendingIcon />}
+                              {tallerPaymentStatuses[student.id] ===
+                                "overdue" && <OverdueIcon />}
+                            </td>
+                          )}
                         </tr>
                       </React.Fragment>
                     )
@@ -434,7 +476,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                 {isEditing ? "Guardar Asistencia" : "Pasar Asistencia"}
               </ActionButton>
             </ButtonContainer>
-            {!(group.level === "Taller" || isInstructorUser) && (
+            {!(group.level === "Taller" || isInstructorUser || isEditing) && (
               <ButtonContainer>
                 <ActionButton onClick={handleOpenModal}>
                   Alumnos Ayuda

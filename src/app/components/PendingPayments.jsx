@@ -5,6 +5,7 @@ import {
   fetchReceipts,
   fetchAttendances,
   fetchScholarshipStudents,
+  fetchGroups,
 } from "../firebase/firebaseFirestoreService";
 import Loading from "./Loading";
 import {
@@ -35,9 +36,16 @@ const PendingPayments = ({ onBack }) => {
         const receipts = await fetchReceipts();
         const attendances = await fetchAttendances();
         const scholarshipStudents = await fetchScholarshipStudents();
+        const groups = await fetchGroups();
         const scholarshipStudentIds = new Set(
           scholarshipStudents.map((student) => student.studentId)
         );
+
+        console.log("Students:", students);
+        console.log("Receipts:", receipts);
+        console.log("Attendances:", attendances);
+        console.log("Scholarship Students:", scholarshipStudents);
+        console.log("Groups:", groups);
 
         const monthOrder = {
           enero: 0,
@@ -54,6 +62,12 @@ const PendingPayments = ({ onBack }) => {
           diciembre: 11,
         };
 
+        const tallerGroups = groups.filter((group) => group.level === "Taller");
+        const otherGroups = groups.filter((group) => group.level !== "Taller");
+
+        console.log("Taller Groups:", tallerGroups);
+        console.log("Other Groups:", otherGroups);
+
         const pendingPayments = students
           .filter((student) => !scholarshipStudentIds.has(student.id))
           .map((student) => {
@@ -66,18 +80,23 @@ const PendingPayments = ({ onBack }) => {
             );
 
             const pendingMonths = studentAttendances.reduce((acc, att) => {
-              const attDate = new Date(att.date.seconds * 1000);
-              let monthName = attDate.toLocaleString("es-ES", {
-                month: "long",
-              });
-              monthName =
-                monthName.charAt(0).toUpperCase() + monthName.slice(1);
-              const monthYear = `${monthName} de ${attDate.getFullYear()}`;
-              const hasReceipt = studentReceipts.some(
-                (rec) => rec.specification === monthYear
+              const group = otherGroups.find(
+                (group) => group.id === att.groupId
               );
-              if (!hasReceipt) {
-                acc.add(monthYear);
+              if (group) {
+                const attDate = new Date(att.date.seconds * 1000);
+                let monthName = attDate.toLocaleString("es-ES", {
+                  month: "long",
+                });
+                monthName =
+                  monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                const monthYear = `${monthName} de ${attDate.getFullYear()}`;
+                const hasReceipt = studentReceipts.some(
+                  (rec) => rec.specification === monthYear
+                );
+                if (!hasReceipt) {
+                  acc.add(monthYear);
+                }
               }
               return acc;
             }, new Set());
@@ -91,7 +110,49 @@ const PendingPayments = ({ onBack }) => {
           })
           .flat();
 
-        pendingPayments.sort((a, b) => {
+        console.log("Pending Payments (Non-Taller):", pendingPayments);
+
+        const pendingTallerPayments = students
+          .map((student) => {
+            const studentAttendances = attendances.filter(
+              (att) => att.studentId === student.id
+            );
+            const studentReceipts = receipts.filter(
+              (rec) => rec.studentId === student.id && rec.concept === "Taller"
+            );
+
+            const pendingTaller = studentAttendances.reduce((acc, att) => {
+              const group = tallerGroups.find(
+                (group) => group.id === att.groupId
+              );
+              if (group) {
+                const hasReceipt = studentReceipts.some(
+                  (rec) => rec.specification === group.name
+                );
+                if (!hasReceipt) {
+                  acc.add(group.name);
+                }
+              }
+              return acc;
+            }, new Set());
+
+            return Array.from(pendingTaller).map((groupName) => ({
+              studentName: student.name,
+              studentPhone: student.phone,
+              month: groupName,
+              paymentDate: student.paymentDate || "Pendiente",
+            }));
+          })
+          .flat();
+
+        console.log("Pending Payments (Taller):", pendingTallerPayments);
+
+        const allPendingPayments = [
+          ...pendingPayments,
+          ...pendingTallerPayments,
+        ];
+
+        allPendingPayments.sort((a, b) => {
           const [monthA, yearA] = a.month.split(" de ");
           const [monthB, yearB] = b.month.split(" de ");
           const dateA = new Date(yearA, monthOrder[monthA.toLowerCase()]);
@@ -99,8 +160,10 @@ const PendingPayments = ({ onBack }) => {
           return dateA - dateB;
         });
 
-        setPendingPayments(pendingPayments);
-        setFilteredPayments(pendingPayments);
+        console.log("All Pending Payments:", allPendingPayments);
+
+        setPendingPayments(allPendingPayments);
+        setFilteredPayments(allPendingPayments);
       } catch (error) {
         console.error("Error al cargar los pagos pendientes: ", error);
       } finally {
@@ -231,7 +294,7 @@ const PendingPayments = ({ onBack }) => {
               <tr>
                 <th>Alumno</th>
                 <th>Celular</th>
-                <th>Mes</th>
+                <th>Concepto</th>
                 <th>F. Pago</th>
               </tr>
             </thead>
