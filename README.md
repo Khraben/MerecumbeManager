@@ -46,13 +46,13 @@ Follow these steps to set up the project locally:
 
 ### Prerequisites
 1. Install [Node.js](https://nodejs.org/).
-2. Set up a Firebase project and add the necessary collections (`students`, `groups`, `payments`, etc.).
-3. Create a user via Firebase Authentication using Google and link it in the `owners` collection with the fields:
+2. Create a user via Firebase Authentication using Email Autentification and link it in the `owners` collection with the fields:
    - `email`
    - `name`
    - `username`
    - `phone`
-   This user will act as the administrator.
+
+This user will act as the administrator.
 
 ### Steps
 ```bash
@@ -93,7 +93,7 @@ NEXT_PUBLIC_EMAIL_PASS=
 ```
 ### Firebase Rules
 Set the following rules in Firebase Firestore:
-```javasript
+```javascript
 rules_version = '1';
 service cloud.firestore {
   match /databases/{database}/documents {
