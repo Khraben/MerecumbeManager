@@ -1,17 +1,17 @@
-# Merecumbé Manager
+# DanceManager
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Version](https://img.shields.io/badge/version-1.0-blue.svg)
 
 ## Description
 
-**Merecumbé Manager** is an internal management platform for a dance academy in Costa Rica. It provides tools to efficiently manage students, groups, attendance tracking, and payments. The platform also offers advanced reporting capabilities and email integration for payment receipts. 
+**DanceManager** is an internal management platform for a dance academy in Costa Rica. It provides tools to efficiently manage students, groups, attendance tracking, and payments. The platform also offers advanced reporting capabilities and email integration for payment receipts. 
 
 It features role-based permissions with three user types:
 - **Owners**: Administrators with full access to all features.
 - **Secretaries**: Users with access to administrative functions, excluding user management.
 - **Instructors**: Users focused on group and attendance management.
 
-This platform was tailored specifically for the organizational structure of Merecumbé in Costa Rica.
+This platform was tailored specifically for the organizational structure of an dance academy in Costa Rica.
 
 ## Key Features
 
