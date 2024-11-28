@@ -369,7 +369,7 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
                         <tr
                           style={{
                             color: student.isPrimaryGroup
-                              ? "#0b0f8b"
+                              ? "#333333"
                               : "#323232",
                           }}
                         >
@@ -548,10 +548,10 @@ const CloseButton = styled.button`
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #0b0f8b;
+  color: #333333;
 
   &:hover {
-    color: #073e8a;
+    color: #242424;
   }
 
   &:focus {
@@ -575,7 +575,7 @@ const DetailsWrapper = styled.div`
 
 const Title = styled.h2`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 10px;
 
   @media (max-width: 480px) {
@@ -585,7 +585,7 @@ const Title = styled.h2`
 
 const GroupName = styled.h3`
   font-size: 18px;
-  color: #0b0f8b;
+  color: #333333;
   text-transform: uppercase;
   margin-bottom: 20px;
 
@@ -632,7 +632,7 @@ const AttendanceControl = styled.div`
 const ControlTitle = styled.p`
   font-size: 18px;
   font-weight: bold;
-  color: #0b0f8b;
+  color: #333333;
 
   @media (max-width: 480px) {
     font-size: 16px;
@@ -663,7 +663,7 @@ const Table = styled.table`
   }
 
   th {
-    background-color: #0b0f8b;
+    background-color: #333333;
     color: #dddddd;
   }
 
@@ -681,12 +681,12 @@ const Table = styled.table`
 const StudentName = styled.td`
   font-weight: bold;
   position: relative;
-  color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#0b0f8b" : "#323232")};
+  color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#333333" : "#323232")};
 `;
 
 const BulletPoint = styled(FaInfo)`
   font-size: 12px;
-  color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#0b0f8b" : "#323232")};
+  color: ${({ isPrimaryGroup }) => (isPrimaryGroup ? "#333333" : "#323232")};
   position: absolute;
   top: 0;
   right: 0;
@@ -748,7 +748,7 @@ const AttendanceCell = styled.td`
     width: 0;
     height: 0;
     border-left: 10px solid transparent;
-    border-top: 10px solid #0b0f8b;
+    border-top: 10px solid #333333;
   }
 
   @media (max-width: 480px) {
@@ -757,7 +757,7 @@ const AttendanceCell = styled.td`
 `;
 
 const PresentIcon = styled(FaCheckCircle)`
-  color: #0b0f8b;
+  color: #333333;
   font-size: 20px;
 
   @media (max-width: 480px) {
@@ -825,7 +825,7 @@ const ActionButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: #0b0f8b;
+  background-color: #333333;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -833,7 +833,7 @@ const ActionButton = styled.button`
   margin-bottom: 20px;
 
   &:hover {
-    background-color: #073e8a;
+    background-color: #242424;
   }
 
   &:focus {

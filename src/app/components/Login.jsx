@@ -105,7 +105,7 @@ export default function Login({ onLogin }) {
 }
 
 const Background = styled.div`
-  background-color: #0b0f8b;
+  background-color: #333333;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -173,7 +173,7 @@ const Form = styled.form`
 const Button = styled.button`
   padding: 10px;
   background-color: #dddddd;
-  color: #0b0f8b;
+  color: #333333;
   border: none;
   border-radius: 5px;
   cursor: pointer;

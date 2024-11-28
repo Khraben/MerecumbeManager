@@ -20,7 +20,7 @@ const StyledInput = styled.input`
   transition: all 0.3s ease-in-out;
 
   &:focus {
-    border-color: #0b0f8b;
+    border-color: #333333;
     transform: scale(1.05);
   }
 
@@ -28,7 +28,7 @@ const StyledInput = styled.input`
   &:not(:placeholder-shown) + label {
     transform: translateY(-1.8rem);
     font-size: 0.75rem;
-    color: #0b0f8b;
+    color: #333333;
   }
 
   @media (max-width: 480px) {
@@ -49,7 +49,7 @@ const StyledSelect = styled.select`
   appearance: none;
 
   &:focus {
-    border-color: #0b0f8b;
+    border-color: #333333;
     transform: scale(1.05);
   }
 
@@ -57,7 +57,7 @@ const StyledSelect = styled.select`
   &:not([value=""]) + label {
     transform: translateY(-1.8rem);
     font-size: 0.75rem;
-    color: #0b0f8b;
+    color: #333333;
   }
 
   @media (max-width: 480px) {
@@ -89,7 +89,7 @@ const StyledLabel = styled.label`
     `
     transform: translateY(-1.8rem);
     font-size: 0.75rem;
-    color: #0b0f8b;
+    color: #333333;
   `}
 `;
 

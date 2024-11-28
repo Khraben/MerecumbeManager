@@ -88,7 +88,7 @@ const Wrapper = styled.div`
 `;
 const Title = styled.h1`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 20px;
   text-transform: uppercase;
   font-weight: 700;
@@ -132,7 +132,7 @@ const ReportTypeSection = styled.section`
 `;
 const Subtitle = styled.h2`
   font-size: 20px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 20px;
   text-transform: uppercase;
   font-weight: 600;

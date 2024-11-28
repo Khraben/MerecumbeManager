@@ -259,7 +259,7 @@ const ModalHeader = styled.div`
   h2 {
     font-size: 20px;
     font-weight: bold;
-    color: #0b0f8b;
+    color: #333333;
     text-align: center;
 
     @media (max-width: 480px) {
@@ -316,7 +316,7 @@ const CancelButton = styled.button`
 `;
 
 const SaveButton = styled.button`
-  background-color: #0b0f8b;
+  background-color: #333333;
   color: #dddddd;
   padding: 10px;
   border: none;
@@ -326,7 +326,7 @@ const SaveButton = styled.button`
   width: 100%;
 
   &:hover {
-    background-color: #073e8a;
+    background-color: #242424;
   }
 
   &:focus {

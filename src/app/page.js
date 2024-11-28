@@ -191,7 +191,7 @@ const Wrapper = styled.div`
 
 const Title = styled.h1`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 50px;
   text-transform: uppercase;
   font-weight: 700;
@@ -217,7 +217,7 @@ const ButtonSection = styled.div`
 `;
 
 const StyledButton = styled.button`
-  background-color: #0b0f8b;
+  background-color: #333333;
   color: #dddddd;
   border: none;
   padding: 15px 30px;
@@ -232,7 +232,7 @@ const StyledButton = styled.button`
   font-weight: bold;
 
   &:hover {
-    background-color: #081075;
+    background-color: #242424;
     transform: scale(1.05);
   }
 
@@ -269,7 +269,7 @@ const DashboardSection = styled.section`
 
 const DashboardTitle = styled.h2`
   font-size: 20px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 20px;
   text-transform: uppercase;
   font-weight: 600;
@@ -302,7 +302,7 @@ const DashboardLabel = styled.span`
 
 const DashboardValue = styled.span`
   font-size: 18px;
-  color: #0b0f8b;
+  color: #333333;
   font-weight: 700;
 
   @media (max-width: 480px) {
@@ -316,7 +316,7 @@ const DaySection = styled.div`
 
 const DayLabel = styled.span`
   font-size: 18px;
-  color: #0b0f8b;
+  color: #333333;
   font-weight: 700;
   display: block;
   margin-bottom: 10px;

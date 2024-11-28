@@ -222,7 +222,7 @@ const Wrapper = styled.div`
 
 const Title = styled.h1`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 20px;
   text-transform: uppercase;
   font-weight: 700;
@@ -239,14 +239,14 @@ const AddButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: #0b0f8b;
+  background-color: #333333;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #073e8a;
+    background-color: #242424;
   }
 
   &:focus {
@@ -285,7 +285,7 @@ const Table = styled.table`
   thead {
     position: sticky;
     top: 0;
-    background-color: #0b0f8b;
+    background-color: #333333;
     color: #dddddd;
     z-index: 1;
   }
@@ -344,7 +344,7 @@ const SearchInput = styled.input`
   width: 95%;
   padding: 10px 15px;
   font-size: 14px;
-  border: 2px solid #0b0f8b;
+  border: 2px solid #333333;
   border-radius: 5px;
   outline: none;
   background-color: transparent;
@@ -357,7 +357,7 @@ const SearchInput = styled.input`
 
 const SearchIcon = styled(FaSearch)`
   margin-left: -35px;
-  color: #0b0f8b;
+  color: #333333;
   font-size: 18px;
   cursor: pointer;
 
@@ -367,12 +367,12 @@ const SearchIcon = styled(FaSearch)`
 `;
 
 const InfoIcon = styled(FaInfoCircle)`
-  color: #0b0f8b;
+  color: #333333;
   cursor: pointer;
   font-size: 20px;
 
   &:hover {
-    color: #073e8a;
+    color: #242424;
   }
 
   @media (max-width: 480px) {
@@ -381,14 +381,14 @@ const InfoIcon = styled(FaInfoCircle)`
 `;
 
 const EditIcon = styled(FaEdit)`
-  color: #0b0f8b;
+  color: #333333;
   cursor: pointer;
   font-size: 20px;
   margin-right: 10px;
   margin-left: 10px;
 
   &:hover {
-    color: #073e8a;
+    color: #242424;
   }
 
   @media (max-width: 480px) {
@@ -397,7 +397,7 @@ const EditIcon = styled(FaEdit)`
 `;
 
 const DeleteIcon = styled(FaTrash)`
-  color: #0b0f8b;
+  color: #333333;
   cursor: pointer;
   font-size: 18px;
 
@@ -416,7 +416,7 @@ const ClearButton = styled.button`
   top: 10px;
   background: none;
   border: none;
-  color: #0b0f8b;
+  color: #333333;
   font-size: 18px;
   cursor: pointer;
   z-index: 1001;

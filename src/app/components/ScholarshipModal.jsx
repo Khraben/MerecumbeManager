@@ -222,10 +222,10 @@ const CloseButton = styled.button`
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #0b0f8b;
+  color: #333333;
 
   &:hover {
-    color: #073e8a;
+    color: #242424;
   }
 `;
 
@@ -237,7 +237,7 @@ const ModalBody = styled.div`
 
 const Title = styled.h2`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 10px;
   text-align: center;
 `;
@@ -251,12 +251,12 @@ const Form = styled.form`
 const AddButton = styled.button`
   background: none;
   border: none;
-  color: #0b0f8b;
+  color: #333333;
   cursor: pointer;
   font-size: 20px;
 
   &:hover {
-    color: #073e8a;
+    color: #242424;
   }
 
   &:focus {

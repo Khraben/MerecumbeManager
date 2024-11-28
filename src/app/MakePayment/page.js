@@ -528,7 +528,7 @@ const Wrapper = styled.div`
 
 const Title = styled.h1`
   font-size: 24px;
-  color: #0b0f8b;
+  color: #333333;
   margin-bottom: 20px;
   text-transform: uppercase;
   font-weight: 700;
@@ -557,7 +557,7 @@ const ReceiptHeader = styled.div`
   h2 {
     margin: 0;
     font-size: 20px;
-    color: #0b0f8b;
+    color: #333333;
   }
 
   p {
@@ -595,7 +595,7 @@ const Input = styled.input`
   outline: none;
 
   &:focus {
-    border-color: #0b0f8b;
+    border-color: #333333;
   }
 
   @media (max-width: 480px) {
@@ -612,7 +612,7 @@ const StyledDatePicker = styled(DatePicker)`
   width: 93%;
 
   &:focus {
-    border-color: #0b0f8b;
+    border-color: #333333;
   }
 
   &:hover {
@@ -639,7 +639,7 @@ const Select = styled.select`
   outline: none;
 
   &:focus {
-    border-color: #0b0f8b;
+    border-color: #333333;
   }
 
   @media (max-width: 480px) {
@@ -699,14 +699,14 @@ const GenerateButton = styled.button`
   font-size: 14px;
   font-weight: bold;
   color: #dddddd;
-  background-color: #0b0f8b;
+  background-color: #333333;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #073e8a;
+    background-color: #242424;
   }
 
   &:focus {

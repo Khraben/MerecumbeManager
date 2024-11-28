@@ -81,7 +81,7 @@ export default function SideNavbar({
                 <Tooltip>Grupos</Tooltip>
               </HiddenLink>
             </HiddenLinkContainer>
-            {isOwnerUser && (
+            {!isInstructorUser && (
               <>
                 <HiddenLinkContainer>
                   <HiddenLink
@@ -138,7 +138,7 @@ export default function SideNavbar({
               <FaUsers /> Grupos
             </StyledLink>
           </NavItem>
-          {isOwnerUser && (
+          {!isInstructorUser && (
             <>
               <NavItem>
                 <StyledLink
@@ -184,7 +184,7 @@ const ToggleButton = styled.button`
   position: fixed;
   top: 10px;
   left: 10px;
-  background-color: #0b0f8b;
+  background-color: #333333;
   color: #dddddd;
   border: none;
   padding: 10px;
@@ -197,7 +197,7 @@ const ToggleButton = styled.button`
   z-index: 1001;
 
   &:hover {
-    background-color: #081075;
+    background-color: #242424;
   }
 
   @media (max-width: 480px) {
@@ -210,7 +210,7 @@ const ToggleButton = styled.button`
 const Tooltip = styled.span`
   visibility: hidden;
   width: 100px;
-  background-color: #081075;
+  background-color: #242424;
   color: #dddddd;
   text-align: center;
   border-radius: 6px;
@@ -232,7 +232,7 @@ const Tooltip = styled.span`
     margin-top: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #081075;
+    border-color: #242424;
   }
 
   @media (max-width: 480px) {
@@ -282,7 +282,7 @@ const SettingsContainer = styled.div`
 `;
 
 const HiddenLink = styled.button`
-  background-color: #0b0f8b;
+  background-color: #333333;
   color: #dddddd;
   border: none;
   padding: 10px;
@@ -295,7 +295,7 @@ const HiddenLink = styled.button`
   z-index: 1001;
 
   &:hover {
-    background-color: #081075;
+    background-color: #242424;
   }
 
   @media (max-width: 480px) {
@@ -310,7 +310,7 @@ const HiddenLink = styled.button`
 `;
 
 const SideNav = styled.nav`
-  background-color: #0b0f8b;
+  background-color: #333333;
   width: 250px;
   height: 100vh;
   position: fixed;
