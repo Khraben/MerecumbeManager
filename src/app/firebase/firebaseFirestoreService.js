@@ -740,6 +740,39 @@ export const fetchEmailByUsername = async (username) => {
   return null;
 };
 
+export const fetchNameByEmail = async (email) => {
+  const secretariesQuery = query(
+    collection(db, "secretaries"),
+    where("email", "==", email)
+  );
+  const secretariesSnapshot = await getDocs(secretariesQuery);
+
+  const ownersQuery = query(
+    collection(db, "owners"),
+    where("email", "==", email)
+  );
+  const ownersSnapshot = await getDocs(ownersQuery);
+
+  const instructorsQuery = query(
+    collection(db, "instructors"),
+    where("email", "==", email)
+  );
+  const instructorsSnapshot = await getDocs(instructorsQuery);
+
+  if (!secretariesSnapshot.empty) {
+    return secretariesSnapshot.docs[0].data().name;
+  }
+
+  if (!ownersSnapshot.empty) {
+    return ownersSnapshot.docs[0].data().name;
+  }
+
+  if (!instructorsSnapshot.empty) {
+    return instructorsSnapshot.docs[0].data().name;
+  }
+  return null;
+};
+
 export const fetchStudentGroupsByStudentId = async (studentId) => {
   const q = query(
     collection(db, "studentGroups"),

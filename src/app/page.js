@@ -14,6 +14,7 @@ import {
   fetchScholarshipStudents,
   fetchGroupsByInstructor,
   fetchInstructorByEmail,
+  fetchNameByEmail,
 } from "./firebase/firebaseFirestoreService";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./context/AuthContext";
@@ -24,13 +25,16 @@ export default function Home() {
   const [paymentsThisMonthCount, setPaymentsThisMonthCount] = useState(0);
   const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
   const [instructorGroups, setInstructorGroups] = useState([]);
+  const [birthdaysThisWeek, setBirthdaysThisWeek] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
   const router = useRouter();
   const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setName(await fetchNameByEmail(user.email));
       if (isInstructorUser) {
         const instructor = await fetchInstructorByEmail(user.email);
         const groups = await fetchGroupsByInstructor(instructor.id);
@@ -64,6 +68,9 @@ export default function Home() {
         const pendingPayments =
           nonScholarshipStudents.length - paymentsThisMonth.length;
         setPendingPaymentsCount(pendingPayments);
+
+        const birthdays = getBirthdaysThisWeek(nonScholarshipStudents);
+        setBirthdaysThisWeek(birthdays);
       }
       setLoading(false);
     };
@@ -85,6 +92,43 @@ export default function Home() {
       hours = parseInt(hours, 10) + 12;
     }
     return `${String(hours).padStart(2, "0")}:${minutes}`;
+  };
+
+  const getBirthdaysThisWeek = (students) => {
+    const currentDate = new Date();
+    const currentDay = currentDate.getDay();
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDay + 1);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const daysOfWeek = [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado",
+    ];
+
+    return students
+      .map((student) => {
+        const [day, month] = student.birthday.split("/").map(Number);
+        const birthdayDate = new Date(
+          currentDate.getFullYear(),
+          month - 1,
+          day
+        );
+        const dayOfWeek = daysOfWeek[birthdayDate.getDay()];
+        return { ...student, birthdayDate, dayOfWeek };
+      })
+      .filter(
+        (student) =>
+          student.birthdayDate >= startOfWeek &&
+          student.birthdayDate <= endOfWeek
+      )
+      .sort((a, b) => a.birthdayDate - b.birthdayDate);
   };
 
   const groupedByDay = instructorGroups.reduce((acc, group) => {
@@ -111,7 +155,8 @@ export default function Home() {
 
   return (
     <Wrapper>
-      <Title>Merecumbé San Ramón</Title>
+      <Title>Dance Manager</Title>
+      <Subtitle>¡Bienvenido/a {name}!</Subtitle>
       <ButtonSection>
         <StyledButton onClick={() => handleLinkClick("/GroupList")}>
           <FaUsers /> Grupos
@@ -144,6 +189,22 @@ export default function Home() {
           <DashboardItem>
             <DashboardLabel>Pagos Faltantes Este Mes:</DashboardLabel>
             <DashboardValue>{pendingPaymentsCount}</DashboardValue>
+          </DashboardItem>
+          <DashboardItem>
+            <DashboardLabel>Cumpleaños Esta Semana:</DashboardLabel>
+            <DashboardValue>
+              {birthdaysThisWeek.length > 0 ? (
+                <ul>
+                  {birthdaysThisWeek.map((student) => (
+                    <li key={student.id}>
+                      {student.name} - {student.dayOfWeek}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                "No hay cumpleaños esta semana"
+              )}
+            </DashboardValue>
           </DashboardItem>
         </DashboardSection>
       )}
@@ -199,6 +260,19 @@ const Title = styled.h1`
 
   @media (max-width: 480px) {
     font-size: 20px;
+  }
+`;
+
+const Subtitle = styled.h2`
+  font-size: 18px;
+  color: #333333;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
   }
 `;
 

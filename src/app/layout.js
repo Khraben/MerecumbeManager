@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
   const shouldShowLayout = !noLayoutRoutes.includes(pathname);
 
   useEffect(() => {
-    document.title = "Merecumbé San Ramón - Manager";
+    document.title = "Dance Manager";
   }, []);
 
   return (
