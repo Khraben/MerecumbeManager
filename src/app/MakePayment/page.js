@@ -84,9 +84,30 @@ export default function MakePayment() {
       studentId,
       "Mensualidad"
     );
+    const monthMap = {
+      Enero: 0,
+      Febrero: 1,
+      Marzo: 2,
+      Abril: 3,
+      Mayo: 4,
+      Junio: 5,
+      Julio: 6,
+      Agosto: 7,
+      Septiembre: 8,
+      Octubre: 9,
+      Noviembre: 10,
+      Diciembre: 11,
+    };
+
+    const parseSpecification = (specification) => {
+      const [monthName, year] = specification.split(" de ");
+      const month = monthMap[monthName];
+      return { month, year: parseInt(year, 10) };
+    };
+
     const paidMonths = receipts.map((receipt) => {
-      const date = new Date(receipt.specification);
-      return { month: date.getMonth(), year: date.getFullYear() };
+      const { month, year } = parseSpecification(receipt.specification);
+      return { month, year };
     });
     setPaidMonths(paidMonths);
 
@@ -137,7 +158,7 @@ export default function MakePayment() {
     try {
       if (receiptRef.current) {
         const canvas = await html2canvas(receiptRef.current, {
-          scale: 2,
+          scale: 1.75,
           useCORS: true,
           logging: true,
           backgroundColor: null,

@@ -15,7 +15,10 @@ export async function POST(request) {
 
   const mailOptions = {
     from:
-      "Merecumbé San Ramón" + "<" + process.env.NEXT_PUBLIC_EMAIL_USER + ">",
+      process.env.NEXT_PUBLIC_EMAIL_NAME +
+      "<" +
+      process.env.NEXT_PUBLIC_EMAIL_USER +
+      ">",
     to: email,
     subject: "Comprobante de Pago",
     text: "Adjunto encontrarás tu comprobante de pago.\n\n¡Gracias por ser parte de nuestra academia!",
