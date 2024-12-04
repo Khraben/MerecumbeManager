@@ -116,9 +116,25 @@ export default function StudentModal({
       (g) => g !== "INACTIVO"
     );
 
+    const levelOrder = [
+      "Nivel IV",
+      "Nivel III-3",
+      "Nivel III-2",
+      "Nivel III-1",
+      "Nivel II-B",
+      "Nivel II-A",
+      "Nivel I",
+      "Taller",
+    ];
+
     const sortedGroups = allGroups.sort((a, b) => {
       const groupA = groups.find((g) => g.id === a);
       const groupB = groups.find((g) => g.id === b);
+      const levelComparison =
+        levelOrder.indexOf(groupA.level) - levelOrder.indexOf(groupB.level);
+      if (levelComparison !== 0) {
+        return levelComparison;
+      }
       const dateA = new Date(groupA.startDate.split("/").reverse().join("-"));
       const dateB = new Date(groupB.startDate.split("/").reverse().join("-"));
       return dateA - dateB;
@@ -373,7 +389,11 @@ export default function StudentModal({
                           value={group.id}
                           disabled={isGroupSelected(group.id)}
                         >
-                          {group.level + " - " + group.name}
+                          {group.level +
+                            " - " +
+                            group.name +
+                            " - " +
+                            group.instructor}
                         </option>
                       ))}
                     </ComboBox>

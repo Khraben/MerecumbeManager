@@ -13,9 +13,11 @@ import GroupModal from "../components/GroupModal";
 import GroupDetails from "../components/GroupDetails";
 import Loading from "../components/Loading";
 import ConfirmationModal from "../components/ConfirmationModal";
+import ReassignStudentsModal from "../components/ReassignStudentsModal";
 import {
   fetchGroups,
   deleteGroup,
+  fetchStudentGroupsByGroupId,
   fetchInstructorByEmail,
 } from "../firebase/firebaseFirestoreService";
 import { useAuth } from "../context/AuthContext";
@@ -27,8 +29,9 @@ export default function GroupList() {
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [editingGroupId, setEditingGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const { isInstructorUser, user } = useAuth();
 
   useEffect(() => {
@@ -72,24 +75,39 @@ export default function GroupList() {
     setSelectedGroupId(null);
   };
 
-  const handleDeleteGroup = async () => {
+  const handleOpenReassignModal = async (group) => {
+    setLoading(true);
     try {
+      const students = await fetchStudentGroupsByGroupId(group.id);
+      if (students.length === 0) {
+        setGroupToDelete(group);
+        setIsConfirmationModalOpen(true);
+      } else {
+        setGroupToDelete(group);
+        setIsReassignModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching students: ", error);
+    }
+    setLoading(false);
+  };
+
+  const handleCloseReassignModal = () => {
+    setIsReassignModalOpen(false);
+    setGroupToDelete(null);
+    fetchGroupsData();
+  };
+
+  const handleCloseConfirmationModal = () => {
+    setIsConfirmationModalOpen(false);
+    setGroupToDelete(null);
+  };
+
+  const handleConfirmDeleteGroup = async () => {
+    if (groupToDelete) {
       await deleteGroup(groupToDelete.id);
       fetchGroupsData();
-      setIsConfirmationOpen(false);
-    } catch (error) {
-      console.error("Error deleting group: ", error);
     }
-  };
-
-  const handleOpenConfirmation = (group) => {
-    setGroupToDelete(group);
-    setIsConfirmationOpen(true);
-  };
-
-  const handleCloseConfirmation = () => {
-    setIsConfirmationOpen(false);
-    setGroupToDelete(null);
   };
 
   const handleClearSearch = () => {
@@ -148,7 +166,7 @@ export default function GroupList() {
                         />
                         <EditIcon onClick={() => handleOpenModal(group.id)} />
                         <DeleteIcon
-                          onClick={() => handleOpenConfirmation(group)}
+                          onClick={() => handleOpenReassignModal(group)}
                         />
                       </IconContainer>
                     )}
@@ -180,11 +198,16 @@ export default function GroupList() {
         onClose={handleCloseGroupDetails}
         groupId={selectedGroupId}
       />
+      <ReassignStudentsModal
+        isOpen={isReassignModalOpen}
+        onClose={handleCloseReassignModal}
+        groupId={groupToDelete?.id}
+      />
       <ConfirmationModal
-        isOpen={isConfirmationOpen}
-        onClose={handleCloseConfirmation}
-        onConfirm={handleDeleteGroup}
-        message={`¿Estás seguro de que deseas eliminar el grupo "${groupToDelete?.name}"?`}
+        isOpen={isConfirmationModalOpen}
+        onClose={handleCloseConfirmationModal}
+        onConfirm={handleConfirmDeleteGroup}
+        message={`¿Estás seguro que deseas eliminar el grupo "${groupToDelete?.name}"?`}
       />
     </Wrapper>
   );

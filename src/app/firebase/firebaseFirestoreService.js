@@ -183,22 +183,6 @@ export const fetchStudentEmail = async (studentId) => {
   }
 };
 
-export const fetchStudentsByGroup = async (groupId) => {
-  try {
-    const studentsRef = collection(db, "students");
-    const q = query(studentsRef, where("groupId", "==", groupId));
-    const querySnapshot = await getDocs(q);
-    const students = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    return students;
-  } catch (error) {
-    console.error("Error fetching students by group: ", error);
-    throw error;
-  }
-};
-
 export const fetchActiveStudents = async () => {
   const studentGroupsSnapshot = await getDocs(collection(db, "studentGroups"));
   const activeStudentIds = new Set(
@@ -388,35 +372,6 @@ export const fetchGroupsByIds = async (groupIds) => {
   return groupData;
 };
 
-export const fetchGroupsByDay = async (day) => {
-  const querySnapshot = await getDocs(collection(db, "groups"));
-  const groupsData = querySnapshot.docs
-    .map((doc) => doc.data())
-    .filter(
-      (group) => group.day && group.day.toLowerCase() === day.toLowerCase()
-    );
-
-  groupsData.sort((a, b) => {
-    const convertTo24HourFormat = (time) => {
-      const [hours, minutes, period] = time.match(/(\d+):(\d+)(\w+)/).slice(1);
-      let hours24 = parseInt(hours);
-      if (period.toLowerCase() === "pm" && hours !== "12") {
-        hours24 += 12;
-      }
-      if (period.toLowerCase() === "am" && hours === "12") {
-        hours24 = 0;
-      }
-      return `${hours24.toString().padStart(2, "0")}:${minutes}`;
-    };
-
-    const startTimeA = convertTo24HourFormat(a.startTime);
-    const startTimeB = convertTo24HourFormat(b.startTime);
-    return startTimeA.localeCompare(startTimeB);
-  });
-
-  return groupsData;
-};
-
 export const fetchGroupsByInstructor = async (instructorId) => {
   try {
     const groupsQuery = query(
@@ -602,24 +557,6 @@ export const fetchReceiptsByStudentAndMonth = async (studentId, monthYear) => {
   }
 };
 
-export const fetchReceiptByNumber = async (receiptNumber) => {
-  try {
-    const receiptsQuery = query(
-      collection(db, "receipts"),
-      where("receiptNumber", "==", receiptNumber)
-    );
-    const querySnapshot = await getDocs(receiptsQuery);
-    if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data();
-    } else {
-      throw new Error("Receipt not found");
-    }
-  } catch (e) {
-    console.error("Error fetching receipt by number: ", e);
-    throw e;
-  }
-};
-
 export const fetchAttendances = async () => {
   try {
     const attendancesCollection = collection(db, "attendance");
@@ -676,34 +613,6 @@ export const fetchAttendancesByGroup = async (groupId) => {
   } catch (error) {
     console.error("Error fetching attendances: ", error);
     return {};
-  }
-};
-
-export const fetchAttendancesByStudentAndMonth = async (
-  studentId,
-  monthYear
-) => {
-  try {
-    const attendances = [];
-    const attendancesQuery = query(
-      collection(db, "attendance"),
-      where("studentId", "==", studentId),
-      where("monthYear", "==", monthYear)
-    );
-
-    const snapshot = await getDocs(attendancesQuery);
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const attendanceDate =
-        data.date instanceof Date ? data.date : data.date.toDate();
-      attendances.push({ ...data, date: attendanceDate });
-    });
-
-    return attendances;
-  } catch (error) {
-    console.error("Error fetching attendances: ", error);
-    throw error;
   }
 };
 
@@ -771,6 +680,27 @@ export const fetchNameByEmail = async (email) => {
     return instructorsSnapshot.docs[0].data().name;
   }
   return null;
+};
+
+export const fetchStudentGroupRelation = async (studentId, groupId) => {
+  try {
+    const q = query(
+      collection(db, "studentGroups"),
+      where("studentId", "==", studentId),
+      where("groupId", "==", groupId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return doc.data();
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting student group relation:", error);
+    throw error;
+  }
 };
 
 export const fetchStudentGroupsByStudentId = async (studentId) => {
