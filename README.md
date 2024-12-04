@@ -101,6 +101,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
 ```plaintext
 NEXT_PUBLIC_EMAIL_USER=
 NEXT_PUBLIC_EMAIL_PASS=
+NEXT_PUBLIC_EMAIL_NAME=
 ```
 
 ### Firebase Rules
@@ -203,7 +204,7 @@ SOFTWARE.
 
 ### User Manual (Spanish)
 
-- [Link to User Manual](https://drive.google.com/file/d/1aPeyl7EL338DQH4ahBlAKF_HbeG7rJv4/view?usp=sharing)
+- [Link to User Manual](https://drive.google.com/file/d/1s6GhVg0bCVMUCfApiN2ry1FhOia942iQ/view?usp=sharing)
 
 ### Article about the Project (Spanish)
 
