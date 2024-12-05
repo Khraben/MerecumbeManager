@@ -50,7 +50,7 @@ export default function RootLayout({ children }) {
                 <MainContent>
                   <Watermark>
                     <Image
-                      src="/logo.svg"
+                      src="/receiptLogo.svg"
                       alt="Marca de Agua"
                       layout="fill"
                       objectFit="contain"
