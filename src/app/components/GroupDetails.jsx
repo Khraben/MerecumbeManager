@@ -95,7 +95,6 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   };
 
   const fetchPaymentStatuses = async (studentsData, groupLevel, groupName) => {
-    console.log("groupName:", groupName);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const month = currentDate.toLocaleString("es-ES", { month: "long" });
@@ -275,8 +274,23 @@ export default function GroupDetails({ isOpen, onClose, groupId }) {
   };
 
   const getAttendanceDates = useCallback((monthYear, groupDay) => {
+    const monthNames = {
+      enero: 0,
+      febrero: 1,
+      marzo: 2,
+      abril: 3,
+      mayo: 4,
+      junio: 5,
+      julio: 6,
+      agosto: 7,
+      septiembre: 8,
+      octubre: 9,
+      noviembre: 10,
+      diciembre: 11,
+    };
+
     const [monthName, year] = monthYear.split(" ");
-    const month = new Date(`${monthName} 1, ${year}`).getMonth();
+    const month = monthNames[monthName.toLowerCase()];
     const selectedYear = parseInt(year, 10);
     const dayOfWeekIndex = getDayOfWeekIndex(groupDay);
 
