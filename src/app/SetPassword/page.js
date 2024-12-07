@@ -96,7 +96,8 @@ const SetPassword = () => {
       <SetContainer>
         <Form onSubmit={handleSubmit}>
           <Image src="/logo.svg" alt="Logo" width={100} height={100} />
-          <Title>Crear Contraseña Mere</Title>
+          <Title>{process.env.NEXT_PUBLIC_EMAIL_NAME}</Title>
+          <Title>Crear Contraseña</Title>
           <PasswordRequirements>
             <p>Requisitos de la contraseña:</p>
             <ul>
