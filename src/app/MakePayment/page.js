@@ -14,6 +14,7 @@ import {
   fetchGroupsByIds,
   fetchLastReceiptNumber,
   addReceipt,
+  addToCurrentCash,
   fetchReceiptsByStudentAndConcept,
   fetchStudentGroupsByStudentId,
 } from "../firebase/firebaseFirestoreService";
@@ -226,6 +227,11 @@ export default function MakePayment() {
           };
 
           await addReceipt(receiptData);
+
+          if (paymentMethod === "Efectivo") {
+            await addToCurrentCash(Number(amount.replace(/\./g, "")));
+          }
+
           setLoading(false);
           setShowPreview(false);
           loadInitialData();

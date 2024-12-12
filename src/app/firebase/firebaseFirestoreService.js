@@ -117,6 +117,14 @@ export const addScholarshipStudent = async (studentId) => {
   }
 };
 
+export const addToCurrentCash = async (amount) => {
+  const currentCash = await fetchCurrentCash();
+  const newCashAmount = currentCash + amount;
+  const metadataDoc = doc(db, "metadata", "cash");
+  await setDoc(metadataDoc, { currentCash: newCashAmount }, { merge: true });
+  return newCashAmount;
+};
+
 //FETCH
 export const fetchStudents = async () => {
   const querySnapshot = await getDocs(
@@ -454,6 +462,19 @@ export const fetchLastReceiptNumber = async () => {
     return data.lastReceiptNumber;
   } else {
     await setDoc(metadataDoc, { lastReceiptNumber: 0 });
+    return 0;
+  }
+};
+
+export const fetchCurrentCash = async () => {
+  const metadataDoc = doc(db, "metadata", "cash");
+  const metadataSnapshot = await getDoc(metadataDoc);
+
+  if (metadataSnapshot.exists()) {
+    const data = metadataSnapshot.data();
+    return data.currentCash;
+  } else {
+    await setDoc(metadataDoc, { currentCash: 0 });
     return 0;
   }
 };
@@ -1046,4 +1067,13 @@ export const isUsernameRegistered = async (username) => {
     !ownersSnapshot.empty ||
     !instructorsSnapshot.empty
   );
+};
+
+//SUBSTRACT
+export const subtractFromCurrentCash = async (amount) => {
+  const currentCash = await fetchCurrentCash();
+  const newCashAmount = currentCash - amount;
+  const metadataDoc = doc(db, "metadata", "cash");
+  await setDoc(metadataDoc, { currentCash: newCashAmount }, { merge: true });
+  return newCashAmount;
 };
