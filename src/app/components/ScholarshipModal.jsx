@@ -114,12 +114,12 @@ const ScholarshipModal = ({ isOpen, onClose }) => {
       <Overlay isOpen={isOpen}>
         <ModalContainer>
           <ModalHeader>
-            <Title>Administrar Alumnos Becados</Title>
             <CloseButton onClick={onClose}>
               <FaTimes />
             </CloseButton>
           </ModalHeader>
           <ModalBody>
+            <Title>Administrar Alumnos Becados</Title>
             <Form onSubmit={handleAddScholarshipStudent}>
               <TextInput
                 as="select"
@@ -212,9 +212,7 @@ const ModalContainer = styled.div`
 
 const ModalHeader = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
+  justify-content: flex-end;
 `;
 
 const CloseButton = styled.button`
@@ -238,7 +236,7 @@ const ModalBody = styled.div`
 const Title = styled.h2`
   font-size: 24px;
   color: #333333;
-  margin-bottom: 10px;
+  margin-bottom: 40px;
   text-align: center;
 `;
 

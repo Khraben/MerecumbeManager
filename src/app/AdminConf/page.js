@@ -10,9 +10,12 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import SecretaryModal from "../components/SecretaryModal";
+import SecretaryDetails from "../components/SecretaryDetails";
 import InstructorModal from "../components/InstructorModal";
 import InstructorDetails from "../components/InstructorDetails";
 import ConfirmationModal from "../components/ConfirmationModal";
+import ScholarshipModal from "../components/ScholarshipModal";
+import CashModal from "../components/CashModal";
 import Loading from "../components/Loading";
 import {
   fetchSecretaries,
@@ -21,8 +24,6 @@ import {
   deleteInstructor,
   fetchCountGroupsByInstructor,
 } from "../firebase/firebaseFirestoreService";
-import SecretaryDetails from "../components/SecretaryDetails";
-import ScholarshipModal from "../components/ScholarshipModal";
 
 export default function AdminConf() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +47,8 @@ export default function AdminConf() {
   const [viewingSecretaryId, setViewingSecretaryId] = useState(null);
 
   const [isScholarshipModalOpen, setIsScholarshipModalOpen] = useState(false);
+
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
 
   useEffect(() => {
     const loadSecretaries = async () => {
@@ -135,6 +138,14 @@ export default function AdminConf() {
 
   const handleCloseScholarshipModal = () => {
     setIsScholarshipModalOpen(false);
+  };
+
+  const handleOpenCashModal = () => {
+    setIsCashModalOpen(true);
+  };
+
+  const handleCloseCashModal = () => {
+    setIsCashModalOpen(false);
   };
 
   const handleOpenConfirmation = (type, item) => {
@@ -321,9 +332,12 @@ export default function AdminConf() {
         </ActionButton>
       </ButtonContainer>
       <ButtonContainer>
-        <ActionButton onClick={handleOpenScholarshipModal}>
+        <StyledActionButton onClick={handleOpenScholarshipModal}>
           Administrar Alumnos Becados
-        </ActionButton>
+        </StyledActionButton>
+        <StyledActionButton onClick={handleOpenCashModal}>
+          Consultar Efectivo en Caja
+        </StyledActionButton>
       </ButtonContainer>
       <InstructorModal
         isOpen={isInstructorModalOpen}
@@ -349,6 +363,7 @@ export default function AdminConf() {
         isOpen={isScholarshipModalOpen}
         onClose={handleCloseScholarshipModal}
       />
+      <CashModal isOpen={isCashModalOpen} onClose={handleCloseCashModal} />
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={handleCloseConfirmation}
@@ -577,6 +592,7 @@ const ActionButton = styled.button`
   font-weight: bold;
   color: #dddddd;
   background-color: #333333;
+  width: 175px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -593,6 +609,37 @@ const ActionButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 16px;
     font-size: 12px;
+  }
+`;
+
+const StyledActionButton = styled.button`
+  padding: 20px;
+  margin: 10px 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #333333;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 175px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, transform 0.3s;
+
+  &:hover {
+    background-color: #242424;
+    transform: translateY(-2px);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 

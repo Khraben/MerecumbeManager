@@ -52,7 +52,7 @@ const HelpModal = ({ groupId, onClose }) => {
             <StudentList>
               {femaleStudents.map((student) => (
                 <StudentItem key={student.id}>
-                  {student.name} - {student.phone}
+                  {student.name} | Celular: {student.phone}
                 </StudentItem>
               ))}
             </StudentList>
@@ -64,7 +64,7 @@ const HelpModal = ({ groupId, onClose }) => {
             <StudentList>
               {maleStudents.map((student) => (
                 <StudentItem key={student.id}>
-                  {student.name} - {student.phone}
+                  {student.name} | Celular: {student.phone}
                 </StudentItem>
               ))}
             </StudentList>
@@ -146,11 +146,15 @@ const ModalBody = styled.div`
 `;
 
 const Title = styled.h2`
-  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333333;
+  text-align: center;
+  margin-bottom: 10px;
 `;
 
 const SectionTitle = styled.h3`
   margin-bottom: 10px;
+  text-align: center;
 `;
 
 const StudentList = styled.ul`

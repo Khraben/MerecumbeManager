@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
   const shouldShowLayout = !noLayoutRoutes.includes(pathname);
 
   useEffect(() => {
-    document.title = "Dance Manager";
+    document.title = "Merecumbé San Ramón - Manager";
   }, []);
 
   return (
@@ -49,12 +49,9 @@ export default function RootLayout({ children }) {
                 />
                 <MainContent>
                   <Watermark>
-                    <Image
-                      src="/receiptLogo.svg"
+                    <WatermarkImage
+                      src="/logo.svg"
                       alt="Marca de Agua"
-                      layout="fill"
-                      objectFit="contain"
-                      style={{ opacity: 0.3 }}
                       draggable="false"
                     />
                   </Watermark>
@@ -90,12 +87,21 @@ const Watermark = styled.div`
   position: absolute;
   top: 0;
   left: 50px;
-  width: calc(100% - 45px);
+  width: calc(100% - 65px);
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 0;
+  pointer-events: none;
+`;
+
+const WatermarkImage = styled(Image).attrs({
+  width: 750,
+  height: 750,
+})`
+  opacity: 0.3;
+  pointer-events: none;
 `;
 
 const Content = styled.div`
